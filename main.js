@@ -179,9 +179,14 @@ if (!gotInstanceLock) {
     process.exit(0);
 }
 
+app.setAsDefaultProtocolClient('infomaniakmeet');
+
 /**
  * Run the application.
  */
+app.on('open-url', (event, url) => {
+    event.preventDefault();
+});
 
 app.on('activate', () => {
     if (mainWindow === null) {
