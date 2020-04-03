@@ -1,9 +1,9 @@
 {
   "name": "jitsi-meet-electron",
   "version": "1.1.1",
-  "description": "Electron application for Jitsi Meet",
+  "description": "Electron application for Infomaniak Meet",
   "main": "./build/main.js",
-  "productName": "Jitsi Meet",
+  "productName": "Infomaniak Meet",
   "scripts": {
     "start": "webpack --config ./webpack.main.js --mode development && concurrently \"npm:watch\" \"electron ./build/main.js\"",
     "clean": "rm -rf node_modules build dist",
@@ -16,8 +16,8 @@
     "watch": "webpack --config ./webpack.renderer.js --mode development --watch --watch-poll"
   },
   "build": {
-    "appId": "org.jitsi.jitsi-meet",
-    "productName": "Jitsi Meet",
+    "appId": "com.infomaniak.meet",
+    "productName": "Infomaniak Meet",
     "generateUpdatesFilesForAllChannels": true,
     "files": [
       "**/*",
@@ -26,15 +26,21 @@
       "!main.js"
     ],
     "mac": {
-      "artifactName": "jitsi-meet.${ext}",
+      "artifactName": "infomaniak-meet.${ext}",
       "category": "public.app-category.video",
-      "darkModeSupport": true
+      "darkModeSupport": true,
+      "hardenedRuntime": true,
+      "entitlements": "entitlements.mac.plist",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Please give us access to your microphone",
+        "NSCameraUsageDescription": "Please give us access to your camera"
+      }
     },
     "linux": {
-      "artifactName": "jitsi-meet-${arch}.${ext}",
+      "artifactName": "infomaniak-meet-${arch}.${ext}",
       "category": "VideoConference;AudioVideo;Audio;Video;Network",
-      "description": "Jitsi Meet Desktop App",
-      "executableName": "jitsi-meet",
+      "description": "Infomaniak Meet Desktop App",
+      "executableName": "infomaniak-meet",
       "target": [
         {
           "arch": "x64",
@@ -43,7 +49,7 @@
       ]
     },
     "win": {
-      "artifactName": "jitsi-meet.${ext}",
+      "artifactName": "infomaniak-meet.${ext}",
       "target": [
         {
           "arch": [
@@ -56,6 +62,12 @@
     },
     "directories": {
       "buildResources": "resources"
+    },
+    "protocols": {
+      "name": "meet.infomaniak.com",
+      "schemes": [
+        "https"
+      ]
     }
   },
   "pre-commit": [
@@ -72,12 +84,12 @@
     "electron",
     "jitsi-meet"
   ],
-  "author": "Jitsi Team <support@jitsi.org>",
+  "author": "Infomaniak",
   "readmeFilename": "README.md",
   "license": "Apache-2.0",
   "dependencies": {
     "@atlaskit/avatar": "14.1.7",
-    "@atlaskit/button": "10.1.1",
+    "@atlaskit/button": "^10.1.1",
     "@atlaskit/css-reset": "3.0.5",
     "@atlaskit/droplist": "7.0.17",
     "@atlaskit/field-text": "7.0.19",
@@ -126,7 +138,7 @@
     "css-loader": "2.0.1",
     "devtron": "1.4.0",
     "electron": "7.1.7",
-    "electron-builder": "20.38.3",
+    "electron-builder": "^22.4.1",
     "electron-react-devtools": "0.5.3",
     "eslint": "6.5.1",
     "eslint-config-jitsi": "github:jitsi/eslint-config-jitsi#1.0.2",

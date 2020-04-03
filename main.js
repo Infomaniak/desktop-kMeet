@@ -32,7 +32,7 @@ autoUpdater.logger.transports.file.level = 'info';
  * - Enable automatic reloads
  */
 if (isDev) {
-    require('electron-debug')({ showDevTools: false });
+    require('electron-debug')({ showDevTools: true });
     require('electron-reload')(path.join(__dirname, 'build'));
 }
 

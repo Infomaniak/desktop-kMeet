@@ -3,30 +3,30 @@ export default {
     /**
      * The URL with extra information about the app / service.
      */
-    aboutURL: 'https://jitsi.org/what-is-jitsi/',
+    aboutURL: 'https://www.infomaniak.com/meet/',
 
     /**
      * Application name.
      */
-    appName: 'Jitsi Meet',
+    appName: 'Infomaniak Meet',
 
     /**
      * The default server URL of Jitsi Meet Deployment that will be used.
      */
-    defaultServerURL: 'https://meet.jit.si',
+    defaultServerURL: 'https://meet.infomaniak.com',
 
     /**
      * URL to send feedback.
      */
-    feedbackURL: 'mailto:support@jitsi.org',
+    feedbackURL: 'https://www.infomaniak.com/fr/support/contact',
 
     /**
      * The URL of Privacy Policy Page.
      */
-    privacyPolicyURL: 'https://jitsi.org/meet/privacy',
+    privacyPolicyURL: 'https://www.infomaniak.com/en/legal/confidentiality-policy',
 
     /**
      * The URL of Terms and Conditions Page.
      */
-    termsAndConditionsURL: 'https://jitsi.org/meet/terms'
+    termsAndConditionsURL: 'https://www.infomaniak.com/en/legal/confidentiality-policy'
 };
