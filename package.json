@@ -33,14 +33,7 @@
       "entitlements": "entitlements.mac.plist",
       "extendInfo": {
         "NSMicrophoneUsageDescription": "Please give us access to your microphone",
-        "NSCameraUsageDescription": "Please give us access to your camera",
-        "CFBundleURLTypes": [
-          {
-            "CFBundleTypeRole": "Viewer",
-            "CFBundleURLSchemes": "infomaniakmeet"
-          }
-        ],
-        "NSPrincipalClass": "AtomApplication"
+        "NSCameraUsageDescription": "Please give us access to your camera"
       }
     },
     "linux": {
@@ -71,9 +64,9 @@
       "buildResources": "resources"
     },
     "protocols": {
-      "name": "meet.infomaniak.com",
+      "name": "jitsi-protocol",
       "schemes": [
-        "https"
+        "jitsi"
       ]
     }
   },

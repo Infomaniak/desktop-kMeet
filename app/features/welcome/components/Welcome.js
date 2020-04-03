@@ -1,5 +1,5 @@
 // @flow
-
+import styled from 'styled-components';
 import Button from '@atlaskit/button';
 import { FieldTextStateless } from '@atlaskit/field-text';
 import { SpotlightTarget } from '@atlaskit/onboarding';
@@ -14,10 +14,9 @@ import { push } from 'react-router-redux';
 import { Navbar } from '../../navbar';
 import { Onboarding, startOnboarding } from '../../onboarding';
 import { RecentList } from '../../recent-list';
-import { normalizeServerURL } from '../../utils';
+import { createConferenceObjectFromURL } from '../../utils';
 
 import { Body, Form, Header, Wrapper } from '../styled';
-
 
 type Props = {
 
@@ -40,6 +39,13 @@ type State = {
      */
     url: string;
 };
+
+// Thanks atlaskit for the random fucking !important on your button color prop.
+const StyledButton = styled(Button)`
+    background: #3DBD86;
+    color: white !important;
+    border-radius: 4px;
+`;
 
 /**
  * Welcome Component.
@@ -125,33 +131,13 @@ class Welcome extends Component<Props, State> {
      */
     _onJoin() {
         const inputURL = this.state.url;
-        const lastIndexOfSlash = inputURL.lastIndexOf('/');
-        let room;
-        let serverURL;
+        const conference = createConferenceObjectFromURL(inputURL);
 
-        if (lastIndexOfSlash === -1) {
-            // This must be only the room name.
-            room = inputURL;
-        } else {
-            // Take the substring after last slash to be the room name.
-            room = inputURL.substring(lastIndexOfSlash + 1);
-
-            // Take the substring before last slash to be the Server URL.
-            serverURL = inputURL.substring(0, lastIndexOfSlash);
-
-            // Normalize the server URL.
-            serverURL = normalizeServerURL(serverURL);
-        }
-
-        // Don't navigate if no room was specified.
-        if (!room) {
+        // Don't navigate if conference couldn't be created
+        if (!conference) {
             return;
         }
-
-        this.props.dispatch(push('/conference', {
-            room,
-            serverURL
-        }));
+        this.props.dispatch(push('/conference', conference));
     }
 
     _onURLChange: (*) => void;
@@ -206,12 +192,11 @@ class Welcome extends Component<Props, State> {
                             value = { this.state.url } />
                     </Form>
                 </SpotlightTarget>
-                <Button
-                    appearance = 'primary'
+                <StyledButton
                     onClick = { this._onJoin }
                     type = 'button'>
                     GO
-                </Button>
+                </StyledButton>
             </Header>
         );
     }
