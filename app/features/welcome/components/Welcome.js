@@ -1,5 +1,5 @@
 // @flow
-
+import styled from 'styled-components';
 import Button from '@atlaskit/button';
 import { FieldTextStateless } from '@atlaskit/field-text';
 import { SpotlightTarget } from '@atlaskit/onboarding';
@@ -17,7 +17,6 @@ import { RecentList } from '../../recent-list';
 import { normalizeServerURL } from '../../utils';
 
 import { Body, Form, Header, Wrapper } from '../styled';
-
 
 type Props = {
 
@@ -40,6 +39,13 @@ type State = {
      */
     url: string;
 };
+
+// Thanks atlaskit for the random fucking !important on your button color prop.
+const StyledButton = styled(Button)`
+    background: #3DBD86;
+    color: white !important;
+    border-radius: 4px;
+`;
 
 /**
  * Welcome Component.
@@ -206,12 +212,11 @@ class Welcome extends Component<Props, State> {
                             value = { this.state.url } />
                     </Form>
                 </SpotlightTarget>
-                <Button
-                    appearance = 'primary'
+                <StyledButton
                     onClick = { this._onJoin }
                     type = 'button'>
                     GO
-                </Button>
+                </StyledButton>
             </Header>
         );
     }
