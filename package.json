@@ -54,7 +54,13 @@
       "entitlementsInherit": "entitlements.mac.plist",
       "extendInfo": {
         "NSMicrophoneUsageDescription": "Please give us access to your microphone",
-        "NSCameraUsageDescription": "Please give us access to your camera"
+        "NSCameraUsageDescription": "Please give us access to your camera",
+        "CFBundleURLTypes": [
+          {
+            "CFBundleTypeRole": "Viewer",
+            "CFBundleURLSchemes": "kmeet"
+          }
+        ]
       }
     },
     "linux": {
