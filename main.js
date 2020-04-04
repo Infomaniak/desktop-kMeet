@@ -180,7 +180,7 @@ function createJitsiMeetWindow() {
      *  while app is closed
      * it will trigger this event below
      */
-    handleProtocolCall(process.argv[2]);
+    handleProtocolCall(process.argv[1]);
 }
 
 /**
@@ -301,7 +301,11 @@ app.on('open-url', (event, data) => {
  */
 app.on('second-instance', (event, commandLine) => {
     if (mainWindow) {
-        handleProtocolCall(commandLine[4]);
+        if (isDev) {
+            handleProtocolCall(commandLine[4]);
+        } else {
+            handleProtocolCall(commandLine[3]);
+        }
     }
 });
 
