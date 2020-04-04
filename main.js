@@ -262,9 +262,9 @@ app.on('second-instance', () => {
 
 app.on('window-all-closed', () => {
     // Don't quit the application on macOS.
-    if (process.platform !== 'darwin') {
-        app.quit();
-    }
+    //if (process.platform !== 'darwin') {
+    app.quit();
+    //}
 });
 
 // remove so we can register each time as we run the app.

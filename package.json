@@ -55,8 +55,7 @@
       "extendInfo": {
         "NSMicrophoneUsageDescription": "Please give us access to your microphone",
         "NSCameraUsageDescription": "Please give us access to your camera"
-      },
-      "target": "dmg"
+      }
     },
     "linux": {
       "artifactName": "infomaniak-meet-${arch}.${ext}",
