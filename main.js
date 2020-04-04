@@ -43,7 +43,7 @@ let mainWindow = null;
 /**
  * Add protocol data
  */
-const PROTOCOL_PREFIX = 'jitsi'; // this could be configurable later
+const PROTOCOL_PREFIX = 'kmeet'; // this could be configurable later
 const PROTOCOL_SURPLUS = `${PROTOCOL_PREFIX}://`;
 let rendererReady = false;
 let protocolDataForFrontApp = null;

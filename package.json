@@ -64,9 +64,9 @@
       "buildResources": "resources"
     },
     "protocols": {
-      "name": "jitsi-protocol",
+      "name": "kmeet-protocol",
       "schemes": [
-        "jitsi"
+        "kmeet"
       ]
     }
   },
