@@ -157,7 +157,7 @@ function createJitsiMeetWindow() {
     initPopupsConfigurationMain(mainWindow);
     setupAlwaysOnTopMain(mainWindow);
     setupPowerMonitorMain(mainWindow);
-    setupScreenSharingMain(mainWindow, 'Jitsi Meet');
+    setupScreenSharingMain(mainWindow, 'Infomaniak Meet');
 
     mainWindow.webContents.on('new-window', (event, url, frameName) => {
         const target = getPopupTarget(url, frameName);
@@ -301,7 +301,7 @@ app.on('open-url', (event, data) => {
  */
 app.on('second-instance', (event, commandLine) => {
     if (mainWindow) {
-        handleProtocolCall(commandLine[2]);
+        handleProtocolCall(commandLine[4]);
     }
 });
 
