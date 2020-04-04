@@ -1,5 +1,5 @@
 {
-  "name": "jitsi-meet-electron",
+  "name": "kmeet-electron",
   "version": "1.1.1",
   "description": "Electron application for Infomaniak Meet",
   "main": "./build/main.js",
@@ -13,33 +13,62 @@
     "dist": "npm run build && electron-builder",
     "postinstall": "electron-builder install-app-deps",
     "validate": "npm ls",
-    "watch": "webpack --config ./webpack.renderer.js --mode development --watch --watch-poll"
+    "watch": "webpack --config ./webpack.renderer.js --mode development --watch --watch-poll",
+    "publish": "npm run build && electron-builder -p always"
   },
   "build": {
     "appId": "com.infomaniak.meet",
     "productName": "Infomaniak Meet",
     "generateUpdatesFilesForAllChannels": true,
+    "afterSign": "scripts/notarize.js",
+    "publish": {
+      "provider": "s3",
+      "channel": "latest",
+      "bucket": "login",
+      "endpoint": "https://storage.infomaniak.com",
+      "path": "/kmeet"
+    },
     "files": [
       "**/*",
       "resources",
       "!app",
       "!main.js"
     ],
+    "dmg": {
+      "sign": false
+    },
     "mac": {
       "artifactName": "infomaniak-meet.${ext}",
       "category": "public.app-category.video",
+      "publish": {
+        "provider": "s3",
+        "channel": "latest",
+        "bucket": "assets",
+        "endpoint": "https://storage.infomaniak.com",
+        "path": "/kmeet"
+      },
       "darkModeSupport": true,
       "hardenedRuntime": true,
+      "gatekeeperAssess": false,
       "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist",
       "extendInfo": {
         "NSMicrophoneUsageDescription": "Please give us access to your microphone",
         "NSCameraUsageDescription": "Please give us access to your camera"
-      }
+      },
+      "target": "dmg"
     },
     "linux": {
       "artifactName": "infomaniak-meet-${arch}.${ext}",
       "category": "VideoConference;AudioVideo;Audio;Video;Network",
       "description": "Infomaniak Meet Desktop App",
+      "publish": {
+        "provider": "s3",
+        "channel": "latest",
+        "bucket": "assets",
+        "endpoint": "https://storage.infomaniak.com",
+        "path": "/kmeet"
+      },
       "executableName": "infomaniak-meet",
       "target": [
         {
@@ -50,6 +79,13 @@
     },
     "win": {
       "artifactName": "infomaniak-meet.${ext}",
+      "publish": {
+        "provider": "s3",
+        "channel": "latest",
+        "bucket": "assets",
+        "endpoint": "https://storage.infomaniak.com",
+        "path": "/kmeet"
+      },
       "target": [
         {
           "arch": [
@@ -100,9 +136,11 @@
     "@atlaskit/spinner": "9.0.13",
     "@atlaskit/theme": "7.0.1",
     "@atlaskit/toggle": "5.0.14",
+    "dotenv": "^8.2.0",
     "electron-debug": "2.0.0",
     "electron-is-dev": "1.0.1",
     "electron-log": "2.2.17",
+    "electron-notarize": "^0.3.0",
     "electron-reload": "1.5.0",
     "electron-store": "2.0.0",
     "electron-updater": "4.0.6",
