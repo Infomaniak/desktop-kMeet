@@ -7,6 +7,13 @@ import React, { Component } from 'react';
 
 import config from '../../config';
 import { openExternalLink } from '../../utils';
+import styled from 'styled-components';
+
+const VersionNumber = styled.span`
+    padding: 15px 0;
+    display: flex;
+    justify-content: center;
+`;
 
 type State = {
 
@@ -103,6 +110,7 @@ export default class HelpButton extends Component< *, State> {
                     <Item onActivate = { this._onAboutClick }>
                         About
                     </Item>
+                    <VersionNumber>v{ require('electron').remote.app.getVersion() }</VersionNumber>
                 </Group>
             </Droplist>
         );
