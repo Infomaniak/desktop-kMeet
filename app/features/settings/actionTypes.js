@@ -64,7 +64,7 @@ export const SET_VIDEO_MUTED = Symbol('SET_VIDEO_MUTED');
  * {
  *     type: SET_ALWAYS_ON_TOP_WINDOW_ENABLED,
  *     windowAlwaysOnTop: boolean
- * }
+ * }.
  */
 export const SET_ALWAYS_ON_TOP_WINDOW_ENABLED
     = Symbol('SET_ALWAYS_ON_TOP_WINDOW_ENABLED');
