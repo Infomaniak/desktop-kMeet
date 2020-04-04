@@ -17,6 +17,9 @@ import { RecentList } from '../../recent-list';
 import { createConferenceObjectFromURL } from '../../utils';
 
 import { Body, Form, Header, Wrapper } from '../styled';
+import { Trans } from 'react-i18next';
+
+// import { Translation } from 'react-i18next';
 
 type Props = {
 
@@ -195,7 +198,8 @@ class Welcome extends Component<Props, State> {
                 <StyledButton
                     onClick = { this._onJoin }
                     type = 'button'>
-                    GO
+                    <Trans i18nKey = 'welcome'></Trans>
+                    {/* {this.props.t('welcome')} */}
                 </StyledButton>
             </Header>
         );

@@ -7,6 +7,7 @@ import React, { Component } from 'react';
 import { Route, Switch } from 'react-router';
 import { ConnectedRouter as Router, push } from 'react-router-redux';
 import { connect } from 'react-redux';
+import { i18n } from '../../config/i18next.config';
 
 import { Conference } from '../../conference';
 import config from '../../config';
@@ -105,4 +106,5 @@ class App extends Component<*> {
     }
 }
 
+// export default compose(translate(), connect())(App);
 export default connect()(App);
