@@ -18,17 +18,17 @@ export default {
     /**
      * URL to send feedback.
      */
-    feedbackURL: 'https://www.infomaniak.com/fr/support/contact',
+    feedbackURL: 'https://www.infomaniak.com/gtl/support.contact',
 
     /**
      * The URL of Privacy Policy Page.
      */
-    privacyPolicyURL: 'https://www.infomaniak.com/en/legal/confidentiality-policy',
+    privacyPolicyURL: 'https://www.infomaniak.com/gtl/rgpd.confidentiality',
 
     /**
      * The URL of Terms and Conditions Page.
      */
-    termsAndConditionsURL: 'https://www.infomaniak.com/en/legal/confidentiality-policy',
+    termsAndConditionsURL: 'https://www.infomaniak.com/gtl/rgpd.documents',
 
     /**
      * Some of default values for application.
