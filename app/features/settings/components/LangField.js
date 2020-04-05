@@ -40,7 +40,7 @@ type Props = {
     /**
      * Default lang in (redux) store.
      */
-    _language: string;
+    _lang: string;
 
     t: any;
 };
