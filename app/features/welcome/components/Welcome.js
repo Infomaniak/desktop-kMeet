@@ -217,7 +217,7 @@ class Welcome extends Component<Props, State> {
                                 isInvalid = { locationError }
                                 isLabelHidden = { true }
                                 onChange = { this._onURLChange }
-                                placeholder = 'Enter a name for your conference'
+                                placeholder = { this.props.t('welcomepage.roomname') }
                                 shouldFitContainer = { true }
                                 type = 'text'
                                 value = { this.state.url } />
@@ -226,7 +226,7 @@ class Welcome extends Component<Props, State> {
                     <StyledButton
                         onClick = { this._onJoin }
                         type = 'button'>
-                        Creer
+                        { this.props.t('welcomepage.go') }
                     </StyledButton>
                 </StyledHeader>
             </div>

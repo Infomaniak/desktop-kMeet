@@ -22,6 +22,7 @@ import { setEmail, setName } from '../../settings';
 import { conferenceEnded, conferenceJoined } from '../actions';
 import { LoadingIndicator, Wrapper } from '../styled';
 import { getExternalApiURL } from '../../utils';
+import i18next from '../../config/i18next.config';
 
 type Props = {
 
@@ -262,7 +263,7 @@ class Conference extends Component<Props, State> {
             configOverwrite,
             onload: this._onIframeLoad,
             parentNode,
-            roomName: this._conference.room
+            roomName: `${this._conference.room}?lang=${i18next.language}`
         });
         initPopupsConfigurationRender(this._api);
 
