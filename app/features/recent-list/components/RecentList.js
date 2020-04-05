@@ -9,12 +9,20 @@ import { push } from 'react-router-redux';
 const StyledConferenceCard = styled(ConferenceCard)`
     background: white;
     color:#333333;
+    margin-left:-10px;
+    margin-right:-10px;
+    margin-bottom: 10px;
+    border-radius:8px;
+    padding:15px 25px;
 `;
 const StyledTruncatedText = styled(TruncatedText)`
     margin-right:5px;
     color:#666666;
 `;
 
+const blockConf = {
+    marginTop: '10px'
+};
 
 import {
     ConferenceCard,
@@ -82,7 +90,7 @@ class RecentList extends Component<Props, *> {
                 <ConferenceTitle>
                     { conference.room }
                 </ConferenceTitle>
-                <div>
+                <div style={blockConf}>
                     <StyledTruncatedText>
                         { this._renderServerURL(conference.serverURL) }
                     </StyledTruncatedText>
