@@ -76,7 +76,7 @@ class RecentList extends Component<Props, *> {
         return (
             <RecentListContainer>
                 <div>
-                    {this.props._recentList.length && this.props.t('welcomepage.history') }
+                    {this.props._recentList.length >= 1 ? this.props.t('welcomepage.history') : ''}
                     {
                         this.props._recentList.map(
                             conference => this._renderRecentListEntry(conference)
