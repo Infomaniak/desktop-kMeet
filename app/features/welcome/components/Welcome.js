@@ -197,8 +197,8 @@ class Welcome extends Component<Props, State> {
 
         return (
             <div>
-                <div style={mainBlock}>
-                    <h1 style={mainTitle}>Communiquez en toute securite et dans le respect de la vie privee</h1>
+                <div style = { mainBlock }>
+                    <h1 style = { mainTitle }>Communiquez en toute securite et dans le respect de la vie privee</h1>
                 </div>
                 <StyledHeader>
                     <SpotlightTarget name = 'conference-url'>

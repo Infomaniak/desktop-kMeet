@@ -6,6 +6,7 @@ import { connect } from 'react-redux';
 import type { Dispatch } from 'redux';
 import { push } from 'react-router-redux';
 
+// eslint-disable-next-line no-use-before-define
 const StyledConferenceCard = styled(ConferenceCard)`
     background: white;
     color:#333333;
@@ -15,6 +16,7 @@ const StyledConferenceCard = styled(ConferenceCard)`
     border-radius:8px;
     padding:15px 25px;
 `;
+// eslint-disable-next-line no-use-before-define
 const StyledTruncatedText = styled(TruncatedText)`
     margin-right:5px;
     color:#666666;
@@ -91,7 +93,7 @@ class RecentList extends Component<Props, *> {
                 <ConferenceTitle>
                     { conference.room }
                 </ConferenceTitle>
-                <div style={blockConf}>
+                <div style = { blockConf }>
                     <StyledTruncatedText>
                         { this._renderStartTime(conference) }
                     </StyledTruncatedText>

@@ -130,7 +130,7 @@ class SettingsDrawer extends Component<Props, *> {
                                     value = { this.props._email } />
                             </form>
                         </SpotlightTarget>
-                        <div style={hiddenField}>
+                        <div style = { hiddenField }>
                             <SpotlightTarget
                                 name = 'server-setting'>
                                 <ServerURLField />
