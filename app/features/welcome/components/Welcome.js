@@ -170,6 +170,7 @@ class Welcome extends Component<Props, State> {
     _renderBody() {
         return (
             <Body>
+                <div>Historique de vos reunions</div>
                 <RecentList />
             </Body>
         );
