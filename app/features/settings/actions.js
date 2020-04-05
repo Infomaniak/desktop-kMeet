@@ -80,13 +80,13 @@ export function setServerURL(serverURL: string) {
 /**
  * Set app language.
  *
- * @param {string} language - App language.
- * @returns {{language: string, type: symbol}}
+ * @param {string} lang - App language.
+ * @returns {{lang: string, type: symbol}}
  */
-export function setLanguage(language: string) {
+export function setLang(lang: string) {
     return {
         type: SET_LANGUAGE,
-        language
+        lang
     };
 }
 

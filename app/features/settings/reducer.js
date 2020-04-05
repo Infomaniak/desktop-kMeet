@@ -11,7 +11,7 @@ import {
     SET_NAME,
     SET_SERVER_URL,
     SET_VIDEO_MUTED,
-    SET_ALWAYS_ON_TOP_WINDOW_ENABLED
+    SET_ALWAYS_ON_TOP_WINDOW_ENABLED, SET_LANGUAGE
 } from './actionTypes';
 
 type State = {
@@ -22,6 +22,7 @@ type State = {
     startWithAudioMuted: boolean,
     startWithVideoMuted: boolean,
     windowAlwaysOnTop: boolean,
+    lang: string,
 };
 
 const username = os.userInfo().username;
@@ -33,7 +34,8 @@ const DEFAULT_STATE = {
     serverURL: undefined,
     startWithAudioMuted: false,
     startWithVideoMuted: false,
-    windowAlwaysOnTop: true
+    windowAlwaysOnTop: true,
+    lang: 'fr'
 };
 
 /**
@@ -45,6 +47,11 @@ const DEFAULT_STATE = {
  */
 export default (state: State = DEFAULT_STATE, action: Object) => {
     switch (action.type) {
+    case SET_LANGUAGE:
+        return {
+            ...state,
+            lang: action.lang
+        };
     case SET_AUDIO_MUTED:
         return {
             ...state,

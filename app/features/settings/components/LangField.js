@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import type { Dispatch } from 'redux';
 
-import { setLanguage } from '../actions';
+import { setLang } from '../actions';
 import i18next from '../../config/i18next.config';
 import { TogglesContainer } from '../styled';
 import styled from 'styled-components';
@@ -70,6 +70,19 @@ class LangField extends Component<Props, State> {
     }
 
     /**
+     * This updates the startWithAudioMuted and startWithVideoMuted in (local)
+     * state when there is a change in redux store.
+     *
+     * @param {Props} props - New props of the component.
+     * @returns {State} - New state of the component.
+     */
+    static getDerivedStateFromProps(props) {
+        return {
+            lang: props._lang
+        };
+    }
+
+    /**
      * Render function of component.
      *
      * @returns {ReactElement}
@@ -99,7 +112,7 @@ class LangField extends Component<Props, State> {
      * @returns {void}
      */
     _onLangChange(event) {
-        this.props.dispatch(setLanguage(event.target.value));
+        this.props.dispatch(setLang(event.target.value));
 
         i18next.changeLanguage(event.target.value);
     }
@@ -114,8 +127,6 @@ class LangField extends Component<Props, State> {
  * }}
  */
 function _mapStateToProps(state: Object) {
-    i18next.changeLanguage(state.settings.lang);
-
     return {
         _lang: state.settings.lang
     };
