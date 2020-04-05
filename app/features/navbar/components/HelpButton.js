@@ -105,9 +105,6 @@ class HelpButton extends Component< *, State> {
                     <Item onActivate = { this._onPrivacyClick }>
                         { this.props.t('welcomepage.privacy') }
                     </Item>
-                    <Item onActivate = { this._onSendFeedbackClick }>
-                        { this.props.t('welcomepage.sendFeedback') }
-                    </Item>
                     <Item onActivate = { this._onAboutClick }>
                         { this.props.t('welcomepage.about') }
                     </Item>
