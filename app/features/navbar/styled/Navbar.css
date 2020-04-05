@@ -7,7 +7,7 @@ div[class^="ContainerNavigationInner"] button {
 }
 
 div[class^="ContainerNavigationInner"] button:hover {
-    background: #3DBD86 !important;
+    background: #F5F5F5 !important;
 }
 
 
@@ -28,11 +28,15 @@ span[class^="Item__Span"] {
     color: #666666 !important;
 }
 
-span[class^="Item__Span:hover"] {
+span[class^="Item__Span"]:hover {
     background: #eeeeee !important;
 }
 
 div[class^="DrawerInner"] {
     background: #F1F1F1;
     color: #333333;
+}
+
+div[class^="Target__TargetInner"] {
+    display:none !important;
 }
