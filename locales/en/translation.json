@@ -37,7 +37,29 @@
         "sendFeedback": "Send feedback",
         "terms": "Terms",
         "about": "About",
+        "help": "HELP",
         "title": "Communicate in a safe, privacy respectful environment. It's free!",
-        "cgu": "GT&C"
+        "cgu": "GT&C",
+        "history": "Meeting history"
+    },
+    "settingsView": {
+        "advanced": "Advanced",
+        "alertOk": "OK",
+        "alertTitle": "Warning",
+        "alertURLText": "The entered server URL is invalid",
+        "buildInfoSection": "Build Information",
+        "conferenceSection": "Conference",
+        "disableCallIntegration": "Disable native call integration",
+        "disableP2P": "Disable Peer-To-Peer mode",
+        "displayName": "Display name",
+        "email": "Email",
+        "header": "Settings",
+        "profileSection": "Profile",
+        "serverURL": "Server URL",
+        "showAdvanced": "Show advanced settings",
+        "startWithAudioMuted": "Start with audio muted",
+        "startWithVideoMuted": "Start with video muted",
+        "version": "Version",
+        "alwaysOnTopWindow": "Always on Top window"
     }
 }

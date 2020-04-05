@@ -18,6 +18,7 @@ import { setEmail, setName } from '../actions';
 import ServerURLField from './ServerURLField';
 import StartMutedToggles from './StartMutedToggles';
 import WindowAlwaysOnTopToggle from './WindowAlwaysOnTopToggle';
+import { withTranslation } from 'react-i18next';
 
 type Props = {
 
@@ -45,6 +46,8 @@ type Props = {
      * Name of the user.
      */
     _name: string;
+
+    t: any;
 };
 
 const hiddenField = {
@@ -112,7 +115,7 @@ class SettingsDrawer extends Component<Props, *> {
                             name = 'name-setting'>
                             <form onSubmit = { this._onNameFormSubmit }>
                                 <FieldText
-                                    label = 'Name'
+                                    label = { this.props.t('settingsView.displayName') }
                                     onBlur = { this._onNameBlur }
                                     shouldFitContainer = { true }
                                     type = 'text'
@@ -123,7 +126,7 @@ class SettingsDrawer extends Component<Props, *> {
                             name = 'email-setting'>
                             <form onSubmit = { this._onEmailFormSubmit }>
                                 <FieldText
-                                    label = 'Email'
+                                    label = { this.props.t('settingsView.email') }
                                     onBlur = { this._onEmailBlur }
                                     shouldFitContainer = { true }
                                     type = 'text'
@@ -240,4 +243,4 @@ function _mapStateToProps(state: Object) {
     };
 }
 
-export default connect(_mapStateToProps)(SettingsDrawer);
+export default withTranslation()(connect(_mapStateToProps)(SettingsDrawer));

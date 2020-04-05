@@ -38,6 +38,28 @@
         "terms": "Termes",
         "about": "À propos",
         "title": "Communiquez en toute sécurité et dans le respect de la vie privée. C'est gratuit !",
-        "cgu": "CGU"
+        "cgu": "CGU",
+        "help": "AIDE",
+        "history": "Historique de vos réunions"
+    },
+    "settingsView": {
+        "advanced": "Avancé",
+        "alertOk": "D'accord",
+        "alertTitle": "Avertissement",
+        "alertURLText": "L'URL du serveur est invalide",
+        "buildInfoSection": "Informations de build",
+        "conferenceSection": "Conférence",
+        "disableCallIntegration": "Désactiver l'intégration d'appels native",
+        "disableP2P": "Désactiver le mode pair à pair",
+        "displayName": "Pseudo",
+        "email": "Email",
+        "header": "Paramètres",
+        "profileSection": "Profil",
+        "serverURL": "URL du serveur",
+        "showAdvanced": "Afficher les paramètres avancés",
+        "startWithAudioMuted": "Commencez avec l'audio en sourdine",
+        "startWithVideoMuted": "Commencez avec la vidéo en sourdine",
+        "version": "Version",
+        "alwaysOnTopWindow": "Fenêtre en dessus"
     }
   }

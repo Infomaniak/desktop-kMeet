@@ -98,7 +98,7 @@ class HelpButton extends Component< *, State> {
                 onOpenChange = { this._onOpenChange }
                 position = 'right bottom'
                 trigger = { <HelpIcon /> }>
-                <Group heading = 'Help'>
+                <Group heading = { this.props.t('welcomepage.help') }>
                     <Item onActivate = { this._onTermsClick }>
                         { this.props.t('welcomepage.terms') }
                     </Item>

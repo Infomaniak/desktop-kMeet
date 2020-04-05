@@ -7,5 +7,53 @@
     "Copy": "Copy",
     "Paste": "Paste",
     "Select All": "Select All",
-    "welcome": "Ca marche"
+    "welcome": "Ca marche",
+    "welcomepage": {
+        "accessibilityLabel": {
+            "join": "Tap per accedere",
+            "roomname": "Inserisci Nome Stanza"
+        },
+        "appDescription": "Infomaniak Meet è una proposta di videoconferenza che rispetta la privacy delle vostre riunioni virtuali. Senza pubblicità, senza abbonamento e senza sofware. I vostri scambi circolano solo a traverso i nostri servers svizzeri.",
+        "audioVideoSwitch": {
+            "audio": "Voce",
+            "video": "Video"
+        },
+        "calendar": "Calendario",
+        "connectCalendarButton": "Collega calendario",
+        "connectCalendarText": "",
+        "enterRoomTitle": "Avvia una nuova conferenza",
+        "go": "VAI",
+        "join": "UNISCITI",
+        "info": "Informazioni",
+        "privacy": "Privacy",
+        "recentList": "Recente",
+        "recentListDelete": "Cancella",
+        "recentListEmpty": "La tua lista &egrave; vuota. Chatta con qualcuno del tuo team e lo vedrai apparire nella lista di meeting recenti.",
+        "reducedUIText": "",
+        "roomname": "Inserisci Nome Stanza",
+        "roomnameHint": "Inserisci il nome o l'URL della stanza alla quale vuoi accedere. Puoi anche inventarti un nome, assicurati solo che le persone che vuoi contattare lo sappiano, così che possano inserire lo stesso nome.",
+        "sendFeedback": "Invia feedback",
+        "terms": "Termini di utilizzo",
+        "title": "Comunicate in sicurezza e rispetto della privacy. Non costa niente!",
+        "cgu": "CGU",
+        "help": "AIUTO",
+        "history": "Storia dell'incontro",
+        "about": "Informazioni"
+    },
+    "settingsView": {
+        "alertOk": "OK",
+        "alertTitle": "Attenzione",
+        "alertURLText": "L'URL del server inserito non è valido",
+        "buildInfoSection": "Versione",
+        "conferenceSection": "Conferenza",
+        "displayName": "Nome visualizzato",
+        "email": "Email",
+        "header": "Impostazioni",
+        "profileSection": "Profilo",
+        "serverURL": "URL del server",
+        "startWithAudioMuted": "Inizia con l'audio disattivato",
+        "startWithVideoMuted": "Avvia con il video disattivato",
+        "version": "Versione",
+        "alwaysOnTopWindow": "Finestra sempre in alto"
+    }
 }

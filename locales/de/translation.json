@@ -7,5 +7,59 @@
     "Copy": "Copy",
     "Paste": "Paste",
     "Select All": "Select All",
-    "welcome": "Ca marche"
+    "welcome": "Ca marche",
+    "welcomepage": {
+        "accessibilityLabel": {
+            "join": "Zum Teilnehmen tippen",
+            "roomname": "Konferenzname eingeben"
+        },
+        "appDescription": "Infomaniak Meet ist eine Videokonferenzlösung, bei der die Privatsphäre für alle Ihre Gespräche gewahrt bleibt. Keine Werbung, keine Registrierung, keine Software. Ihre Gespräche laufen nur über unsere Server in der Schweiz.",
+        "audioVideoSwitch": {
+            "audio": "Audio",
+            "video": "Video"
+        },
+        "calendar": "Kalender",
+        "connectCalendarButton": "Kalender verbinden",
+        "connectCalendarText": "Verbinden Sie Ihren Kalender, um all Ihre Meetings in {{app}} anzuzeigen. Fügen Sie zudem {{provider}}-Meetings in Ihren Kalender ein und starten Sie sie mit nur einem Klick.",
+        "enterRoomTitle": "Neues Meeting starten",
+        "roomNameAllowedChars": "Der Meeting-Name sollte keines der folgenden Zeichen enthalten: ?, &, :, ', \", %, #.",
+        "go": "Los",
+        "goSmall": "Los",
+        "join": "Beitreten",
+        "info": "Informationen",
+        "privacy": "Datenschutz",
+        "recentList": "Letzte",
+        "recentListDelete": "Löschen",
+        "recentListEmpty": "Die Liste „Letzte“ ist momentan leer. Chatten Sie mit Ihrem Team. Sie finden all Ihre letzten Meetings hier.",
+        "reducedUIText": "Willkommen bei {{app}}!",
+        "roomname": "Konferenzname eingeben",
+        "roomnameHint": "Name oder URL der Konferenz, der Sie beitreten möchten. Sie können einen Namen erfinden, er muss nur den anderen Teilnehmern übermittelt werden, damit diese der gleichen Konferenz beitreten.",
+        "sendFeedback": "Feedback senden",
+        "terms": "AGB",
+        "title": "Kommunizieren Sie in aller Sicherheit und in Respekt Ihrer Privatsphäre. Es ist kostenlos!",
+        "cgu": "Nutzungsbedingungen",
+        "help": "HILFE",
+        "history": "Geschichte der Begegnung",
+        "about": "Über"
+    },
+    "settingsView": {
+        "advanced": "Erweitert",
+        "alertOk": "OK",
+        "alertTitle": "Warnung",
+        "alertURLText": "Die angegebene Server-URL ist ungültig",
+        "buildInfoSection": "Build-Informationen",
+        "conferenceSection": "Konferenz",
+        "disableCallIntegration": "Native Anrufintegration deaktivieren",
+        "disableP2P": "Ende-zu-Ende-Modus deaktivieren",
+        "displayName": "Anzeigename",
+        "email": "E-Mail",
+        "header": "Einstellungen",
+        "profileSection": "Profil",
+        "serverURL": "Server-URL",
+        "showAdvanced": "Erweiterte Einstellungen anzeigen",
+        "startWithAudioMuted": "Stumm beitreten",
+        "startWithVideoMuted": "Ohne Video beitreten",
+        "version": "Version",
+        "alwaysOnTopWindow": "Always on Top-Fenster"
+    }
 }

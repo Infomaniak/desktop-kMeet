@@ -1,10 +1,16 @@
 // @flow
 import styled from 'styled-components';
 import moment from 'moment';
+import 'moment/src/locale/es';
+import 'moment/src/locale/fr';
+import 'moment/src/locale/en-gb';
+import 'moment/src/locale/de';
+import 'moment/src/locale/it';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import type { Dispatch } from 'redux';
 import { push } from 'react-router-redux';
+import i18next from '../../config/i18next.config';
 
 // eslint-disable-next-line no-use-before-define
 const StyledConferenceCard = styled(ConferenceCard)`
@@ -33,6 +39,7 @@ import {
     TruncatedText
 } from '../styled';
 import type { RecentListItem } from '../types';
+import { withTranslation } from 'react-i18next';
 
 type Props = {
 
@@ -45,26 +52,37 @@ type Props = {
      * Array of recent conferences.
      */
     _recentList: Array<RecentListItem>;
+
+    t: any;
 };
 
 /**
  * Recent List Component.
  */
 class RecentList extends Component<Props, *> {
+
     /**
      * Render function of component.
      *
      * @returns {ReactElement}
      */
     render() {
+        if (i18next.language === 'en') {
+            moment.locale('en-gb');
+        } else {
+            moment.locale(i18next.language);
+        }
+
         return (
             <RecentListContainer>
-                {this.props._recentList.length > 1 && <div>Historique de vos reunions</div>}
-                {
-                    this.props._recentList.map(
-                        conference => this._renderRecentListEntry(conference)
-                    )
-                }
+                <div>
+                    {this.props._recentList.length && this.props.t('welcomepage.history') }
+                    {
+                        this.props._recentList.map(
+                            conference => this._renderRecentListEntry(conference)
+                        )
+                    }
+                </div>
             </RecentListContainer>
         );
     }
@@ -158,4 +176,4 @@ function _mapStateToProps(state: Object) {
     };
 }
 
-export default connect(_mapStateToProps)(RecentList);
+export default withTranslation()(connect(_mapStateToProps)(RecentList));

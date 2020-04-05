@@ -12,6 +12,28 @@ import {
 
 import ToggleWithLabel from './ToggleWithLabel';
 import i18next from '../../config/i18next.config';
+import { withTranslation } from 'react-i18next';
+import styled from 'styled-components';
+
+const Select = styled.select`
+  width: 100%;
+  height: 35px;
+  background: white;
+  color: gray;
+  padding-left: 5px;
+  font-size: 14px;
+  border: none;
+  margin: 20px 0;
+
+  option {
+    color: black;
+    background: white;
+    display: flex;
+    white-space: pre;
+    min-height: 20px;
+    padding: 0px 2px 1px;
+  }
+`;
 
 type Props = {
 
@@ -29,6 +51,8 @@ type Props = {
      * Start with Video Muted value in (redux) state.
      */
     _startWithVideoMuted: boolean;
+
+    t: any;
 };
 
 type State = {
@@ -87,20 +111,25 @@ class StartMutedToggles extends Component<Props, State> {
     render() {
         return (
             <TogglesContainer>
+                <Select
+                    onChange = { this._onLangChange }
+                    value = { i18next.language }>
+                    <option value = 'fr'>Français</option>
+                    <option value = 'en'>English</option>
+                    <option value = 'de'>Deutsch</option>
+                    <option value = 'it'>Italiano</option>
+                    <option value = 'es'>Español</option>
+                </Select>
                 <ToggleWithLabel
                     isDefaultChecked = { this.props._startWithAudioMuted }
-                    label = 'Start with Audio muted'
+                    label = { this.props.t('settingsView.startWithAudioMuted') }
                     onChange = { this._onAudioToggleChange }
                     value = { this.state.startWithAudioMuted } />
                 <ToggleWithLabel
                     isDefaultChecked = { this.props._startWithVideoMuted }
-                    label = 'Start with Video muted'
+                    label = { this.props.t('settingsView.startWithVideoMuted') }
                     onChange = { this._onVideoToggleChange }
                     value = { this.state.startWithVideoMuted } />
-                <select onChange = { this._onLangChange }>
-                    <option>fr</option>
-                    <option>en</option>
-                </select>
             </TogglesContainer>
         );
     }
@@ -160,4 +189,4 @@ function _mapStateToProps(state: Object) {
     };
 }
 
-export default connect(_mapStateToProps)(StartMutedToggles);
+export default withTranslation()(connect(_mapStateToProps)(StartMutedToggles));

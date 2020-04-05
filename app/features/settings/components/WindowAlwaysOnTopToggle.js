@@ -8,6 +8,7 @@ import { TogglesContainer } from '../styled';
 import { setWindowAlwaysOnTop } from '../actions';
 
 import ToggleWithLabel from './ToggleWithLabel';
+import { withTranslation } from 'react-i18next';
 
 type Props = {
 
@@ -20,6 +21,8 @@ type Props = {
      * Window Always on Top value in (redux) state.
      */
     _windowAlwaysOnTop: boolean;
+
+    t: any;
 };
 
 /**
@@ -48,7 +51,7 @@ class WindowAlwaysOnTopToggle extends Component<Props> {
             <TogglesContainer>
                 <ToggleWithLabel
                     isDefaultChecked = { this.props._windowAlwaysOnTop }
-                    label = 'Always on Top Window'
+                    label = { this.props.t('settingsView.alwaysOnTopWindow') }
                     onChange = { this._onWindowAlwaysOnTopToggleChange }
                     value = { this.props._windowAlwaysOnTop } />
             </TogglesContainer>
@@ -84,4 +87,4 @@ function _mapStateToProps(state: Object) {
     };
 }
 
-export default connect(_mapStateToProps)(WindowAlwaysOnTopToggle);
+export default withTranslation()(connect(_mapStateToProps)(WindowAlwaysOnTopToggle));

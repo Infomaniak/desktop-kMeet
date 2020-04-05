@@ -7,5 +7,58 @@
     "Copy": "Copy",
     "Paste": "Paste",
     "Select All": "Select All",
-    "welcome": "Ca marche"
+    "welcome": "Ca marche",
+    "welcomepage": {
+        "accessibilityLabel": {
+            "join": "Toque para unirse",
+            "roomname": "Introduzca un nombre de sala"
+        },
+        "appDescription": "Infomaniak Meet es una solución de videoconferencia respetuosa con la privacidad para todos sus intercambios. Sin publicidad, sin registro, sin software. Sus intercambios pasan solo a través de nuestros servidores en Suiza.\n",
+        "audioVideoSwitch": {
+            "audio": "Voz",
+            "video": "Video"
+        },
+        "calendar": "Calendario",
+        "connectCalendarButton": "Conecte su calendario",
+        "connectCalendarText": "Conecte su calendario para ver todas sus reuniones en {{app}}. Plus, add {{provider}}reuniones a tu calendario e iniciarlas con un solo clic.",
+        "enterRoomTitle": "Comenzar una reunión",
+        "roomNameAllowedChars": "El nombre de la reunión no debe contener ninguno de estos caracteres: ?, &, :, ', \", %, #.",
+        "go": "IR",
+        "goSmall": "IR",
+        "join": "CREAR / UNIRSE",
+        "info": "Información",
+        "privacy": "Privacidad",
+        "recentList": "Reciente",
+        "recentListDelete": "Borrar",
+        "recentListEmpty": "Su lista de recientes está actualmente vacía. Chatea con tu equipo y encontrarás todas tus reuniones aquí.",
+        "reducedUIText": "¡Bienvenido a {{app}}!",
+        "roomname": "Introduzca un nombre de sala",
+        "roomnameHint": "Introduce el nombre o URL de la sala a la que quieres unirte. Puedes crear un nombre nuevo, sólo tienes que hacer llegar este nombre al resto de participantes para que puedan unirse a esta sala.",
+        "sendFeedback": "Enviar comentarios",
+        "terms": "Términos",
+        "title": "Comunicar de forma segura y con respeto a la privacidad. Es gratis !",
+        "cgu": "CGU",
+        "help": "AYUDA",
+        "history": "Historia de la reunión",
+        "about": "Acerca de"
+    },
+    "settingsView": {
+        "advanced": "Avanzado",
+        "alertOk": "OK",
+        "alertTitle": "Aviso",
+        "alertURLText": "La dirección URL del servidor no es válida",
+        "buildInfoSection": "Información de la compilación",
+        "conferenceSection": "Conferencia",
+        "disableCallIntegration": "Deshabilitar la integración nativa de llamadas",
+        "disableP2P": "Deshabilitar el modo punto a punto",
+        "displayName": "Nombre a mostrar",
+        "email": "Email",
+        "header": "Ajustes",
+        "profileSection": "Perfil",
+        "serverURL": "URL del servidor",
+        "showAdvanced": "Mostrar configuración avanzada",
+        "startWithAudioMuted": "Inicio con audio en silencio",
+        "startWithVideoMuted": "Iniciar con el vídeo en silencio",
+        "version": "Siempre en la ventana superior"
+    }
   }
