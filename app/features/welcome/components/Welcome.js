@@ -204,8 +204,8 @@ class Welcome extends Component<Props, State> {
 
         return (
             <div>
-                <div style={mainBlock}>
-                    <h1 style={mainTitle}>
+                <div style = { mainBlock }>
+                    <h1 style = { mainTitle }>
                         { this.props.t('welcomepage.title') }
                     </h1>
                 </div>
