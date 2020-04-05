@@ -17,6 +17,7 @@ import { RecentList } from '../../recent-list';
 import { createConferenceObjectFromURL } from '../../utils';
 
 import { Body, Form, Header, Wrapper } from '../styled';
+import { withTranslation } from 'react-i18next';
 
 // import { Trans } from 'react-i18next';
 
@@ -33,6 +34,8 @@ type Props = {
      * React Router location object.
      */
     location: Object;
+
+    t: any;
 };
 
 type State = {
@@ -201,8 +204,10 @@ class Welcome extends Component<Props, State> {
 
         return (
             <div>
-                <div style = { mainBlock }>
-                    <h1 style = { mainTitle }>Communiquez en toute securite et dans le respect de la vie privee</h1>
+                <div style={mainBlock}>
+                    <h1 style={mainTitle}>
+                        { this.props.t('welcomepage.title') }
+                    </h1>
                 </div>
                 <StyledHeader>
                     <SpotlightTarget name = 'conference-url'>
@@ -229,4 +234,4 @@ class Welcome extends Component<Props, State> {
     }
 }
 
-export default connect()(Welcome);
+export default withTranslation()(connect()(Welcome));
