@@ -1,10 +1,20 @@
 // @flow
-
+import styled from 'styled-components';
 import moment from 'moment';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import type { Dispatch } from 'redux';
 import { push } from 'react-router-redux';
+
+const StyledConferenceCard = styled(ConferenceCard)`
+    background: white;
+    color:#333333;
+`;
+const StyledTruncatedText = styled(TruncatedText)`
+    margin-right:5px;
+    color:#666666;
+`;
+
 
 import {
     ConferenceCard,
@@ -66,22 +76,24 @@ class RecentList extends Component<Props, *> {
      */
     _renderRecentListEntry(conference: RecentListItem) {
         return (
-            <ConferenceCard
+            <StyledConferenceCard
                 key = { conference.startTime }
                 onClick = { this._onNavigateToConference(conference) }>
                 <ConferenceTitle>
                     { conference.room }
                 </ConferenceTitle>
-                <TruncatedText>
-                    { this._renderServerURL(conference.serverURL) }
-                </TruncatedText>
-                <TruncatedText>
-                    { this._renderStartTime(conference) }
-                </TruncatedText>
-                <TruncatedText>
-                    { this._renderDuration(conference) }
-                </TruncatedText>
-            </ConferenceCard>
+                <div>
+                    <StyledTruncatedText>
+                        { this._renderServerURL(conference.serverURL) }
+                    </StyledTruncatedText>
+                    <StyledTruncatedText>
+                        { this._renderStartTime(conference) }
+                    </StyledTruncatedText>
+                    <StyledTruncatedText>
+                        { this._renderDuration(conference) }
+                    </StyledTruncatedText>
+                </div>
+            </StyledConferenceCard>
         );
     }
 
