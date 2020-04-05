@@ -102,16 +102,15 @@ class Welcome extends Component<Props, State> {
 
         this.state = { url };
 
-        // if (this.props._persistentLang) {
-        //     i18n.changeLanguage(this.props._persistentLang);
-        // } else {
-        (async () => {
-            const detected = await osLocale();
+        if (this.props._persistentLang) {
+            i18n.changeLanguage(this.props._persistentLang);
+        } else {
+            (async () => {
+                const detected = await osLocale();
 
-            i18n.changeLanguage(detected.split('_')[0]);
-        })();
-
-        // }
+                i18n.changeLanguage(detected.split('_')[0]);
+            })();
+        }
 
         // Bind event handlers.
         this._onURLChange = this._onURLChange.bind(this);
