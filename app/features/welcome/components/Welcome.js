@@ -18,10 +18,9 @@ import { createConferenceObjectFromURL } from '../../utils';
 
 import { Body, Form, Header, Wrapper } from '../styled';
 import { withTranslation } from 'react-i18next';
+import i18n from '../../config/i18next.config';
 
-// import { Trans } from 'react-i18next';
-
-// import { Translation } from 'react-i18next';
+const osLocale = require('os-locale');
 
 type Props = {
 
@@ -34,6 +33,11 @@ type Props = {
      * React Router location object.
      */
     location: Object;
+
+    /**
+     * Lang from previous session.
+     */
+    _persistentLang: string;
 
     t: any;
 };
@@ -97,6 +101,16 @@ class Welcome extends Component<Props, State> {
         }
 
         this.state = { url };
+
+        if (this.props._persistentLang) {
+            i18n.changeLanguage(this.props._persistentLang);
+        } else {
+            (async () => {
+                const detected = await osLocale();
+
+                i18n.changeLanguage(detected.split('-')[0]);
+            })();
+        }
 
         // Bind event handlers.
         this._onURLChange = this._onURLChange.bind(this);
@@ -234,4 +248,18 @@ class Welcome extends Component<Props, State> {
     }
 }
 
-export default withTranslation()(connect()(Welcome));
+/**
+ * Maps (parts of) the redux state to the React props.
+ *
+ * @param {Object} state - The redux state.
+ * @returns {{
+ *     _persistentLang: string
+ * }}
+ */
+function _mapStateToProps(state: Object) {
+    return {
+        _persistentLang: state.settings.lang
+    };
+}
+
+export default withTranslation()(connect(_mapStateToProps)(Welcome));

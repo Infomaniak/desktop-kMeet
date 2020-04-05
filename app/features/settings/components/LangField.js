@@ -92,7 +92,7 @@ class LangField extends Component<Props, State> {
             <TogglesContainer>
                 <Select
                     onChange = { this._onLangChange }
-                    value = { this.state.lang }>
+                    value = { i18next.language }>
                     <option value = 'fr'>{ this.props.t('settingsView.French') }</option>
                     <option value = 'en'>{ this.props.t('settingsView.English') }</option>
                     <option value = 'de'>{ this.props.t('settingsView.Deutsch') }</option>
