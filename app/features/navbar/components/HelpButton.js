@@ -8,6 +8,7 @@ import React, { Component } from 'react';
 import config from '../../config';
 import { openExternalLink } from '../../utils';
 import styled from 'styled-components';
+import { withTranslation } from 'react-i18next';
 
 const VersionNumber = styled.span`
     padding: 15px 0;
@@ -26,7 +27,7 @@ type State = {
 /**
  * Help button for Navigation Bar.
  */
-export default class HelpButton extends Component< *, State> {
+class HelpButton extends Component< *, State> {
     /**
      * Initializes a new {@code HelpButton} instance.
      *
@@ -99,16 +100,16 @@ export default class HelpButton extends Component< *, State> {
                 trigger = { <HelpIcon /> }>
                 <Group heading = 'Help'>
                     <Item onActivate = { this._onTermsClick }>
-                        Terms
+                        { this.props.t('welcomepage.terms') }
                     </Item>
                     <Item onActivate = { this._onPrivacyClick }>
-                        Privacy
+                        { this.props.t('welcomepage.privacy') }
                     </Item>
                     <Item onActivate = { this._onSendFeedbackClick }>
-                        Send Feedback
+                        { this.props.t('welcomepage.sendFeedback') }
                     </Item>
                     <Item onActivate = { this._onAboutClick }>
-                        About
+                        { this.props.t('welcomepage.about') }
                     </Item>
                     <VersionNumber>v{ require('electron').remote.app.getVersion() }</VersionNumber>
                 </Group>
@@ -116,3 +117,5 @@ export default class HelpButton extends Component< *, State> {
         );
     }
 }
+
+export default withTranslation()(HelpButton);
