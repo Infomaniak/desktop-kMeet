@@ -1,6 +1,7 @@
 // @flow
 
 import {
+    SET_LANGUAGE,
     SET_AUDIO_MUTED,
     SET_AVATAR_URL,
     SET_EMAIL,
@@ -73,6 +74,19 @@ export function setServerURL(serverURL: string) {
     return {
         type: SET_SERVER_URL,
         serverURL: normalizeServerURL(serverURL)
+    };
+}
+
+/**
+ * Set app language.
+ *
+ * @param {string} language - App language.
+ * @returns {{language: string, type: symbol}}
+ */
+export function setLanguage(language: string) {
+    return {
+        type: SET_LANGUAGE,
+        language
     };
 }
 

@@ -1,4 +1,14 @@
 /**
+ * The type of (redux) action that sets language.
+ *
+ * @type {
+ *     type: SET_LANGUAGE,
+ *     language: string
+ * }
+ */
+export const SET_LANGUAGE = Symbol('SET_LANGUAGE');
+
+/**
  * The type of (redux) action that sets Start with Audio Muted.
  *
  * @type {

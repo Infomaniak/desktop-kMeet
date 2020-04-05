@@ -11,29 +11,7 @@ import {
 } from '../actions';
 
 import ToggleWithLabel from './ToggleWithLabel';
-import i18next from '../../config/i18next.config';
 import { withTranslation } from 'react-i18next';
-import styled from 'styled-components';
-
-const Select = styled.select`
-  width: 100%;
-  height: 35px;
-  background: white;
-  color: gray;
-  padding-left: 5px;
-  font-size: 14px;
-  border: none;
-  margin: 20px 0;
-
-  option {
-    color: black;
-    background: white;
-    display: flex;
-    white-space: pre;
-    min-height: 20px;
-    padding: 0px 2px 1px;
-  }
-`;
 
 type Props = {
 
@@ -111,15 +89,6 @@ class StartMutedToggles extends Component<Props, State> {
     render() {
         return (
             <TogglesContainer>
-                <Select
-                    onChange = { this._onLangChange }
-                    value = { i18next.language }>
-                    <option value = 'fr'>Français</option>
-                    <option value = 'en'>English</option>
-                    <option value = 'de'>Deutsch</option>
-                    <option value = 'it'>Italiano</option>
-                    <option value = 'es'>Español</option>
-                </Select>
                 <ToggleWithLabel
                     isDefaultChecked = { this.props._startWithAudioMuted }
                     label = { this.props.t('settingsView.startWithAudioMuted') }
@@ -145,18 +114,6 @@ class StartMutedToggles extends Component<Props, State> {
         const { startWithAudioMuted } = this.state;
 
         this.props.dispatch(setStartWithAudioMuted(!startWithAudioMuted));
-    }
-
-    _onLangChange: (*) => void;
-
-    /**
-     * Change language.
-     *
-     * @param {any} event - Html event.
-     * @returns {void}
-     */
-    _onLangChange(event) {
-        i18next.changeLanguage(event.target.value);
     }
 
     _onVideoToggleChange: (*) => void;

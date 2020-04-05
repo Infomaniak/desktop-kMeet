@@ -15,6 +15,7 @@ import { Onboarding, startOnboarding } from '../../onboarding';
 import { AvatarContainer, SettingsContainer } from '../styled';
 import { setEmail, setName } from '../actions';
 
+import LangField from './LangField';
 import ServerURLField from './ServerURLField';
 import StartMutedToggles from './StartMutedToggles';
 import WindowAlwaysOnTopToggle from './WindowAlwaysOnTopToggle';
@@ -139,6 +140,10 @@ class SettingsDrawer extends Component<Props, *> {
                                 <ServerURLField />
                             </SpotlightTarget>
                         </div>
+                        <SpotlightTarget
+                            name = 'lang-select'>
+                            <LangField />
+                        </SpotlightTarget>
                         <SpotlightTarget
                             name = 'start-muted-toggles'>
                             <StartMutedToggles />
