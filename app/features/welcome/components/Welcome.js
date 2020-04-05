@@ -47,6 +47,13 @@ const StyledButton = styled(Button)`
     border-radius: 4px;
 `;
 
+const StyledHeader = styled(Header)`
+    background: white;
+    border-radius: 8px;
+    padding:25px 15px;
+    margin: 40px 12.5%;
+`;
+
 /**
  * Welcome Component.
  */
@@ -163,6 +170,7 @@ class Welcome extends Component<Props, State> {
     _renderBody() {
         return (
             <Body>
+                <div>Historique de vos reunions</div>
                 <RecentList />
             </Body>
         );
@@ -178,7 +186,7 @@ class Welcome extends Component<Props, State> {
         const locationError = locationState && locationState.error;
 
         return (
-            <Header>
+            <StyledHeader>
                 <SpotlightTarget name = 'conference-url'>
                     <Form onSubmit = { this._onFormSubmit }>
                         <FieldTextStateless
@@ -195,9 +203,9 @@ class Welcome extends Component<Props, State> {
                 <StyledButton
                     onClick = { this._onJoin }
                     type = 'button'>
-                    GO
+                    Creer
                 </StyledButton>
-            </Header>
+            </StyledHeader>
         );
     }
 }

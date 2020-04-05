@@ -1,5 +1,5 @@
 // @flow
-
+import styled from 'styled-components';
 import { Modal } from '@atlaskit/onboarding';
 
 import React, { Component } from 'react';
@@ -18,6 +18,25 @@ type Props = {
      * Redux dispatch.
      */
     dispatch: Dispatch<*>;
+};
+
+const StyledModal = styled(Modal)`
+`;
+
+const subTitle = {
+    display: 'block',
+    fontSize: '14px',
+    lineHeight: '20px',
+    color: '#666666',
+    marginBottom: '40px'
+};
+const description = {
+    display: 'block',
+    fontSize: '14px',
+    fontWeight: '500',
+    lineHeight: '18px',
+    color: '#333333',
+    marginBottom: '0px'
 };
 
 /**
@@ -44,7 +63,7 @@ class OnboardingModal extends Component<Props, *> {
      */
     render() {
         return (
-            <Modal
+            <StyledModal
                 actions = { [
                     {
                         onClick: this._next,
@@ -57,8 +76,9 @@ class OnboardingModal extends Component<Props, *> {
                 ] }
                 heading = { `Welcome to ${config.appName}` }
                 image = { OnboardingModalImage } >
-                <p> Let us show you around!</p>
-            </Modal>
+                <p style={subTitle}>Communiquez en toute securite et dans le respect de la vie privee</p>
+                <p style={description}>Let us show you around!</p>
+            </StyledModal>
         );
     }
 
