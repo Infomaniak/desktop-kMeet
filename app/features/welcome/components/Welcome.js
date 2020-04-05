@@ -54,6 +54,17 @@ const StyledHeader = styled(Header)`
     margin: 40px 12.5%;
 `;
 
+const mainBlock = {
+    margin: '0 12.5%',
+    padding: '30px 0 0 0',
+    textAlign: 'center'
+};
+const mainTitle = {
+    fontSize: '24px',
+    lineHeight: '31px',
+    color: '#333333'
+};
+
 /**
  * Welcome Component.
  */
@@ -170,7 +181,6 @@ class Welcome extends Component<Props, State> {
     _renderBody() {
         return (
             <Body>
-                <div>Historique de vos reunions</div>
                 <RecentList />
             </Body>
         );
@@ -186,26 +196,31 @@ class Welcome extends Component<Props, State> {
         const locationError = locationState && locationState.error;
 
         return (
-            <StyledHeader>
-                <SpotlightTarget name = 'conference-url'>
-                    <Form onSubmit = { this._onFormSubmit }>
-                        <FieldTextStateless
-                            autoFocus = { true }
-                            isInvalid = { locationError }
-                            isLabelHidden = { true }
-                            onChange = { this._onURLChange }
-                            placeholder = 'Enter a name for your conference'
-                            shouldFitContainer = { true }
-                            type = 'text'
-                            value = { this.state.url } />
-                    </Form>
-                </SpotlightTarget>
-                <StyledButton
-                    onClick = { this._onJoin }
-                    type = 'button'>
-                    Creer
-                </StyledButton>
-            </StyledHeader>
+            <div>
+                <div style={mainBlock}>
+                    <h1 style={mainTitle}>Communiquez en toute securite et dans le respect de la vie privee</h1>
+                </div>
+                <StyledHeader>
+                    <SpotlightTarget name = 'conference-url'>
+                        <Form onSubmit = { this._onFormSubmit }>
+                            <FieldTextStateless
+                                autoFocus = { true }
+                                isInvalid = { locationError }
+                                isLabelHidden = { true }
+                                onChange = { this._onURLChange }
+                                placeholder = 'Enter a name for your conference'
+                                shouldFitContainer = { true }
+                                type = 'text'
+                                value = { this.state.url } />
+                        </Form>
+                    </SpotlightTarget>
+                    <StyledButton
+                        onClick = { this._onJoin }
+                        type = 'button'>
+                        Creer
+                    </StyledButton>
+                </StyledHeader>
+            </div>
         );
     }
 }

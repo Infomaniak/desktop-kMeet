@@ -57,6 +57,7 @@ class RecentList extends Component<Props, *> {
     render() {
         return (
             <RecentListContainer>
+                {this.props._recentList.length && <div>Historique de vos reunions</div>}
                 {
                     this.props._recentList.map(
                         conference => this._renderRecentListEntry(conference)
