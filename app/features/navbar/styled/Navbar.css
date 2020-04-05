@@ -1,0 +1,38 @@
+div[class^="ContainerNavigationInner"] {
+    background: white !important;
+}
+
+div[class^="ContainerNavigationInner"] button {
+    color: #666666 !important;
+}
+
+div[class^="ContainerNavigationInner"] button:hover {
+    background: #3DBD86 !important;
+}
+
+
+div[class^="Card__Body"] {
+    background: #3DBD86 !important;
+}
+
+div[class^="Card__Body"] button {
+    background: #0D8040 !important;
+    box-shadow: none !important;
+}
+
+div[class^="Droplist__Content"] {
+    background: white !important;
+}
+
+span[class^="Item__Span"] {
+    color: #666666 !important;
+}
+
+span[class^="Item__Span:hover"] {
+    background: #eeeeee !important;
+}
+
+div[class^="DrawerInner"] {
+    background: #F1F1F1;
+    color: #333333;
+}

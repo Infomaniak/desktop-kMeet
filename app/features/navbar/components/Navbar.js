@@ -12,6 +12,8 @@ import { isElectronMac } from '../../utils';
 import HelpButton from './HelpButton';
 import Logo from './Logo';
 
+import '../styled/Navbar.css';
+
 type Props = {
 
     /**
