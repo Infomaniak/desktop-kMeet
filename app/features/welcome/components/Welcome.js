@@ -108,6 +108,8 @@ class Welcome extends Component<Props, State> {
             (async () => {
                 const detected = await osLocale();
 
+                console.log(detected);
+
                 i18n.changeLanguage(detected.split('-')[0]);
             })();
         }
