@@ -158,7 +158,7 @@ function createJitsiMeetWindow() {
     initPopupsConfigurationMain(mainWindow);
     setupAlwaysOnTopMain(mainWindow);
     setupPowerMonitorMain(mainWindow);
-    setupScreenSharingMain(mainWindow, 'Jitsi Meet');
+    setupScreenSharingMain(mainWindow, 'Infomaniak Meet');
 
     mainWindow.webContents.on('new-window', (event, url, frameName) => {
         const target = getPopupTarget(url, frameName);
@@ -181,7 +181,7 @@ function createJitsiMeetWindow() {
      *  while app is closed
      * it will trigger this event below
      */
-    handleProtocolCall(process.argv[2]);
+    handleProtocolCall(process.argv[1]);
 }
 
 /**
@@ -262,7 +262,6 @@ app.on('second-instance', () => {
 });
 
 app.on('window-all-closed', () => {
-    // Don't quit the application on macOS.
     app.quit();
 });
 
@@ -300,7 +299,11 @@ app.on('open-url', (event, data) => {
  */
 app.on('second-instance', (event, commandLine) => {
     if (mainWindow) {
-        handleProtocolCall(commandLine[2]);
+        if (isDev) {
+            handleProtocolCall(commandLine[4]);
+        } else {
+            handleProtocolCall(commandLine[3]);
+        }
     }
 });
 

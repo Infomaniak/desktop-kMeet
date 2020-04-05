@@ -67,6 +67,12 @@
       "artifactName": "infomaniak-meet-${arch}.${ext}",
       "category": "VideoConference;AudioVideo;Audio;Video;Network",
       "description": "Infomaniak Meet Desktop App",
+      "mimeTypes": [
+        "x-scheme-handler/kmeet"
+      ],
+      "desktop": {
+        "MimeType": "x-scheme-handler/kmeet"
+      },
       "publish": {
         "provider": "s3",
         "channel": "latest",
@@ -74,11 +80,16 @@
         "endpoint": "https://storage.infomaniak.com",
         "path": "/kmeet"
       },
+      "maintainer": "Infomaniak",
       "executableName": "infomaniak-meet",
       "target": [
         {
           "arch": "x64",
-          "target": "AppImage"
+          "target": "deb"
+        },
+        {
+          "arch": "x64",
+          "target": "rpm"
         }
       ]
     },
@@ -123,7 +134,7 @@
     "webrtc",
     "xmpp",
     "electron",
-    "jitsi-meet"
+    "infomaniak-meet"
   ],
   "author": "Infomaniak",
   "readmeFilename": "README.md",

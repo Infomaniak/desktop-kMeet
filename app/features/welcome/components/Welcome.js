@@ -17,7 +17,8 @@ import { RecentList } from '../../recent-list';
 import { createConferenceObjectFromURL } from '../../utils';
 
 import { Body, Form, Header, Wrapper } from '../styled';
-import { Trans } from 'react-i18next';
+
+// import { Trans } from 'react-i18next';
 
 // import { Translation } from 'react-i18next';
 
@@ -48,6 +49,13 @@ const StyledButton = styled(Button)`
     background: #3DBD86;
     color: white !important;
     border-radius: 4px;
+`;
+
+const StyledHeader = styled(Header)`
+    background: white;
+    border-radius: 8px;
+    padding:25px 15px;
+    margin: 40px 12.5%;
 `;
 
 /**
@@ -166,6 +174,7 @@ class Welcome extends Component<Props, State> {
     _renderBody() {
         return (
             <Body>
+                <div>Historique de vos reunions</div>
                 <RecentList />
             </Body>
         );
@@ -181,7 +190,7 @@ class Welcome extends Component<Props, State> {
         const locationError = locationState && locationState.error;
 
         return (
-            <Header>
+            <StyledHeader>
                 <SpotlightTarget name = 'conference-url'>
                     <Form onSubmit = { this._onFormSubmit }>
                         <FieldTextStateless
@@ -198,10 +207,10 @@ class Welcome extends Component<Props, State> {
                 <StyledButton
                     onClick = { this._onJoin }
                     type = 'button'>
-                    <Trans i18nKey = 'welcome'></Trans>
-                    {/* {this.props.t('welcome')} */}
+                    Creer
+                    {/* <Trans i18nKey = 'welcome'></Trans> */}
                 </StyledButton>
-            </Header>
+            </StyledHeader>
         );
     }
 }
