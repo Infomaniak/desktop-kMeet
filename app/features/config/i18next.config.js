@@ -8,8 +8,6 @@ const translationIT = require('../../../locales/it/translation.json');
 const translationDE = require('../../../locales/de/translation.json');
 
 const i18nextOptions = {
-    lng: 'fr',
-    fallbackLng: 'en', // use en if detected lng is not available
     resources: {
         en: { translation: translationEN },
         fr: { translation: translationFR },
