@@ -85,11 +85,7 @@
       "target": [
         {
           "arch": "x64",
-          "target": "deb"
-        },
-        {
-          "arch": "x64",
-          "target": "rpm"
+          "target": "AppImage"
         }
       ]
     },
@@ -196,7 +192,7 @@
     "css-loader": "2.0.1",
     "devtron": "1.4.0",
     "electron": "7.1.7",
-    "electron-builder": "^22.4.1",
+    "electron-builder": "^20.44.4",
     "electron-react-devtools": "0.5.3",
     "eslint": "6.5.1",
     "eslint-config-jitsi": "github:jitsi/eslint-config-jitsi#1.0.2",
