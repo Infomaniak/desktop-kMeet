@@ -7,5 +7,37 @@
     "Copy": "Copy",
     "Paste": "Paste",
     "Select All": "Select All",
-    "welcome": "Ca marche"
+    "welcome": "Creer",
+    "welcomepage": {
+        "accessibilityLabel": {
+            "join": "Touchez pour rejoindre",
+            "roomname": "Saisissez un nom de salle"
+        },
+        "appDescription": "Infomaniak Meet est une solution de visioconférence respectueuse de la vie privée pour tous vos échanges. Aucune publicité, aucune inscription, aucun logiciel. Vos échanges transitent uniquement par nos serveurs en Suisse.",
+        "audioVideoSwitch": {
+            "audio": "Voix",
+            "video": "Vidéo"
+        },
+        "calendar": "Calendrier",
+        "connectCalendarButton": "Connecter votre calendrier",
+        "connectCalendarText": "Connectez-vous à votre calendrier pour afficher toutes les réunions {{app}}. Ajoutez également les réunions de {{provider}} à votre calendrier et démarrez-les d'un simple clic.",
+        "enterRoomTitle": "Démarrer une nouvelle réunion",
+        "roomNameAllowedChars": "Le nom de la réunion ne doit contenir aucun de ces caractères : ?, &, :, ', \", %, #.",
+        "go": "Créer",
+        "goSmall": "Créer",
+        "join": "CRÉER / REJOINDRE",
+        "info": "Infos",
+        "privacy": "Confidentialité",
+        "recentList": "Récent",
+        "recentListDelete": "Supprimer",
+        "recentListEmpty": "Votre liste récente est actuellement vide. Discuter avec votre équipe et vous trouverez toutes vos réunions récentes ici.",
+        "reducedUIText": "Bienvenue sur {{app}}!",
+        "roomname": "Saisissez un nom de salle",
+        "roomnameHint": "Entrez le nom ou l'URL de la salle que vous souhaitez rejoindre. Vous pouvez faire un nom, laissez les gens que vous rencontrerez le savoir afin qu'ils entrent le même nom.",
+        "sendFeedback": "Envoyer votre avis",
+        "terms": "Termes",
+        "about": "À propos",
+        "title": "Communiquez en toute sécurité et dans le respect de la vie privée. C'est gratuit !",
+        "cgu": "CGU"
+    }
   }
