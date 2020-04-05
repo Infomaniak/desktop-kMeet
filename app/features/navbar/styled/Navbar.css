@@ -27,6 +27,9 @@ div[class^="Droplist__Content"] {
 span[class^="Item__Span"] {
     color: #666666 !important;
 }
+div[class^="Droplist__Trigger"] span[class^="Icon__IconWrapper"] {
+    color: #F5F5F5 !important;
+}
 
 span[class^="Item__Span"]:hover {
     background: #eeeeee !important;
