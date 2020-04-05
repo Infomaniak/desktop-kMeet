@@ -1,4 +1,5 @@
 const i18n = require('i18next').default;
+const osLocale = require('os-locale');
 
 const initReactI18next = require('react-i18next').initReactI18next;
 const translationEN = require('../../../locales/en/translation.json');
@@ -25,7 +26,14 @@ const i18nextOptions = {
     }
 };
 
+
 i18n.use(initReactI18next)
-    .init(i18nextOptions);
+    .init(i18nextOptions, () => {
+        (async () => {
+            const detected = await osLocale();
+
+            i18n.changeLanguage(detected.split('-')[0]);
+        })();
+    });
 
 export default i18n;
