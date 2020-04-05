@@ -37,6 +37,24 @@ div[class^="DrawerInner"] {
     color: #333333;
 }
 
+@keyframes shadow {
+    from {
+        box-shadow:0 0 0 2px #3DBD86;
+    }
+  
+    to {
+        box-shadow:0 0 0 2px #3DBD86;
+    }
+  }
+
 div[class^="Target__TargetInner"] {
-    
+    animation: shadow 3000ms cubic-bezier(0.55,0.055,0.675,0.19) infinite;
+}
+
+div[class^="Content__ChildWrapper"] div[class^="Content"] {
+    border: 1px solid #E0E0E0;
+    border-radius: 4px;
+    background-color: #FFFFFF;
+    color: #333333;
+    font-size:15px;
 }
