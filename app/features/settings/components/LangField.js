@@ -4,11 +4,11 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import type { Dispatch } from 'redux';
 
-import {setLanguage} from '../actions';
-import i18next from "../../config/i18next.config";
-import {TogglesContainer} from "../styled";
-import styled from "styled-components";
-import {withTranslation} from "react-i18next";
+import { setLanguage } from '../actions';
+import i18next from '../../config/i18next.config';
+import { TogglesContainer } from '../styled';
+import styled from 'styled-components';
+import { withTranslation } from 'react-i18next';
 
 const Select = styled.select`
   width: 100%;
@@ -79,7 +79,7 @@ class LangField extends Component<Props, State> {
             <TogglesContainer>
                 <Select
                     onChange = { this._onLangChange }
-                    value = { this.state.language }>
+                    value = { this.state.lang }>
                     <option value = 'fr'>{ this.props.t('settingsView.French') }</option>
                     <option value = 'en'>{ this.props.t('settingsView.English') }</option>
                     <option value = 'de'>{ this.props.t('settingsView.Deutsch') }</option>
@@ -95,14 +95,13 @@ class LangField extends Component<Props, State> {
     /**
      * Change language.
      *
+     * @param {any} event - Html event.
      * @returns {void}
      */
-    _onLangChange() {
-        const { lang } = this.state;
+    _onLangChange(event) {
+        this.props.dispatch(setLanguage(event.target.value));
 
-        this.props.dispatch(setLanguage(lang));
-
-        i18next.changeLanguage(lang);
+        i18next.changeLanguage(event.target.value);
     }
 }
 
@@ -115,6 +114,8 @@ class LangField extends Component<Props, State> {
  * }}
  */
 function _mapStateToProps(state: Object) {
+    i18next.changeLanguage(state.settings.lang);
+
     return {
         _lang: state.settings.lang
     };
