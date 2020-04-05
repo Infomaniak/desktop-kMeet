@@ -2,7 +2,6 @@
 
 const {
     BrowserWindow,
-    Menu,
     app,
     shell,
     ipcMain
@@ -19,7 +18,6 @@ const {
 } = require('jitsi-meet-electron-utils');
 const path = require('path');
 const URL = require('url');
-const i18n = require('./app/features/config/i18next.config').default;
 
 autoUpdater.logger = require('electron-log');
 autoUpdater.logger.transports.file.level = 'info';
@@ -49,73 +47,10 @@ const PROTOCOL_SURPLUS = `${PROTOCOL_PREFIX}://`;
 let rendererReady = false;
 let protocolDataForFrontApp = null;
 
-
-/**
- * Sets the application menu. It is hidden on all platforms except macOS because
- * otherwise copy and paste functionality is not available.
- */
-function setApplicationMenu() {
-    if (process.platform === 'darwin') {
-        const template = [ {
-            label: app.getName(),
-            submenu: [ {
-                label: i18n.t('Quit'),
-                accelerator: 'Command+Q',
-                click() {
-                    app.quit();
-                }
-            } ]
-        }, {
-            label: i18n.t('Edit'),
-            submenu: [ {
-                label: i18n.t('Undo'),
-                accelerator: 'CmdOrCtrl+Z',
-                selector: 'undo:'
-            },
-            {
-                label: i18n.t('Redo'),
-                accelerator: 'Shift+CmdOrCtrl+Z',
-                selector: 'redo:'
-            },
-            {
-                type: 'separator'
-            },
-            {
-                label: i18n.t('Cut'),
-                accelerator: 'CmdOrCtrl+X',
-                selector: 'cut:'
-            },
-            {
-                label: i18n.t('Copy'),
-                accelerator: 'CmdOrCtrl+C',
-                selector: 'copy:'
-            },
-            {
-                label: i18n.t('Paste'),
-                accelerator: 'CmdOrCtrl+V',
-                selector: 'paste:'
-            },
-            {
-                label: i18n.t('Select All'),
-                accelerator: 'CmdOrCtrl+A',
-                selector: 'selectAll:'
-            }
-            ]
-        } ];
-
-        Menu.setApplicationMenu(Menu.buildFromTemplate(template));
-    } else {
-        Menu.setApplicationMenu(null);
-    }
-}
-
 /**
  * Opens new window with index.html(Jitsi Meet is loaded in iframe there).
  */
 function createJitsiMeetWindow() {
-    // Application menu.
-    // setApplicationMenu();
-
     // Check for Updates.
     autoUpdater.checkForUpdatesAndNotify();
 
@@ -321,9 +256,3 @@ ipcMain.on('renderer-ready', () => {
             .send('protocol-data-msg', protocolDataForFrontApp);
     }
 });
-
-
-i18n.on('languageChanged', () => {
-    setApplicationMenu();
-});
-
