@@ -5,6 +5,7 @@ import { Modal } from '@atlaskit/onboarding';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import type { Dispatch } from 'redux';
+import './OnBoardingStyle.css';
 
 import OnboardingModalImage from '../../../images/onboarding.png';
 

@@ -1,0 +1,3 @@
+div[class^="Modal__ActionItem"]:first-child button {
+    background: #3DBD86 !important;
+}
