@@ -322,11 +322,6 @@ ipcMain.on('renderer-ready', () => {
     }
 });
 
-i18n.on('loaded', () => {
-    console.log('i18n LOADED');
-    i18n.changeLanguage('fr');
-    i18n.off('loaded');
-});
 
 i18n.on('languageChanged', () => {
     setApplicationMenu();
