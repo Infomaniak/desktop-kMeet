@@ -47,6 +47,10 @@ type Props = {
     _name: string;
 };
 
+const hiddenField = {
+    display: 'none'
+};
+
 /**
  * Drawer that open when SettingsAction is clicked.
  */
@@ -126,10 +130,12 @@ class SettingsDrawer extends Component<Props, *> {
                                     value = { this.props._email } />
                             </form>
                         </SpotlightTarget>
-                        <SpotlightTarget
-                            name = 'server-setting'>
-                            <ServerURLField />
-                        </SpotlightTarget>
+                        <div style={hiddenField}>
+                            <SpotlightTarget
+                                name = 'server-setting'>
+                                <ServerURLField />
+                            </SpotlightTarget>
+                        </div>
                         <SpotlightTarget
                             name = 'start-muted-toggles'>
                             <StartMutedToggles />
