@@ -11,6 +11,7 @@ import {
 } from '../actions';
 
 import ToggleWithLabel from './ToggleWithLabel';
+import i18next from '../../config/i18next.config';
 
 type Props = {
 
@@ -96,6 +97,10 @@ class StartMutedToggles extends Component<Props, State> {
                     label = 'Start with Video muted'
                     onChange = { this._onVideoToggleChange }
                     value = { this.state.startWithVideoMuted } />
+                <select onChange = { this._onLangChange }>
+                    <option>fr</option>
+                    <option>en</option>
+                </select>
             </TogglesContainer>
         );
     }
@@ -111,6 +116,18 @@ class StartMutedToggles extends Component<Props, State> {
         const { startWithAudioMuted } = this.state;
 
         this.props.dispatch(setStartWithAudioMuted(!startWithAudioMuted));
+    }
+
+    _onLangChange: (*) => void;
+
+    /**
+     * Change language.
+     *
+     * @param {any} event - Html event.
+     * @returns {void}
+     */
+    _onLangChange(event) {
+        i18next.changeLanguage(event.target.value);
     }
 
     _onVideoToggleChange: (*) => void;

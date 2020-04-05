@@ -1,0 +1,43 @@
+{
+    "Quit": "Quit",
+    "Edit": "Edit",
+    "Undo": "Undo",
+    "Redo": "Redo",
+    "Cut": "Cut",
+    "Copy": "Copy",
+    "Paste": "Paste",
+    "Select All": "Select All",
+    "welcome": "Ca marche",
+    "welcomepage": {
+        "accessibilityLabel": {
+            "join": "Tap to join",
+            "roomname": "Enter room name"
+        },
+        "appDescription": "Infomaniak Meet is a videoconference solution which respects the privacy of your meetings. No ads, no subscription and no software required. Your data only travels across our safe Swiss servers.",
+        "audioVideoSwitch": {
+            "audio": "Voice",
+            "video": "Video"
+        },
+        "calendar": "Calendar",
+        "connectCalendarButton": "Connect your calendar",
+        "connectCalendarText": "Connect your calendar to view all your meetings in {{app}}. Plus, add {{provider}} meetings to your calendar and start them with one click.",
+        "enterRoomTitle": "Start a new meeting",
+        "roomNameAllowedChars": "Meeting name should not contain any of these characters: ?, &, :, ', \", %, #.",
+        "go": "GO",
+        "goSmall": "GO",
+        "join": "CREATE / JOIN",
+        "info": "Info",
+        "privacy": "Privacy",
+        "recentList": "Recent",
+        "recentListDelete": "Delete",
+        "recentListEmpty": "Your recent list is currently empty. Chat with your team and you will find all your recent meetings here.",
+        "reducedUIText": "Welcome to {{app}}!",
+        "roomname": "Enter room name",
+        "roomnameHint": "Enter the name or URL of the room you want to join. You may make a name up, just let the people you are meeting know it so that they enter the same name.",
+        "sendFeedback": "Send feedback",
+        "terms": "Terms",
+        "about": "About",
+        "title": "Communicate in a safe, privacy respectful environment. It's free!",
+        "cgu": "GT&C"
+    }
+}

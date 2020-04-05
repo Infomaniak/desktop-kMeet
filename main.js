@@ -19,6 +19,7 @@ const {
 } = require('jitsi-meet-electron-utils');
 const path = require('path');
 const URL = require('url');
+const i18n = require('./app/features/config/i18next.config').default;
 
 autoUpdater.logger = require('electron-log');
 autoUpdater.logger.transports.file.level = 'info';
@@ -58,21 +59,21 @@ function setApplicationMenu() {
         const template = [ {
             label: app.getName(),
             submenu: [ {
-                label: 'Quit',
+                label: i18n.t('Quit'),
                 accelerator: 'Command+Q',
                 click() {
                     app.quit();
                 }
             } ]
         }, {
-            label: 'Edit',
+            label: i18n.t('Edit'),
             submenu: [ {
-                label: 'Undo',
+                label: i18n.t('Undo'),
                 accelerator: 'CmdOrCtrl+Z',
                 selector: 'undo:'
             },
             {
-                label: 'Redo',
+                label: i18n.t('Redo'),
                 accelerator: 'Shift+CmdOrCtrl+Z',
                 selector: 'redo:'
             },
@@ -80,22 +81,22 @@ function setApplicationMenu() {
                 type: 'separator'
             },
             {
-                label: 'Cut',
+                label: i18n.t('Cut'),
                 accelerator: 'CmdOrCtrl+X',
                 selector: 'cut:'
             },
             {
-                label: 'Copy',
+                label: i18n.t('Copy'),
                 accelerator: 'CmdOrCtrl+C',
                 selector: 'copy:'
             },
             {
-                label: 'Paste',
+                label: i18n.t('Paste'),
                 accelerator: 'CmdOrCtrl+V',
                 selector: 'paste:'
             },
             {
-                label: 'Select All',
+                label: i18n.t('Select All'),
                 accelerator: 'CmdOrCtrl+A',
                 selector: 'selectAll:'
             }
@@ -113,7 +114,7 @@ function setApplicationMenu() {
  */
 function createJitsiMeetWindow() {
     // Application menu.
-    setApplicationMenu();
+    // setApplicationMenu();
 
     // Check for Updates.
     autoUpdater.checkForUpdatesAndNotify();
@@ -320,3 +321,14 @@ ipcMain.on('renderer-ready', () => {
             .send('protocol-data-msg', protocolDataForFrontApp);
     }
 });
+
+i18n.on('loaded', () => {
+    console.log('i18n LOADED');
+    i18n.changeLanguage('fr');
+    i18n.off('loaded');
+});
+
+i18n.on('languageChanged', () => {
+    setApplicationMenu();
+});
+

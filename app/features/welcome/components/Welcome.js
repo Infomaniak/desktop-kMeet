@@ -18,6 +18,10 @@ import { createConferenceObjectFromURL } from '../../utils';
 
 import { Body, Form, Header, Wrapper } from '../styled';
 
+// import { Trans } from 'react-i18next';
+
+// import { Translation } from 'react-i18next';
+
 type Props = {
 
     /**
