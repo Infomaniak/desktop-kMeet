@@ -60,6 +60,11 @@
         "startWithAudioMuted": "Stumm beitreten",
         "startWithVideoMuted": "Ohne Video beitreten",
         "version": "Version",
-        "alwaysOnTopWindow": "Always on Top-Fenster"
+        "alwaysOnTopWindow": "Always on Top-Fenster",
+        "French": "Französisch",
+        "English": "Englisch",
+        "Deutsch": "Deutsch",
+        "Italiano": "Italienisch",
+        "Spanish": "Spanisch"
     }
 }

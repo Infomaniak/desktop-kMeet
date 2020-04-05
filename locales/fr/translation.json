@@ -60,6 +60,11 @@
         "startWithAudioMuted": "Commencez avec l'audio en sourdine",
         "startWithVideoMuted": "Commencez avec la vidéo en sourdine",
         "version": "Version",
-        "alwaysOnTopWindow": "Fenêtre en dessus"
+        "alwaysOnTopWindow": "Fenêtre en dessus",
+        "French": "Français",
+        "English": "Anglais",
+        "Deutsch": "Allemand",
+        "Italiano": "Italien",
+        "Spanish": "Espagnol"
     }
   }

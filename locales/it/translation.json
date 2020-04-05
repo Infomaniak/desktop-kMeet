@@ -54,6 +54,11 @@
         "startWithAudioMuted": "Inizia con l'audio disattivato",
         "startWithVideoMuted": "Avvia con il video disattivato",
         "version": "Versione",
-        "alwaysOnTopWindow": "Finestra sempre in alto"
+        "alwaysOnTopWindow": "Finestra sempre in alto",
+        "French": "Francese",
+        "English": "Inglese",
+        "Deutsch": "Tedesco",
+        "Italiano": "Italiano",
+        "Spanish": "Spagnolo"
     }
 }

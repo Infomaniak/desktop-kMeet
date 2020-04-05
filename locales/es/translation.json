@@ -59,6 +59,11 @@
         "showAdvanced": "Mostrar configuración avanzada",
         "startWithAudioMuted": "Inicio con audio en silencio",
         "startWithVideoMuted": "Iniciar con el vídeo en silencio",
-        "version": "Siempre en la ventana superior"
+        "version": "Siempre en la ventana superior",
+        "French": "Francés",
+        "English": "Inglés",
+        "Deutsch": "Alemán",
+        "Italiano": "Italiano",
+        "Spanish": "Español"
     }
   }

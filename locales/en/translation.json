@@ -60,6 +60,11 @@
         "startWithAudioMuted": "Start with audio muted",
         "startWithVideoMuted": "Start with video muted",
         "version": "Version",
-        "alwaysOnTopWindow": "Always on Top window"
+        "alwaysOnTopWindow": "Always on Top window",
+        "French": "French",
+        "English": "English",
+        "Deutsch": "Deutsch",
+        "Italiano": "Italiano",
+        "Spanish": "Spanish"
     }
 }

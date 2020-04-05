@@ -41,6 +41,8 @@ type Props = {
      * Default lang in (redux) store.
      */
     _language: string;
+
+    t: any;
 };
 
 type State = {
@@ -78,11 +80,11 @@ class LangField extends Component<Props, State> {
                 <Select
                     onChange = { this._onLangChange }
                     value = { this.state.language }>
-                    <option value = 'fr'>Français</option>
-                    <option value = 'en'>English</option>
-                    <option value = 'de'>Deutsch</option>
-                    <option value = 'it'>Italiano</option>
-                    <option value = 'es'>Español</option>
+                    <option value = 'fr'>{ this.props.t('settingsView.French') }</option>
+                    <option value = 'en'>{ this.props.t('settingsView.English') }</option>
+                    <option value = 'de'>{ this.props.t('settingsView.Deutsch') }</option>
+                    <option value = 'it'>{ this.props.t('settingsView.Italiano') }</option>
+                    <option value = 'es'>{ this.props.t('settingsView.Spanish') }</option>
                 </Select>
             </TogglesContainer>
         );
