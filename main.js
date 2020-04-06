@@ -156,7 +156,8 @@ if (!gotInstanceLock) {
     process.exit(0);
 }
 
-app.setAsDefaultProtocolClient('infomaniakmeet');
+app.commandLine.appendSwitch('disable-site-isolation-trials');
+app.setAsDefaultProtocolClient(PROTOCOL_PREFIX);
 
 /**
  * Run the application.
