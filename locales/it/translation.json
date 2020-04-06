@@ -60,5 +60,18 @@
         "Deutsch": "Tedesco",
         "Italiano": "Italiano",
         "Spanish": "Spagnolo"
+    },
+    "onboarding": {
+        "welcome": "Benvenuti a Infomaniak Meet",
+        "description": "Comunicare in tutta sicurezza e nel rispetto della vita privata",
+        "callToAction": "Lasciate che vi mostriamo in giro!",
+        "btnStart": "Inizio del tour",
+        "btnSkip": "Salta",
+        "btnNext": "Avanti",
+        "input": "Inserite il nome (o l'URL completo) della stanza a cui volete aderire. Potete inventare un nome, basta che lo facciate sapere agli altri in modo che inseriscano lo stesso nome.",
+        "settings": "Cliccare qui per aprire il cassetto delle impostazioni.",
+        "displayName": "Questo sarà il vostro nome di visualizzazione, altri vi vedranno con questo nome.",
+        "email": "L'email che inserisci qui sarà parte del tuo profilo utente e verrà utilizzata per visualizzare il tuo avatar memorizzato su gravatar.com.",
+        "toggles": "Potete attivare o disattivare l'audio o il video se volete iniziare con il vostro audio o video silenziato qui. Questo sarà applicato a tutte le conferenze."
     }
 }

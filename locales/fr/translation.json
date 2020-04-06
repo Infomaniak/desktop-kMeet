@@ -66,5 +66,18 @@
         "Deutsch": "Allemand",
         "Italiano": "Italien",
         "Spanish": "Espagnol"
+    },
+    "onboarding": {
+        "welcome": "Bienvenue sur Infomaniak Meet",
+        "description": "Communiquez en toute sécurité et dans le respect de la vie privée.",
+        "callToAction": "Laissez-nous vous accompagner !",
+        "btnStart": "Commencer",
+        "btnSkip": "Passer",
+        "btnNext": "Suivant",
+        "input": "Entrez le nom (ou l'URL complète) de la salle que vous souhaitez rejoindre. Vous pouvez inventer un nom, mais faites-le savoir aux autres pour qu'ils entrent le même nom.",
+        "settings": "Cliquez ici pour ouvrir le menu des paramètres.",
+        "displayName": "Ce sera votre nom afficher, les autres vous verront avec ce nom.",
+        "email": "L'e-mail que vous saisissez ici fera parti de votre profil d'utilisateur et sera utilisé pour afficher votre avatar stocké dans gravatar.com .",
+        "toggles": "Vous pouvez désactiver si vous voulez commencer avec votre audio ou vidéo en sourdine ici. Cela sera appliqué à toutes les conférences."
     }
   }

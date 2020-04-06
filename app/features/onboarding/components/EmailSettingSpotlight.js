@@ -7,6 +7,7 @@ import { connect } from 'react-redux';
 import type { Dispatch } from 'redux';
 
 import { continueOnboarding } from '../actions';
+import { withTranslation } from 'react-i18next';
 
 type Props = {
 
@@ -14,6 +15,8 @@ type Props = {
      * Redux dispatch.
      */
     dispatch: Dispatch<*>;
+
+    t: any;
 };
 
 /**
@@ -42,13 +45,12 @@ class EmailSettingSpotlight extends Component<Props, *> {
                 actions = { [
                     {
                         onClick: this._next,
-                        text: 'Next'
+                        text: this.props.t('onboarding.btnNext')
                     }
                 ] }
                 dialogPlacement = 'left top'
                 target = { 'email-setting' } >
-                The email you enter here will be part of your user profile and
-                it will be used to display your stored avatar in gravatar.com .
+                { this.props.t('onboarding.email') }
             </Spotlight>
         );
     }
@@ -65,5 +67,5 @@ class EmailSettingSpotlight extends Component<Props, *> {
     }
 }
 
-export default connect()(EmailSettingSpotlight);
+export default withTranslation()(connect()(EmailSettingSpotlight));
 

@@ -10,6 +10,7 @@ import { openDrawer } from '../../navbar';
 import { SettingsDrawer } from '../../settings';
 
 import { continueOnboarding } from '../actions';
+import { withTranslation } from 'react-i18next';
 
 type Props = {
 
@@ -17,6 +18,8 @@ type Props = {
      * Redux dispatch.
      */
     dispatch: Dispatch<*>;
+
+    t: any;
 };
 
 /**
@@ -45,7 +48,7 @@ class SettingsDrawerSpotlight extends Component<Props, *> {
                 dialogPlacement = 'right top'
                 target = { 'settings-drawer-button' }
                 targetOnClick = { this._next }>
-                Click here to open the settings drawer.
+                { this.props.t('onboarding.settings') }
             </Spotlight>
         );
     }
@@ -64,5 +67,5 @@ class SettingsDrawerSpotlight extends Component<Props, *> {
     }
 }
 
-export default connect()(SettingsDrawerSpotlight);
+export default withTranslation()(connect()(SettingsDrawerSpotlight));
 

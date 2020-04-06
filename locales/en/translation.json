@@ -66,5 +66,18 @@
         "Deutsch": "Deutsch",
         "Italiano": "Italiano",
         "Spanish": "Spanish"
+    },
+    "onboarding": {
+        "welcome": "Welcome to Infomaniak Meet",
+        "description": "Communicate safely and with respect for your privacy.",
+        "callToAction": "Let us show you around!",
+        "btnStart": "Start Tour",
+        "btnSkip": "Skip",
+        "btnNext": "Next",
+        "input": "Enter the name (or full URL) of the room you want to join. You may make a name up, just let others know so they enter the same name.",
+        "settings": "Click here to open the settings drawer.",
+        "displayName": "This will be your display name, others will see you with this name.",
+        "email": "The email you enter here will be part of your user profile and it will be used to display your stored avatar in gravatar.com .",
+        "toggles": "You can toggle if you want to start with your audio or video muted here. This will be applied to all conferences."
     }
 }

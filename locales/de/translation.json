@@ -66,5 +66,18 @@
         "Deutsch": "Deutsch",
         "Italiano": "Italienisch",
         "Spanish": "Spanisch"
+    },
+    "onboarding": {
+        "welcome": "Willkommen beim Infomaniak-Treffen",
+        "description": "Kommunizieren Sie sicher und mit Respekt vor der Privatsphäre.",
+        "callToAction": "Lassen Sie sich von uns herumführen!",
+        "btnStart": "Tour starten",
+        "btnSkip": "überspringen",
+        "btnNext": "Nächste",
+        "input": "Geben Sie den Namen (oder die vollständige URL) des Raums ein, dem Sie beitreten möchten. Sie können sich einen Namen ausdenken, lassen Sie es einfach andere wissen, damit diese den gleichen Namen eingeben.",
+        "settings": "Klicken Sie hier, um die Schublade mit den Einstellungen zu öffnen.",
+        "displayName": "Dies wird Ihr Anzeigename sein, andere sehen Sie mit diesem Namen.",
+        "email": "Die E-Mail, die Sie hier eingeben, ist Teil Ihres Benutzerprofils und wird dazu verwendet, Ihren gespeicherten Avatar auf gravatar.com anzuzeigen.",
+        "toggles": "Sie können hier umschalten, ob Sie mit der Stummschaltung Ihrer Audio- oder Videodaten beginnen möchten. Dies wird auf alle Konferenzen angewendet."
     }
 }
