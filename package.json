@@ -24,9 +24,9 @@
     "publish": {
       "provider": "s3",
       "channel": "latest",
-      "bucket": "login",
+      "bucket": "download",
       "endpoint": "https://storage.infomaniak.com",
-      "path": "/kmeet"
+      "path": "/meet"
     },
     "files": [
       "**/*",
@@ -40,13 +40,6 @@
     "mac": {
       "artifactName": "infomaniak-meet.${ext}",
       "category": "public.app-category.video",
-      "publish": {
-        "provider": "s3",
-        "channel": "latest",
-        "bucket": "assets",
-        "endpoint": "https://storage.infomaniak.com",
-        "path": "/kmeet"
-      },
       "darkModeSupport": true,
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
@@ -73,13 +66,6 @@
       "desktop": {
         "MimeType": "x-scheme-handler/kmeet"
       },
-      "publish": {
-        "provider": "s3",
-        "channel": "latest",
-        "bucket": "assets",
-        "endpoint": "https://storage.infomaniak.com",
-        "path": "/kmeet"
-      },
       "maintainer": "Infomaniak",
       "executableName": "infomaniak-meet",
       "target": [
@@ -91,13 +77,6 @@
     },
     "win": {
       "artifactName": "infomaniak-meet.${ext}",
-      "publish": {
-        "provider": "s3",
-        "channel": "latest",
-        "bucket": "assets",
-        "endpoint": "https://storage.infomaniak.com",
-        "path": "/kmeet"
-      },
       "target": [
         {
           "arch": [
