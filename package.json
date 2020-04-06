@@ -26,8 +26,7 @@
       "channel": "latest",
       "bucket": "download",
       "endpoint": "https://storage.infomaniak.com",
-      "path": "/meet",
-      "useMultipleRangeRequest": false
+      "path": "/meet"
     },
     "files": [
       "**/*",
