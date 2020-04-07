@@ -9,6 +9,7 @@ import type { Dispatch } from 'redux';
 import { closeDrawer } from '../../navbar';
 
 import { continueOnboarding } from '../actions';
+import { withTranslation } from 'react-i18next';
 
 type Props = {
 
@@ -16,6 +17,8 @@ type Props = {
      * Redux dispatch.
      */
     dispatch: Dispatch<*>;
+
+    t: any;
 };
 
 /**
@@ -44,13 +47,12 @@ class StartMutedTogglesSpotlight extends Component<Props, *> {
                 actions = { [
                     {
                         onClick: this._next,
-                        text: 'Next'
+                        text: this.props.t('onboarding.btnNext')
                     }
                 ] }
                 dialogPlacement = 'left top'
                 target = { 'start-muted-toggles' } >
-                You can toggle if you want to start with your audio or video
-                muted here. This will be applied to all conferences.
+                { this.props.t('onboarding.toggles') }
             </Spotlight>
         );
     }
@@ -74,5 +76,5 @@ class StartMutedTogglesSpotlight extends Component<Props, *> {
     }
 }
 
-export default connect()(StartMutedTogglesSpotlight);
+export default withTranslation()(connect()(StartMutedTogglesSpotlight));
 

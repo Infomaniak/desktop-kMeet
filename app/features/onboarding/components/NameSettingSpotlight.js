@@ -7,6 +7,7 @@ import { connect } from 'react-redux';
 import type { Dispatch } from 'redux';
 
 import { continueOnboarding } from '../actions';
+import { withTranslation } from 'react-i18next';
 
 type Props = {
 
@@ -14,6 +15,8 @@ type Props = {
      * Redux dispatch.
      */
     dispatch: Dispatch<*>;
+
+    t: any;
 };
 
 /**
@@ -42,13 +45,12 @@ class NameSettingSpotlight extends Component<Props, *> {
                 actions = { [
                     {
                         onClick: this._next,
-                        text: 'Next'
+                        text: this.props.t('onboarding.btnNext')
                     }
                 ] }
                 dialogPlacement = 'left top'
                 target = { 'name-setting' } >
-                This will be your display name, others will see you with this
-                name.
+                { this.props.t('onboarding.displayName') }
             </Spotlight>
         );
     }
@@ -65,5 +67,5 @@ class NameSettingSpotlight extends Component<Props, *> {
     }
 }
 
-export default connect()(NameSettingSpotlight);
+export default withTranslation()(connect()(NameSettingSpotlight));
 

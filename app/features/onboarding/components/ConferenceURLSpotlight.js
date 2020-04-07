@@ -7,6 +7,7 @@ import { connect } from 'react-redux';
 import type { Dispatch } from 'redux';
 
 import { continueOnboarding } from '../actions';
+import { withTranslation } from 'react-i18next';
 
 type Props = {
 
@@ -14,6 +15,8 @@ type Props = {
      * Redux dispatch.
      */
     dispatch: Dispatch<*>;
+
+    t: any;
 };
 
 /**
@@ -42,14 +45,12 @@ class ConferenceURLSpotlight extends Component<Props, *> {
                 actions = { [
                     {
                         onClick: this._next,
-                        text: 'Next'
+                        text: this.props.t('onboarding.btnNext')
                     }
                 ] }
                 dialogPlacement = 'bottom center'
                 target = { 'conference-url' } >
-                Enter the name (or full URL) of the room you want to join. You
-                may make a name up, just let others know so they enter the same
-                name.
+                { this.props.t('onboarding.input') }
             </Spotlight>
         );
     }
@@ -66,5 +67,5 @@ class ConferenceURLSpotlight extends Component<Props, *> {
     }
 }
 
-export default connect()(ConferenceURLSpotlight);
+export default withTranslation()(connect()(ConferenceURLSpotlight));
 

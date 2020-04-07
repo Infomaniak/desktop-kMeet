@@ -9,9 +9,8 @@ import './OnBoardingStyle.css';
 
 import OnboardingModalImage from '../../../images/onboarding.png';
 
-import config from '../../config';
-
 import { skipOnboarding, continueOnboarding } from '../actions';
+import { withTranslation } from 'react-i18next';
 
 type Props = {
 
@@ -19,6 +18,8 @@ type Props = {
      * Redux dispatch.
      */
     dispatch: Dispatch<*>;
+
+    t: any;
 };
 
 const StyledModal = styled(Modal)`
@@ -68,17 +69,17 @@ class OnboardingModal extends Component<Props, *> {
                 actions = { [
                     {
                         onClick: this._next,
-                        text: 'Start Tour'
+                        text: this.props.t('onboarding.btnStart')
                     },
                     {
                         onClick: this._skip,
-                        text: 'Skip'
+                        text: this.props.t('onboarding.btnSkip')
                     }
                 ] }
-                heading = { `Welcome to ${config.appName}` }
+                heading = { this.props.t('onboarding.welcome') }
                 image = { OnboardingModalImage } >
-                <p style = { subTitle }>Communiquez en toute securite et dans le respect de la vie privee</p>
-                <p style = { description }>Let us show you around!</p>
+                <p style = { subTitle }>{ this.props.t('onboarding.description') }</p>
+                <p style = { description }>{ this.props.t('onboarding.callToAction') }</p>
             </StyledModal>
         );
     }
@@ -107,4 +108,4 @@ class OnboardingModal extends Component<Props, *> {
 
 }
 
-export default connect()(OnboardingModal);
+export default withTranslation()(connect()(OnboardingModal));
