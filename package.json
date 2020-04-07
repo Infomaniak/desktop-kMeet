@@ -88,6 +88,13 @@
         }
       ]
     },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "runAfterFinish": true,
+      "createDesktopShortcut": false,
+      "include": "build/installer.nsh"
+    },
     "directories": {
       "buildResources": "resources"
     },
