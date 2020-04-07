@@ -90,12 +90,6 @@
     },
     "directories": {
       "buildResources": "resources"
-    },
-    "protocols": {
-      "name": "kmeet-protocol",
-      "schemes": [
-        "kmeet"
-      ]
     }
   },
   "pre-commit": [
