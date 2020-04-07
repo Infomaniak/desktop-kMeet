@@ -89,8 +89,8 @@
       ]
     },
     "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
       "runAfterFinish": true,
       "createDesktopShortcut": false,
       "include": "build/installer.nsh"
