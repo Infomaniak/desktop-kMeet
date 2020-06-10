@@ -81,6 +81,7 @@ function createJitsiMeetWindow() {
         minHeight: 600,
         show: false,
         webPreferences: {
+            experimentalFeatures: true, // Insertable streams, for E2EE.
             nativeWindowOpen: true,
             nodeIntegration: true
         }
@@ -157,6 +158,9 @@ if (!gotInstanceLock) {
 }
 
 app.commandLine.appendSwitch('disable-site-isolation-trials');
+
+app.allowRendererProcessReuse = false;
+
 app.setAsDefaultProtocolClient(PROTOCOL_PREFIX);
 
 /**
