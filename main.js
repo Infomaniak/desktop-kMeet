@@ -78,7 +78,7 @@ function createJitsiMeetWindow() {
         height: windowState.height,
         icon: path.resolve(basePath, './resources/icons/icon_512x512.png'),
         defaultWidth: 1300,
-        defaultHeight: 900
+        defaultHeight: 900,
         show: false,
         webPreferences: {
             experimentalFeatures: true, // Insertable streams, for E2EE.
