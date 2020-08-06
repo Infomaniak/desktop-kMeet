@@ -2,18 +2,21 @@
 import React, { Component } from 'react';
 import type { Dispatch } from 'redux';
 
-import { getExternalApiURL} from '../../utils';
+import { getExternalApiURL } from '../../utils';
 
 import { Wrapper } from '../styled';
-import {LoadingIndicator} from "../../conference/styled";
-import Spinner from "@atlaskit/spinner";
+import { LoadingIndicator } from '../../conference/styled';
+import Spinner from '@atlaskit/spinner';
 import {
     initPopupsConfigurationRender,
     RemoteControl,
-    setupPowerMonitorRender,
-    setupScreenSharingRender, setupWiFiStats
-} from "jitsi-meet-electron-utils";
+    setupScreenSharingRender
+} from 'jitsi-meet-electron-utils';
 import config from '../../config';
+import { push } from 'react-router-redux';
+import { compose } from 'redux';
+import { withTranslation } from 'react-i18next';
+import { connect } from 'react-redux';
 
 type Props = {
 
@@ -21,18 +24,6 @@ type Props = {
      * Redux dispatch.
      */
     dispatch: Dispatch<*>;
-
-    /**
-     * React Router location object.
-     */
-    location: Object;
-
-    /**
-     * Lang from previous session.
-     */
-    _persistentLang: string;
-
-    t: any;
 };
 
 type State = {
@@ -113,8 +104,16 @@ class Welcome extends Component<Props, State> {
         setupScreenSharingRender(this._api);
         new RemoteControl(iframe); // eslint-disable-line no-new
 
-        setupWiFiStats(iframe);
-        setupPowerMonitorRender(this._api);
+        this._api.on('videoConferenceBeforeJoining',
+            (conferenceInfo: Object) => {
+                this.props.dispatch(
+                    push('/conference', {
+                        room: conferenceInfo.roomName,
+                        serverUrl: host
+                    }
+                    ));
+            }
+        );
     }
 
     /**
@@ -146,4 +145,4 @@ class Welcome extends Component<Props, State> {
     }
 }
 
-export default Welcome;
+export default compose(connect(), withTranslation())(Welcome);
