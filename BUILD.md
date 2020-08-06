@@ -6,6 +6,10 @@
 npm run dist
 ```
 
+```
+APPLEID=**** APPLEIDPASS=*** AWS_ACCESS_KEY_ID=**** AWS_SECRET_ACCESS_KEY=**** npm run publish
+```
+
 ## Linux
 
 ```bash
