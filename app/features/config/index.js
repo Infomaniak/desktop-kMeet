@@ -13,7 +13,7 @@ export default {
     /**
      * The default server URL of Jitsi Meet Deployment that will be used.
      */
-    defaultServerURL: 'https://meet.infomaniak.com',
+    defaultServerURL: 'https://kmeet.infomaniak.com',
 
     /**
      * URL to send feedback.
