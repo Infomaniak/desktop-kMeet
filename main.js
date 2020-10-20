@@ -83,7 +83,8 @@ function createJitsiMeetWindow() {
         webPreferences: {
             experimentalFeatures: true, // Insertable streams, for E2EE.
             nativeWindowOpen: true,
-            nodeIntegration: true
+            nodeIntegration: true,
+            partition: 'persist:main'
         }
     };
 
