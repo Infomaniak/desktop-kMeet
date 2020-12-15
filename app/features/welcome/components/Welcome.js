@@ -106,12 +106,18 @@ class Welcome extends Component<Props, State> {
 
         this._api.on('videoConferenceBeforeJoining',
             (conferenceInfo: Object) => {
+                try {
+                    new URL(conferenceInfo.roomSubject);
+                    window.location = conferenceInfo.roomSubject;
+
+                    return;
+                } catch (error) {}
+
                 this.props.dispatch(
                     push('/conference', {
                         room: conferenceInfo.roomName,
                         serverUrl: host
-                    }
-                    ));
+                    }));
             }
         );
     }
