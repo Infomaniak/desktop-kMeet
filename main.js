@@ -92,6 +92,29 @@ function createJitsiMeetWindow() {
     windowState.manage(mainWindow);
     mainWindow.loadURL(indexURL);
 
+    mainWindow.webContents.session.webRequest.onHeadersReceived({ urls: [ '*://*/*' ] },
+        (d, c) => {
+
+            if (d.responseHeaders['set-cookie']) {
+                for (let i = 0; i < d.responseHeaders['set-cookie'].length; i++) {
+                    if (d.responseHeaders['set-cookie'][i].indexOf('samesite=lax') !== -1) {
+                        d.responseHeaders['set-cookie'][i] = d.responseHeaders['set-cookie'][i].replace(
+                            'samesite=lax',
+                            'samesite=none; secure'
+                        );
+                    }
+                }
+            }
+
+            if (d.responseHeaders['x-frame-options']) {
+                delete d.responseHeaders['x-frame-options'];
+            }
+
+            c({ cancel: false,
+                responseHeaders: d.responseHeaders });
+        }
+    );
+
     initPopupsConfigurationMain(mainWindow);
     setupAlwaysOnTopMain(mainWindow);
     setupPowerMonitorMain(mainWindow);
