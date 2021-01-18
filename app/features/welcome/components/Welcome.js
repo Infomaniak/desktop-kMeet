@@ -107,10 +107,12 @@ class Welcome extends Component<Props, State> {
         this._api.on('videoConferenceBeforeJoining',
             (conferenceInfo: Object) => {
                 try {
+                    // eslint-disable-next-line no-new
                     new URL(conferenceInfo.roomSubject);
                     window.location = conferenceInfo.roomSubject;
 
                     return;
+                // eslint-disable-next-line no-empty
                 } catch (error) {}
 
                 this.props.dispatch(

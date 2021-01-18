@@ -81,9 +81,11 @@ function createJitsiMeetWindow() {
         defaultHeight: 900,
         show: false,
         webPreferences: {
-            experimentalFeatures: true, // Insertable streams, for E2EE.
+            enableBlinkFeatures: 'RTCInsertableStreams',
+            enableRemoteModule: true,
             nativeWindowOpen: true,
             nodeIntegration: true,
+            preload: path.resolve(basePath, './build/preload.js'),
             partition: 'persist:main'
         }
     };
@@ -182,6 +184,9 @@ if (!gotInstanceLock) {
 }
 
 app.commandLine.appendSwitch('disable-site-isolation-trials');
+
+// We need to disable hardware acceleration because its causes the screenshare to flicker.
+app.commandLine.appendSwitch('disable-gpu');
 
 app.allowRendererProcessReuse = false;
 
