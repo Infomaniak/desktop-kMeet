@@ -35,7 +35,7 @@
       "!main.js"
     ],
     "dmg": {
-      "sign": false
+      "sign": true
     },
     "mac": {
       "artifactName": "infomaniak-meet.${ext}",
