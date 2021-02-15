@@ -130,13 +130,15 @@ class Conference extends Component<Props, State> {
     componentDidMount() {
         const parentNode = this._ref.current;
         const room = this.props.location.state.room;
+        const subject = this.props.location.state.subject;
         const serverURL = this.props.location.state.serverURL
             || this.props._serverURL
             || config.defaultServerURL;
 
         this._conference = {
             room,
-            serverURL
+            serverURL,
+            subject
         };
 
         const script = document.createElement('script');
@@ -256,7 +258,8 @@ class Conference extends Component<Props, State> {
 
         const configOverwrite = {
             startWithAudioMuted: this.props._startWithAudioMuted,
-            startWithVideoMuted: this.props._startWithVideoMuted
+            startWithVideoMuted: this.props._startWithVideoMuted,
+            subject: this._conference.subject
         };
 
         this._api = new JitsiMeetExternalAPI(host, {
