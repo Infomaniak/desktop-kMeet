@@ -18,6 +18,7 @@ const {
 } = require('jitsi-meet-electron-utils');
 const path = require('path');
 const URL = require('url');
+const APP_VERSION = require('./package.json').version;
 
 autoUpdater.logger = require('electron-log');
 autoUpdater.logger.transports.file.level = 'info';
@@ -93,6 +94,8 @@ function createJitsiMeetWindow() {
     mainWindow = new BrowserWindow(options);
     windowState.manage(mainWindow);
     mainWindow.loadURL(indexURL);
+
+    mainWindow.webContents.userAgent += ` Infomaniak/${APP_VERSION}`;
 
     mainWindow.webContents.session.webRequest.onHeadersReceived({ urls: [ '*://*/*' ] },
         (d, c) => {
