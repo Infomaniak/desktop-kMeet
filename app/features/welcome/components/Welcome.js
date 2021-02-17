@@ -13,10 +13,11 @@ import {
     setupScreenSharingRender
 } from 'jitsi-meet-electron-utils';
 import config from '../../config';
-import { push } from 'react-router-redux';
+import { push, replace } from 'react-router-redux';
 import { compose } from 'redux';
 import { withTranslation } from 'react-i18next';
 import { connect } from 'react-redux';
+import { setServerURL } from '../../settings';
 
 type Props = {
 
@@ -108,18 +109,27 @@ class Welcome extends Component<Props, State> {
             (conferenceInfo: Object) => {
                 try {
                     // eslint-disable-next-line no-new
-                    new URL(conferenceInfo.roomSubject);
-                    window.location = conferenceInfo.roomSubject;
+                    const roomUrl = new URL(conferenceInfo.roomSubject);
+
+                    this.props.dispatch(setServerURL(roomUrl.origin));
+
+                    this.props.dispatch(replace('/'));
+                    this.props.dispatch(
+                        push('/conference', {
+                            room: roomUrl.pathname.replace('/', '')
+                        }));
 
                     return;
-                // eslint-disable-next-line no-empty
-                } catch (error) {}
-
-                this.props.dispatch(
-                    push('/conference', {
-                        room: conferenceInfo.roomName,
-                        serverUrl: host
-                    }));
+                } catch (error) {
+                    // we didn't pass url in subject we can move in a classic way
+                    this.props.dispatch(setServerURL(conferenceInfo.serverURL));
+                    this.props.dispatch(replace('/'));
+                    this.props.dispatch(
+                        push('/conference', {
+                            room: encodeURIComponent(decodeURIComponent(conferenceInfo.roomName)),
+                            subject: conferenceInfo.roomSubject
+                        }));
+                }
             }
         );
     }

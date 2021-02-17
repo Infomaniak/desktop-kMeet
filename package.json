@@ -18,7 +18,7 @@
   },
   "build": {
     "appId": "com.infomaniak.meet",
-    "productName": "Infomaniak Meet",
+    "productName": "kMeet",
     "generateUpdatesFilesForAllChannels": true,
     "afterSign": "scripts/notarize.js",
     "publish": {
@@ -38,7 +38,7 @@
       "sign": true
     },
     "mac": {
-      "artifactName": "infomaniak-meet.${ext}",
+      "artifactName": "kMeet.${ext}",
       "category": "public.app-category.video",
       "darkModeSupport": true,
       "hardenedRuntime": true,
@@ -57,9 +57,9 @@
       }
     },
     "linux": {
-      "artifactName": "infomaniak-meet-${arch}.${ext}",
+      "artifactName": "kMeet-${arch}.${ext}",
       "category": "VideoConference;AudioVideo;Audio;Video;Network",
-      "description": "Infomaniak Meet Desktop App",
+      "description": "kMeet Desktop App",
       "mimeTypes": [
         "x-scheme-handler/kmeet"
       ],
@@ -67,7 +67,7 @@
         "MimeType": "x-scheme-handler/kmeet"
       },
       "maintainer": "Infomaniak",
-      "executableName": "infomaniak-meet",
+      "executableName": "kMeet",
       "target": [
         {
           "arch": "x64",
@@ -76,7 +76,7 @@
       ]
     },
     "win": {
-      "artifactName": "infomaniak-meet.${ext}",
+      "artifactName": "kMeet.${ext}",
       "certificateSubjectName": "INFOMANIAK NETWORK SA",
       "target": [
         {

@@ -22,7 +22,6 @@ import { setEmail, setName } from '../../settings';
 import { conferenceEnded, conferenceJoined } from '../actions';
 import { LoadingIndicator, Wrapper } from '../styled';
 import { getExternalApiURL } from '../../utils';
-import i18next from '../../config/i18next.config';
 
 type Props = {
 
@@ -237,6 +236,10 @@ class Conference extends Component<Props, State> {
      * @returns {void}
      */
     _navigateToHome(event: Event, room: ?string, serverURL: ?string) {
+
+        // eslint-disable-next-line no-param-reassign
+        serverURL = config.defaultServerURL.replace(/https?:\/\//, '');
+
         this.props.dispatch(push('/', {
             error: event.type === 'error',
             room,
@@ -257,7 +260,7 @@ class Conference extends Component<Props, State> {
         const host = this._conference.serverURL.replace(/https?:\/\//, '');
 
         const configOverwrite = {
-            startWithAudioMuted: this.props._startWithAudioMuted,
+            startWithAudioMuted: false,
             startWithVideoMuted: this.props._startWithVideoMuted,
             subject: this._conference.subject
         };
@@ -266,7 +269,7 @@ class Conference extends Component<Props, State> {
             configOverwrite,
             onload: this._onIframeLoad,
             parentNode,
-            roomName: `${this._conference.room}?lang=${i18next.language}`
+            roomName: this._conference.room
         });
         initPopupsConfigurationRender(this._api);
 
