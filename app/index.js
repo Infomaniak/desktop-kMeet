@@ -11,7 +11,6 @@ import React, { Component } from 'react';
 import { render } from 'react-dom';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import './features/config/i18next.config';
 import { App } from './features/app';
 import { persistor, store } from './features/redux';
 

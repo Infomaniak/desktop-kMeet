@@ -1,123 +1,46 @@
-# Jitsi Meet Electron
+# kmeet-electron
 
-Desktop application for [Jitsi Meet] built with [Electron].
-
-![](screenshot.png)
-
-## Features
-
-- Works with any Jitsi Meet deployment
-- Local settings
-- Builtin auto-updates
-- Remote control
-- Always-On-Top window
-
-## Installation
-
-Download our [latest release] and you're off to the races! The supported platforms
-are macOS, Windows (both 32 and 64bits) and GNU/Linux (64bits only).
-
-<details><summary>NOTE for old GNU/Linux distributions</summary>
-
-You might get the following error:
-
-```
-FATAL:nss_util.cc(632)] NSS_VersionCheck("3.26") failed. NSS >= 3.26 is required.
-Please upgrade to the latest NSS, and if you still get this error, contact your
-distribution maintainer.
-```
-
-If you do, please install NSS (example for Debian / Ubuntu):
+## Dev
 
 ```bash
-sudo apt-get install libnss3
-```
-
-</details>
-
-### Using it with your own Jitsi Meet installation
-
-In order to use this application with your own Jitsi Meet installation it's
-necessary to enable the External API. Your server must serve a `external_api.js`
-file at the root of the installation.
-
-Here is an example using nginx:
-
-```
-location /external_api.js {
-    alias /usr/share/jitsi-meet/libs/external_api.min.js;
-}
-```
-
-## Development
-
-If you want to hack on this project, here is how you do it.
-
-<details><summary>Show building instructions</summary>
-
-#### Installing dependencies
-
-```bash
-npm install
-```
-
-#### Starting in development mode
-
-```bash
+nvm use 12
+npm i
 npm start
 ```
 
-#### Building the production distribution
+## Build
+
+### OSX
 
 ```bash
 npm run dist
 ```
 
-#### Working with jitsi-meet-electron-utils
-
-[jitsi-meet-electron-utils] is a helper package which implements many features
-such as remote control and the always-on-top window. If new features are to be
-added / tested, running with a local version of these utils is very handy, here
-is how to do that.
-
-By default the jitsi-meet-electron-utils is build from its git repository
-sources. The default dependency path in package.json is:
-
-```json
-"jitsi-meet-electron-utils": "jitsi/jitsi-meet-electron-utils"
+```bash
+APPLEID=**** APPLEIDPASS=*** AWS_ACCESS_KEY_ID=**** AWS_SECRET_ACCESS_KEY=**** npm run publish
 ```
 
-To work with local copy you must change the path to:
-
-```json
-"jitsi-meet-electron-utils": "file:///Users/name/jitsi-meet-electron-utils-copy",
-```
-
-To build the project you must force it to take the sources as `npm update` will
-not do it.
+### Windows
 
 ```bash
-npm install jitsi-meet-electron-utils --force
+$Env:WIN_CSC_LINK="C:\Users\leopold\Documents\codesigning.cer"
+npm run publish
 ```
 
-NOTE: Also check the [jitsi-meet-electron-utils README] to see how to configure
-your environment.
+### Linux
 
-</details>
+```bash
+docker run --rm -ti \
+ --env ELECTRON_CACHE="/root/.cache/electron" \
+ --env ELECTRON_BUILDER_CACHE="/root/.cache/electron-builder" \
+ -v ${PWD}:/project \
+ -v ${PWD##*/}-node-modules:/project/node_modules \
+ -v ~/.cache/electron:/root/.cache/electron \
+ -v ~/.cache/electron-builder:/root/.cache/electron-builder \
+ electronuserland/builder:12
 
-## License
-
-Apache 2. See the [LICENSE] file.
-
-## Community
-
-Jitsi is built by a large community of developers, if you want to participate,
-please join [community forum].
-
-[Jitsi Meet]: https://github.com/jitsi/jitsi-meet
-[Electron]: https://electronjs.org/
-[latest release]: https://github.com/jitsi/jitsi-meet-electron/releases/latest
-[jitsi-meet-electron-utils]: https://github.com/jitsi/jitsi-meet-electron-utils
-[jitsi-meet-electron-utils README]: https://github.com/jitsi/jitsi-meet-electron-utils/blob/master/README.md
-[community forum]: https://community.jitsi.org/
-[LICENSE]: LICENSE
+ apt-get update \
+    && apt-get install -y libxtst-dev libpng++-dev \
+    && npm i && npm i electron-builder@20.44.4 \
+    && npm run dist
+```

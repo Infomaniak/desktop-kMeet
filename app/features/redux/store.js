@@ -9,12 +9,7 @@ import reducers from './reducers';
 
 const persistConfig = {
     key: 'root',
-    storage: createElectronStorage(),
-    whitelist: [
-        'onboarding',
-        'recentList',
-        'settings'
-    ]
+    storage: createElectronStorage()
 };
 
 const persistedReducer = persistReducer(persistConfig, reducers);
