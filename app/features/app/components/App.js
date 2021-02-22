@@ -3,7 +3,7 @@ import { AtlasKitThemeProvider } from '@atlaskit/theme';
 
 import React, { Component } from 'react';
 import { Route, Switch } from 'react-router';
-import { ConnectedRouter as Router, push } from 'react-router-redux';
+import { ConnectedRouter as Router, push, replace } from 'react-router-redux';
 import { connect } from 'react-redux';
 
 import { Conference } from '../../conference';
@@ -75,6 +75,7 @@ class App extends Component<*> {
         }
 
         // change route when we are notified
+        this.props.dispatch(replace('/'));
         this.props.dispatch(push('/conference', conference));
     }
 

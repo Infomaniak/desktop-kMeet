@@ -9,6 +9,7 @@ const {
 const isDev = require('electron-is-dev');
 const { autoUpdater } = require('electron-updater');
 const windowStateKeeper = require('electron-window-state');
+const _ = require('lodash');
 const {
     initPopupsConfigurationMain,
     getPopupTarget,
@@ -17,7 +18,7 @@ const {
     setupScreenSharingMain
 } = require('jitsi-meet-electron-utils');
 const path = require('path');
-const URL = require('url');
+const URI = require('url');
 const APP_VERSION = require('./package.json').version;
 
 autoUpdater.logger = require('electron-log');
@@ -65,7 +66,7 @@ function createJitsiMeetWindow() {
     const basePath = isDev ? __dirname : app.getAppPath();
 
     // URL for index.html which will be our entry point.
-    const indexURL = URL.format({
+    const indexURL = URI.format({
         pathname: path.resolve(basePath, './build/index.html'),
         protocol: 'file:',
         slashes: true
@@ -99,6 +100,32 @@ function createJitsiMeetWindow() {
 
     mainWindow.webContents.session.webRequest.onHeadersReceived({ urls: [ '*://*/*' ] },
         (d, c) => {
+            if (d.url.indexOf('welcomePage.joinButton.clicked') > 0) {
+                const joinUrl = new URL(d.url);
+                const searchParams = JSON.parse(joinUrl.searchParams.get('cvar'));
+
+                if (rendererReady) {
+                    let joinHost = _.findLast(searchParams, o => o[0] === 'room_hostname')[1].replace(/https?:\/\//, '');
+                    let joinRoom = _.findLast(searchParams, o => o[0] === 'conference_name')[1];
+                    let joinSubject = _.findLast(searchParams, o => o[0] === 'room_subject')[1];
+
+                    try {
+                        // eslint-disable-next-line no-new
+                        const roomUrl = new URL(joinSubject);
+
+                        joinHost = roomUrl.origin.replace(/https?:\/\//, '');
+                        joinRoom = roomUrl.pathname.replace('/', '');
+                        joinSubject = joinRoom;
+                    } catch (error) {}
+
+                    mainWindow
+                        .webContents
+                        .send(
+                            'protocol-data-msg',
+                            `${joinHost}/${joinRoom}/${joinSubject}`
+                        );
+                }
+            }
 
             if (d.responseHeaders['set-cookie']) {
                 for (let i = 0; i < d.responseHeaders['set-cookie'].length; i++) {

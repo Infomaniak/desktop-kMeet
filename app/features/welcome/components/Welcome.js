@@ -99,33 +99,6 @@ class Welcome extends Component<Props> {
 
         setupScreenSharingRender(this._api);
         new RemoteControl(iframe); // eslint-disable-line no-new
-
-        this._api.on('videoConferenceBeforeJoining',
-            (conferenceInfo: Object) => {
-                try {
-                    // eslint-disable-next-line no-new
-                    const roomUrl = new URL(conferenceInfo.roomSubject);
-
-                    this.props.dispatch(replace('/'));
-                    this.props.dispatch(
-                        push('/conference', {
-                            room: roomUrl.pathname.replace('/', ''),
-                            serverURL: roomUrl.origin
-                        }));
-
-                    return;
-                } catch (error) {
-                    // we didn't pass url in subject we can move in a classic way
-                    this.props.dispatch(replace('/'));
-                    this.props.dispatch(
-                        push('/conference', {
-                            room: encodeURIComponent(decodeURIComponent(conferenceInfo.roomName)),
-                            subject: conferenceInfo.roomSubject,
-                            serverURL: conferenceInfo.serverURL
-                        }));
-                }
-            }
-        );
     }
 
     /**
