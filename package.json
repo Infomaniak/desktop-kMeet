@@ -3,7 +3,7 @@
   "version": "1.1.13",
   "description": "Electron application for Infomaniak Meet",
   "main": "./build/main.js",
-  "productName": "Infomaniak Meet",
+  "productName": "kMeet",
   "scripts": {
     "start": "webpack --config ./webpack.main.js --mode development && concurrently \"npm:watch\" \"electron ./build/main.js\"",
     "clean": "rm -rf node_modules build dist",
@@ -18,7 +18,7 @@
   },
   "build": {
     "appId": "com.infomaniak.meet",
-    "productName": "Infomaniak Meet",
+    "productName": "kMeet",
     "generateUpdatesFilesForAllChannels": true,
     "afterSign": "scripts/notarize.js",
     "publish": {
@@ -38,7 +38,7 @@
       "sign": true
     },
     "mac": {
-      "artifactName": "infomaniak-meet.${ext}",
+      "artifactName": "kMeet.${ext}",
       "category": "public.app-category.video",
       "darkModeSupport": true,
       "hardenedRuntime": true,
@@ -57,7 +57,7 @@
       }
     },
     "linux": {
-      "artifactName": "infomaniak-meet-${arch}.${ext}",
+      "artifactName": "kMeet-${arch}.${ext}",
       "category": "VideoConference;AudioVideo;Audio;Video;Network",
       "description": "Infomaniak Meet Desktop App",
       "mimeTypes": [
@@ -67,7 +67,7 @@
         "MimeType": "x-scheme-handler/kmeet"
       },
       "maintainer": "Infomaniak",
-      "executableName": "infomaniak-meet",
+      "executableName": "kMeet",
       "target": [
         {
           "arch": "x64",
@@ -76,7 +76,7 @@
       ]
     },
     "win": {
-      "artifactName": "infomaniak-meet.${ext}",
+      "artifactName": "kMeet.${ext}",
       "certificateSubjectName": "INFOMANIAK NETWORK SA",
       "target": [
         {
@@ -110,10 +110,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/jitsi/jitsi-meet-electron"
+    "url": "git://gitlab.infomaniak.ch/infomaniak/jitsi-meet-electron"
   },
   "keywords": [
-    "infomaniak-meet"
+    "infomaniak",
+    "kmeet"
   ],
   "author": "Infomaniak",
   "readmeFilename": "README.md",
