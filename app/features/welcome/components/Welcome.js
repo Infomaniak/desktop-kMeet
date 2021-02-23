@@ -11,7 +11,6 @@ import {
     setupScreenSharingRender
 } from 'jitsi-meet-electron-utils';
 import config from '../../config';
-import { push, replace } from 'react-router-redux';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 

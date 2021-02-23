@@ -1,6 +1,6 @@
 {
   "name": "kmeet-electron",
-  "version": "1.1.14",
+  "version": "1.1.15",
   "description": "Electron application for Infomaniak Meet",
   "main": "./build/main.js",
   "productName": "kMeet",
@@ -142,7 +142,7 @@
     "electron-updater": "4.2.5",
     "electron-window-state": "5.0.3",
     "history": "4.7.2",
-    "jitsi-meet-electron-utils": "github:csett86/jitsi-meet-electron-utils#221ea88096ed5972d1d8648cbc3fc5e5567ee4be",
+    "jitsi-meet-electron-utils": "file:jitsi-meet-electron-utils",
     "js-utils": "github:jitsi/js-utils#0c53500a5120be2aa3fc590f0f932a0d4771920f",
     "lodash": "4.17.21",
     "moment": "2.23.0",
