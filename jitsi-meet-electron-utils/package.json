@@ -1,0 +1,81 @@
+{
+  "_from": "github:csett86/jitsi-meet-electron-utils#221ea88096ed5972d1d8648cbc3fc5e5567ee4be",
+  "_id": "jitsi-meet-electron-utils@2.0.20",
+  "_inBundle": false,
+  "_integrity": "",
+  "_location": "/jitsi-meet-electron-utils",
+  "_phantomChildren": {
+    "lru-cache": "6.0.0"
+  },
+  "_requested": {
+    "type": "git",
+    "raw": "jitsi-meet-electron-utils@github:csett86/jitsi-meet-electron-utils#221ea88096ed5972d1d8648cbc3fc5e5567ee4be",
+    "name": "jitsi-meet-electron-utils",
+    "escapedName": "jitsi-meet-electron-utils",
+    "rawSpec": "github:csett86/jitsi-meet-electron-utils#221ea88096ed5972d1d8648cbc3fc5e5567ee4be",
+    "saveSpec": "github:csett86/jitsi-meet-electron-utils#221ea88096ed5972d1d8648cbc3fc5e5567ee4be",
+    "fetchSpec": null,
+    "gitCommittish": "221ea88096ed5972d1d8648cbc3fc5e5567ee4be"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "github:csett86/jitsi-meet-electron-utils#221ea88096ed5972d1d8648cbc3fc5e5567ee4be",
+  "_spec": "jitsi-meet-electron-utils@github:csett86/jitsi-meet-electron-utils#221ea88096ed5972d1d8648cbc3fc5e5567ee4be",
+  "_where": "/Users/leopoldjacquot/code/jitsi-meet-electron",
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/csett86/jitsi-meet-electron-utils/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "jitsi-meet-logger": "github:jitsi/jitsi-meet-logger#v1.0.0",
+    "mac-screen-capture-permissions": "github:csett86/mac-screen-capture-permissions#e6697f46a200c31737425727866757b737594985",
+    "nan": "^2.14.2",
+    "postis": "^2.2.0",
+    "prebuild-install": "^6.0.0",
+    "robotjs": "0.6.0",
+    "semver": "7.3.4"
+  },
+  "deprecated": false,
+  "description": "Utilities for jitsi-meet-electron project",
+  "devDependencies": {
+    "eslint": ">=3",
+    "eslint-plugin-jsdoc": "*",
+    "mocha": "^8.2.1",
+    "node-abi": "^2.19.3",
+    "prebuild": "^10.0.1",
+    "precommit-hook": "3.0.0"
+  },
+  "gypfile": true,
+  "homepage": "https://github.com/csett86/jitsi-meet-electron-utils#readme",
+  "keywords": [
+    "jingle",
+    "webrtc",
+    "xmpp",
+    "electron",
+    "jitsi-meet",
+    "utils"
+  ],
+  "license": "Apache-2.0",
+  "main": "index.js",
+  "name": "jitsi-meet-electron-utils",
+  "optionalDependencies": {
+    "mac-screen-capture-permissions": "github:csett86/mac-screen-capture-permissions#e6697f46a200c31737425727866757b737594985"
+  },
+  "pre-commit": [
+    "lint"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/csett86/jitsi-meet-electron-utils.git"
+  },
+  "scripts": {
+    "install": "prebuild-install || node-gyp rebuild",
+    "lint": "eslint .",
+    "test": "TESTING=true mocha",
+    "validate": "npm ls"
+  },
+  "version": "2.0.20"
+}

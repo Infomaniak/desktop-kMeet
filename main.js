@@ -105,7 +105,9 @@ function createJitsiMeetWindow() {
                 const searchParams = JSON.parse(joinUrl.searchParams.get('cvar'));
 
                 if (rendererReady) {
-                    let joinHost = _.findLast(searchParams, o => o[0] === 'room_hostname')[1].replace(/https?:\/\//, '');
+                    let joinHost = _.findLast(
+                        searchParams, o => o[0] === 'room_hostname'
+                    )[1].replace(/https?:\/\//, '');
                     let joinRoom = _.findLast(searchParams, o => o[0] === 'conference_name')[1];
                     let joinSubject = _.findLast(searchParams, o => o[0] === 'room_subject')[1];
 
@@ -116,7 +118,9 @@ function createJitsiMeetWindow() {
                         joinHost = roomUrl.origin.replace(/https?:\/\//, '');
                         joinRoom = roomUrl.pathname.replace('/', '');
                         joinSubject = joinRoom;
-                    } catch (error) {}
+                    } catch (error) {
+                        console.log(error);
+                    }
 
                     mainWindow
                         .webContents
