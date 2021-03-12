@@ -1,4 +1,5 @@
 const RemoteControl = require('./remotecontrol');
+const RemoteDraw = require('./remotedraw');
 const { setupScreenSharingRender, setupScreenSharingMain } = require('./screensharing');
 const {
     setupAlwaysOnTopRender,
@@ -16,6 +17,7 @@ const {
 module.exports = {
     getWiFiStats,
     RemoteControl,
+    RemoteDraw,
     setupScreenSharingRender,
     setupScreenSharingMain,
     setupAlwaysOnTopRender,

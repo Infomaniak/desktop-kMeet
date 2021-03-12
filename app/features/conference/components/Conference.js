@@ -9,6 +9,7 @@ import { push } from 'react-router-redux';
 
 import {
     RemoteControl,
+    RemoteDraw,
     setupScreenSharingRender,
     setupAlwaysOnTopRender,
     initPopupsConfigurationRender,
@@ -219,6 +220,7 @@ class Conference extends Component<Props, State> {
 
         setupScreenSharingRender(this._api);
         new RemoteControl(iframe); // eslint-disable-line no-new
+        new RemoteDraw(iframe); // eslint-disable-line no-new
 
         setupAlwaysOnTopRender(this._api);
 

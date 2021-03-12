@@ -8,6 +8,7 @@ import { Wrapper } from '../styled';
 import {
     initPopupsConfigurationRender,
     RemoteControl,
+    RemoteDraw,
     setupScreenSharingRender
 } from 'jitsi-meet-electron-utils';
 import config from '../../config';
@@ -98,6 +99,7 @@ class Welcome extends Component<Props> {
 
         setupScreenSharingRender(this._api);
         new RemoteControl(iframe); // eslint-disable-line no-new
+        new RemoteDraw(iframe); // eslint-disable-line no-new
     }
 
     /**

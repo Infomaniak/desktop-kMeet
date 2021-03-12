@@ -8,7 +8,7 @@ export default {
     /**
      * Application name.
      */
-    appName: 'Infomaniak Meet',
+    appName: 'Infomaniak kMeet',
 
     /**
      * The default server URL of Jitsi Meet Deployment that will be used.
