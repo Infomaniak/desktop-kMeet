@@ -15,8 +15,7 @@ const {
     getPopupTarget,
     setupAlwaysOnTopMain,
     setupPowerMonitorMain,
-    setupScreenSharingMain,
-    setupScreenDrawMain
+    setupScreenSharingMain
 } = require('jitsi-meet-electron-utils');
 const path = require('path');
 const URI = require('url');

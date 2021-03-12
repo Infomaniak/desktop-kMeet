@@ -12,6 +12,7 @@ canvas.style.position = 'fixed';
 var ctx = canvas.getContext('2d');
 ctx.canvas.width = window.innerWidth;
 ctx.canvas.height = window.innerHeight;
+var cleaningInterval;
 var draws = [];
 
 ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, {data}) => {
@@ -32,8 +33,8 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, {data}) => {
     } else if (data.type === 'mousemove') {
 
         if (draws[data.participantId].drawing) {
-            if (draws[data.participantId].cleaningInterval) {
-                clearInterval(draws[data.participantId].cleaningInterval);
+            if (cleaningInterval) {
+                clearInterval(cleaningInterval);
             }
 
             ctx.beginPath();
@@ -46,7 +47,7 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, {data}) => {
                 ctx.lineTo(data.destX, data.destY);
                 ctx.stroke();
 
-                draws[data.participantId].cleaningInterval = setInterval(() => {
+                cleaningInterval = setInterval(() => {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                 }, 10000)
             }
