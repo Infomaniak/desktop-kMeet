@@ -1,12 +1,14 @@
+/* global process */
+
 const electron = require('electron');
 const { remote } = electron;
-const { ipcRenderer } = require('electron');
+const { ipcRenderer, systemPreferences } = require('electron');
 const os = require('os');
 const postis = require('postis');
 const sourceId2Coordinates = require('../node_addons/sourceId2Coordinates');
 const constants = require('./constants');
-const {SCREEN_SHARE_EVENTS} = require("../screensharing/constants");
-const {SCREEN_SHARE_EVENTS_CHANNEL} = require("../screensharing/constants");
+const { SCREEN_SHARE_EVENTS } = require('../screensharing/constants');
+const { SCREEN_SHARE_EVENTS_CHANNEL } = require('../screensharing/constants');
 const {
     EVENTS,
     MOUSE_ACTIONS_FROM_EVENT_TYPE,
@@ -154,20 +156,20 @@ class RemoteDraw {
      */
     _onScreenSharingEvent(event, { data }) {
         switch (data.name) {
-            case SCREEN_SHARE_EVENTS.CLOSE_TRACKER:
-                if (this._screenShareDrawer) {
-                    this._screenShareDrawer.close();
-                    this._screenShareDrawer = undefined;
-                }
-                break;
-            case SCREEN_SHARE_EVENTS.STOP_SCREEN_SHARE:
-                if (this._screenShareDrawer) {
-                    this._screenShareDrawer.close();
-                    this._screenShareDrawer = undefined;
-                }
-                break;
-            default:
-                console.warn(`Unhandled ${SCREEN_SHARE_EVENTS_CHANNEL}: ${data}`);
+        case SCREEN_SHARE_EVENTS.CLOSE_TRACKER:
+            if (this._screenShareDrawer) {
+                this._screenShareDrawer.close();
+                this._screenShareDrawer = undefined;
+            }
+            break;
+        case SCREEN_SHARE_EVENTS.STOP_SCREEN_SHARE:
+            if (this._screenShareDrawer) {
+                this._screenShareDrawer.close();
+                this._screenShareDrawer = undefined;
+            }
+            break;
+        default:
+            console.warn(`Unhandled ${SCREEN_SHARE_EVENTS_CHANNEL}: ${data}`);
         }
     }
 
@@ -179,6 +181,11 @@ class RemoteDraw {
      */
     _createScreenDraw() {
         if (this._screenShareDrawer) {
+            return;
+        }
+
+        // Make the window transparent only if the platform supports it.
+        if (process.platform === 'win32' && !systemPreferences.isAeroGlassEnabled()) {
             return;
         }
 
