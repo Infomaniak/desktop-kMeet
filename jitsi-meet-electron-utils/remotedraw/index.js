@@ -192,6 +192,8 @@ class RemoteDraw {
             alwaysOnTop: true,
             backgroundColor: '#00FFFFFF',
             webPreferences: {
+                contextIsolation: false,
+                enableRemoteModule: true,
                 nodeIntegration: true
             }
         });

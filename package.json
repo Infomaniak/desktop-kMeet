@@ -9,7 +9,6 @@
     "clean": "rm -rf node_modules build dist",
     "lint": "eslint . && flow",
     "build": "webpack --config ./webpack.main.js --mode production && webpack --config ./webpack.renderer.js --mode production",
-    "pack": "npm run build && electron-builder --dir",
     "dist": "npm run build && electron-builder",
     "postinstall": "electron-builder install-app-deps",
     "validate": "npm ls",
@@ -39,15 +38,21 @@
     },
     "mac": {
       "artifactName": "kMeet.${ext}",
+      "target": [
+        {
+          "arch": "universal",
+          "target": "dmg"
+        }
+      ],
       "category": "public.app-category.video",
       "darkModeSupport": true,
       "hardenedRuntime": true,
-      "gatekeeperAssess": false,
-      "entitlements": "entitlements.mac.plist",
-      "entitlementsInherit": "entitlements.mac.plist",
+      "entitlements": "resources/entitlements.mac.plist",
+      "asarUnpack": "**/*.node",
       "extendInfo": {
-        "NSMicrophoneUsageDescription": "Please give us access to your microphone",
-        "NSCameraUsageDescription": "Please give us access to your camera",
+        "NSMicrophoneUsageDescription": "kMeet requires access to your camera in order to make video-calls.",
+        "NSCameraUsageDescription": "kMeet requires access to your microphone in order to make calls (audio/video).",
+        "LSMultipleInstancesProhibited": true,
         "CFBundleURLTypes": [
           {
             "CFBundleTypeRole": "Viewer",
@@ -93,7 +98,7 @@
       "allowToChangeInstallationDirectory": false,
       "runAfterFinish": true,
       "createDesktopShortcut": false,
-      "include": "build/installer.nsh"
+      "include": "scripts/installer.nsh"
     },
     "directories": {
       "buildResources": "resources"
@@ -132,6 +137,7 @@
     "@atlaskit/spinner": "9.0.13",
     "@atlaskit/theme": "7.0.1",
     "@atlaskit/toggle": "5.0.14",
+    "@jitsi/js-utils": "^1.0.5",
     "dotenv": "^8.2.0",
     "electron-debug": "3.0.1",
     "electron-is-dev": "1.2.0",
@@ -139,7 +145,7 @@
     "electron-notarize": "1.0.0",
     "electron-reload": "1.5.0",
     "electron-store": "5.1.1",
-    "electron-updater": "4.2.5",
+    "electron-updater": "4.3.8",
     "electron-window-state": "5.0.3",
     "history": "4.7.2",
     "jitsi-meet-electron-utils": "file:jitsi-meet-electron-utils",
@@ -171,9 +177,8 @@
     "babel-plugin-inline-react-svg": "1.0.1",
     "concurrently": "4.1.0",
     "css-loader": "2.0.1",
-    "devtron": "1.4.0",
-    "electron": "10.1.6",
-    "electron-builder": "22.7.0",
+    "electron": "12.0.1",
+    "electron-builder": "22.10.5",
     "electron-react-devtools": "0.5.3",
     "eslint": "6.5.1",
     "eslint-config-jitsi": "github:jitsi/eslint-config-jitsi#1.0.2",

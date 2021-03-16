@@ -19,9 +19,12 @@ module.exports = {
         __dirname: true
     },
     module: {
+        noParse: /external_api\\.js/,
         rules: [
             {
-                exclude: /node_modules(?!(\/|\\)js-utils)/,
+                exclude: [
+                    new RegExp('node_modules/(?!@jitsi/js-utils)')
+                ],
                 loader: 'babel-loader',
                 options: {
                     babelrc: false,

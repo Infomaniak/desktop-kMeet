@@ -90,9 +90,15 @@ class ScreenShareMainHook {
             frame: false,
             show: false,
             webPreferences: {
+                // TODO: these 3 should be removed.
+                contextIsolation: false,
+                enableRemoteModule: true,
                 nodeIntegration: true
             }
         });
+
+        // Avoid this window from being captured.
+        this._screenShareTracker.setContentProtection(true);
 
         this._screenShareTracker.on('closed', () => {
             this._screenShareTracker = undefined;

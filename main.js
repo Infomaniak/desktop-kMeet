@@ -3,9 +3,9 @@
 const {
     BrowserWindow,
     app,
-    shell,
     ipcMain
 } = require('electron');
+const debug = require('electron-debug');
 const isDev = require('electron-is-dev');
 const { autoUpdater } = require('electron-updater');
 const windowStateKeeper = require('electron-window-state');
@@ -19,18 +19,39 @@ const {
 } = require('jitsi-meet-electron-utils');
 const path = require('path');
 const URI = require('url');
+const config = require('./app/features/config');
+const { openExternalLink } = require('./app/features/utils/openExternalLink');
+const pkgJson = require('./package.json');
+const { existsSync } = require('fs');
 const APP_VERSION = require('./package.json').version;
+
+const showDevTools = Boolean(process.env.SHOW_DEV_TOOLS) || (process.argv.indexOf('--show-dev-tools') > -1);
+
+// We need this because of https://github.com/electron/electron/issues/18214
+app.commandLine.appendSwitch('disable-site-isolation-trials');
+
+// This allows BrowserWindow.setContentProtection(true) to work on macOS.
+// https://github.com/electron/electron/issues/19880
+app.commandLine.appendSwitch('disable-features', 'IOSurfaceCapturer');
+
+// Needed until robot.js is fixed: https://github.com/octalmage/robotjs/issues/580
+app.allowRendererProcessReuse = false;
 
 autoUpdater.logger = require('electron-log');
 autoUpdater.logger.transports.file.level = 'info';
 
+// Enable DevTools also on release builds to help troubleshoot issues. Don't
+// show them automatically though.
+debug({
+    isEnabled: true,
+    showDevTools
+});
+
 /**
  * When in development mode:
- * - Load debug utilities (don't open the DevTools window by default though)
  * - Enable automatic reloads
  */
 if (isDev) {
-    require('electron-debug')({ showDevTools: true });
     require('electron-reload')(path.join(__dirname, 'build'));
 }
 
@@ -41,11 +62,12 @@ if (isDev) {
  */
 let mainWindow = null;
 
+let webrtcInternalsWindow = null;
+
 /**
  * Add protocol data
  */
-const PROTOCOL_PREFIX = 'kmeet'; // this could be configurable later
-const PROTOCOL_SURPLUS = `${PROTOCOL_PREFIX}://`;
+const appProtocolSurplus = `${config.default.appProtocolPrefix}://`;
 let rendererReady = false;
 let protocolDataForFrontApp = null;
 
@@ -53,6 +75,7 @@ let protocolDataForFrontApp = null;
  * Opens new window with index.html(Jitsi Meet is loaded in iframe there).
  */
 function createJitsiMeetWindow() {
+
     // Check for Updates.
     autoUpdater.checkForUpdatesAndNotify();
 
@@ -63,7 +86,18 @@ function createJitsiMeetWindow() {
     });
 
     // Path to root directory.
-    const basePath = isDev ? __dirname : app.getAppPath();
+    let basePath = isDev ? __dirname : app.getAppPath();
+
+    // runtime detection on mac if this is a universal build with app-arm64.asar'
+    // as prepared in https://github.com/electron/universal/blob/master/src/index.ts
+    // if universal build, load the arch-specific real asar as the app does not load otherwise
+    if (process.platform === 'darwin' && existsSync(path.join(app.getAppPath(), '..', 'app-arm64.asar'))) {
+        if (process.arch === 'arm64') {
+            basePath = app.getAppPath().replace('app.asar', 'app-arm64.asar');
+        } else if (process.arch === 'x64') {
+            basePath = app.getAppPath().replace('app.asar', 'app-x64.asar');
+        }
+    }
 
     // URL for index.html which will be our entry point.
     const indexURL = URI.format({
@@ -73,22 +107,26 @@ function createJitsiMeetWindow() {
     });
 
     // Options used when creating the main Jitsi Meet window.
+    // Use a preload script in order to provide node specific functionality
+    // to a isolated BrowserWindow in accordance with electron security
+    // guideline.
     const options = {
         x: windowState.x,
         y: windowState.y,
         width: windowState.width,
         height: windowState.height,
-        icon: path.resolve(basePath, './resources/icons/icon_512x512.png'),
-        defaultWidth: 1300,
-        defaultHeight: 900,
+        icon: path.resolve(basePath, './resources/icon.png'),
+        minWidth: 800,
+        minHeight: 600,
         show: false,
         webPreferences: {
-            enableBlinkFeatures: 'RTCInsertableStreams',
+            enableBlinkFeatures: 'RTCInsertableStreams,WebAssemblySimd',
             enableRemoteModule: true,
+            contextIsolation: false,
             nativeWindowOpen: true,
+            partition: 'persist:main',
             nodeIntegration: true,
-            preload: path.resolve(basePath, './build/preload.js'),
-            partition: 'persist:main'
+            preload: path.resolve(basePath, './build/preload.js')
         }
     };
 
@@ -151,17 +189,18 @@ function createJitsiMeetWindow() {
         }
     );
 
+
     initPopupsConfigurationMain(mainWindow);
     setupAlwaysOnTopMain(mainWindow);
     setupPowerMonitorMain(mainWindow);
-    setupScreenSharingMain(mainWindow, 'Infomaniak kMeet');
+    setupScreenSharingMain(mainWindow, config.default.appName, pkgJson.build.appId);
 
     mainWindow.webContents.on('new-window', (event, url, frameName) => {
         const target = getPopupTarget(url, frameName);
 
         if (!target || target === 'browser') {
             event.preventDefault();
-            shell.openExternal(url);
+            openExternalLink(url);
         }
     });
     mainWindow.on('closed', () => {
@@ -172,66 +211,69 @@ function createJitsiMeetWindow() {
     });
 
     /**
-     * This is for windows [win32]
-     * so when someone tries to enter something like jitsi://test
+     * When someone tries to enter something like jitsi-meet://test
      *  while app is closed
      * it will trigger this event below
      */
-    handleProtocolCall(process.argv[1]);
+    handleProtocolCall(process.argv.pop());
 }
 
 /**
- * Handler when protocol call us
- * if there is second argument and it starts
- * with PROTOCOL_PREFIX+ "://" its what we need
- *
- * create conference object and send it to front app
+ * Opens new window with WebRTC internals.
+ */
+function createWebRTCInternalsWindow() {
+    const options = {
+        minWidth: 800,
+        minHeight: 600,
+        show: true
+    };
+
+    webrtcInternalsWindow = new BrowserWindow(options);
+    webrtcInternalsWindow.loadURL('chrome://webrtc-internals');
+}
+
+/**
+ * Handler for application protocol links to initiate a conference.
  */
 function handleProtocolCall(fullProtocolCall) {
     // don't touch when something is bad
     if (
         !fullProtocolCall
         || fullProtocolCall.trim() === ''
-        || fullProtocolCall.indexOf(PROTOCOL_SURPLUS) !== 0
+        || fullProtocolCall.indexOf(appProtocolSurplus) !== 0
     ) {
         return;
     }
 
-    const inputURL = fullProtocolCall.replace(PROTOCOL_SURPLUS, '');
+    const inputURL = fullProtocolCall.replace(appProtocolSurplus, '');
+
+    if (app.isReady() && mainWindow === null) {
+        createJitsiMeetWindow();
+    }
 
     protocolDataForFrontApp = inputURL;
+
     if (rendererReady) {
         mainWindow
             .webContents
-            .send('protocol-data-msg', protocolDataForFrontApp);
+            .send('protocol-data-msg', inputURL);
     }
 }
 
 /**
  * Force Single Instance Application.
+ * Handle this on darwin via LSMultipleInstancesProhibited in Info.plist as below does not work on MAS
  */
-const gotInstanceLock = app.requestSingleInstanceLock();
+const gotInstanceLock = process.platform === 'darwin' ? true : app.requestSingleInstanceLock();
 
 if (!gotInstanceLock) {
     app.quit();
     process.exit(0);
 }
 
-app.commandLine.appendSwitch('disable-site-isolation-trials');
-
-// We need to disable hardware acceleration because its causes the screenshare to flicker.
-app.commandLine.appendSwitch('disable-gpu');
-
-app.allowRendererProcessReuse = false;
-
-app.setAsDefaultProtocolClient(PROTOCOL_PREFIX);
-
 /**
  * Run the application.
  */
-app.on('open-url', event => {
-    event.preventDefault();
-});
 
 app.on('activate', () => {
     if (mainWindow === null) {
@@ -242,7 +284,7 @@ app.on('activate', () => {
 app.on('certificate-error',
     // eslint-disable-next-line max-params
     (event, webContents, url, error, certificate, callback) => {
-        if (url.startsWith('https://localhost')) {
+        if (isDev) {
             event.preventDefault();
             callback(true);
         } else {
@@ -253,7 +295,11 @@ app.on('certificate-error',
 
 app.on('ready', createJitsiMeetWindow);
 
-app.on('second-instance', () => {
+if (isDev) {
+    app.on('ready', createWebRTCInternalsWindow);
+}
+
+app.on('second-instance', (event, commandLine) => {
     /**
      * If someone creates second instance of the application, set focus on
      * existing window.
@@ -261,6 +307,13 @@ app.on('second-instance', () => {
     if (mainWindow) {
         mainWindow.isMinimized() && mainWindow.restore();
         mainWindow.focus();
+
+        /**
+         * This is for windows [win32]
+         * so when someone tries to enter something like jitsi-meet://test
+         * while app is opened it will trigger protocol handler.
+         */
+        handleProtocolCall(commandLine.pop());
     }
 });
 
@@ -269,24 +322,24 @@ app.on('window-all-closed', () => {
 });
 
 // remove so we can register each time as we run the app.
-app.removeAsDefaultProtocolClient(PROTOCOL_PREFIX);
+app.removeAsDefaultProtocolClient(config.default.appProtocolPrefix);
 
 // If we are running a non-packaged version of the app && on windows
 if (isDev && process.platform === 'win32') {
     // Set the path of electron.exe and your app.
     // These two additional parameters are only available on windows.
     app.setAsDefaultProtocolClient(
-        PROTOCOL_PREFIX,
+        config.default.appProtocolPrefix,
         process.execPath,
         [ path.resolve(process.argv[1]) ]
     );
 } else {
-    app.setAsDefaultProtocolClient(PROTOCOL_PREFIX);
+    app.setAsDefaultProtocolClient(config.default.appProtocolPrefix);
 }
 
 /**
  * This is for mac [darwin]
- * so when someone tries to enter something like jitsi://test
+ * so when someone tries to enter something like jitsi-meet://test
  * it will trigger this event below
  */
 app.on('open-url', (event, data) => {
@@ -295,26 +348,7 @@ app.on('open-url', (event, data) => {
 });
 
 /**
- * This is for windows [win32]
- * so when someone tries to enter something like jitsi://test
- *  while app is opened
- * it will trigger this event below
- */
-app.on('second-instance', (event, commandLine) => {
-    if (mainWindow) {
-        if (isDev) {
-            handleProtocolCall(commandLine[4]);
-        } else {
-            handleProtocolCall(commandLine[3]);
-        }
-    }
-});
-
-/**
- * This is our own event
- * to notify main.js [this]
- * that front app is ready to receive
- * conference room and change to it
+ * This is to notify main.js [this] that front app is ready to receive messages.
  */
 ipcMain.on('renderer-ready', () => {
     rendererReady = true;

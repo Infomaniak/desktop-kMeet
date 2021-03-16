@@ -1,19 +1,11 @@
 // @flow
 import React, { Component } from 'react';
 import type { Dispatch } from 'redux';
-
-import { getExternalApiURL } from '../../utils';
-
 import { Wrapper } from '../styled';
-import {
-    initPopupsConfigurationRender,
-    RemoteControl,
-    RemoteDraw,
-    setupScreenSharingRender
-} from 'jitsi-meet-electron-utils';
 import config from '../../config';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
+import JitsiMeetExternalAPI from '../../conference/external_api';
 
 type Props = {
 
@@ -55,14 +47,28 @@ class Welcome extends Component<Props> {
      * @returns {void}
      */
     componentDidMount() {
-        const parentNode = this._ref.current;
-        const script = document.createElement('script');
+        const host = config.defaultServerURL.replace(/https?:\/\//, '');
+        const options = {
+            parentNode: this._ref.current
+        };
 
-        script.async = true;
-        script.onload = () => this._onScriptLoad(parentNode);
-        script.src = getExternalApiURL(config.defaultServerURL.replace(/https?:\/\//, ''));
+        this._api = new JitsiMeetExternalAPI(host, {
+            ...options
+        });
 
-        this._ref.current.appendChild(script);
+        const { RemoteControl,
+            RemoteDraw,
+            setupScreenSharingRender,
+            initPopupsConfigurationRender
+        } = window.jitsiNodeAPI.jitsiMeetElectronUtils;
+
+        initPopupsConfigurationRender(this._api);
+
+        const iframe = this._api.getIFrame();
+
+        setupScreenSharingRender(this._api);
+        new RemoteControl(iframe); // eslint-disable-line no-new
+        new RemoteDraw(iframe); // eslint-disable-line no-new
     }
 
     /**
@@ -74,32 +80,6 @@ class Welcome extends Component<Props> {
         if (this._api) {
             this._api.dispose();
         }
-    }
-
-    /**
-     * When the script is loaded create the iframe element in this component
-     * and attach utils from jitsi-meet-electron-utils.
-     *
-     * @param {Object} parentNode - Node to which iframe has to be attached.
-     * @returns {void}
-     */
-    _onScriptLoad(parentNode: Object) {
-        const JitsiMeetExternalAPI = window.JitsiMeetExternalAPI;
-
-        const host = config.defaultServerURL.replace(/https?:\/\//, '');
-        const configOverwrite = {};
-
-        this._api = new JitsiMeetExternalAPI(host, {
-            configOverwrite,
-            parentNode
-        });
-        initPopupsConfigurationRender(this._api);
-
-        const iframe = this._api.getIFrame();
-
-        setupScreenSharingRender(this._api);
-        new RemoteControl(iframe); // eslint-disable-line no-new
-        new RemoteDraw(iframe); // eslint-disable-line no-new
     }
 
     /**

@@ -7,21 +7,11 @@ import type { Dispatch } from 'redux';
 import { connect } from 'react-redux';
 import { push } from 'react-router-redux';
 
-import {
-    RemoteControl,
-    RemoteDraw,
-    setupScreenSharingRender,
-    setupAlwaysOnTopRender,
-    initPopupsConfigurationRender,
-    setupWiFiStats,
-    setupPowerMonitorRender
-} from 'jitsi-meet-electron-utils';
-
 import config from '../../config';
 
 import { conferenceEnded, conferenceJoined } from '../actions';
+import JitsiMeetExternalAPI from '../external_api';
 import { LoadingIndicator, Wrapper } from '../styled';
-import { getExternalApiURL } from '../../utils';
 
 type Props = {
 
@@ -92,9 +82,9 @@ class Conference extends Component<Props, State> {
      * @returns {void}
      */
     componentDidMount() {
-        const parentNode = this._ref.current;
         const room = this.props.location.state.room;
         const subject = this.props.location.state.subject;
+        const serverTimeout = config.defaultServerTimeout;
         const serverURL = this.props.location.state.serverURL || config.defaultServerURL;
 
         this._conference = {
@@ -103,17 +93,9 @@ class Conference extends Component<Props, State> {
             subject
         };
 
-        const script = document.createElement('script');
+        this._loadConference();
 
-        script.async = true;
-        script.onload = () => this._onScriptLoad(parentNode);
-        script.onerror = (event: Event) =>
-            this._navigateToHome(event, room, serverURL);
-        script.src = getExternalApiURL(serverURL);
-
-        this._ref.current.appendChild(script);
-
-        // Set a timer for 10s, if we haven't loaded the iframe by then,
+        // Set a timer for a timeout duration, if we haven't loaded the iframe by then,
         // give up.
         this._loadTimer = setTimeout(() => {
             this._navigateToHome(
@@ -125,7 +107,7 @@ class Conference extends Component<Props, State> {
                 },
                 room,
                 serverURL);
-        }, 10000);
+        }, serverTimeout * 1000);
     }
 
     /**
@@ -156,6 +138,66 @@ class Conference extends Component<Props, State> {
     }
 
     /**
+     * Load the conference by creating the iframe element in this component
+     * and attaching utils from jitsi-meet-electron-utils.
+     *
+     * @returns {void}
+     */
+    _loadConference() {
+        const url = new URL(this._conference.room, this._conference.serverURL);
+        const roomName = url.pathname.split('/').pop();
+        const host = this._conference.serverURL.replace(/https?:\/\//, '');
+
+        const configOverwrite = {
+            startWithAudioMuted: false,
+            startWithVideoMuted: true,
+            subject: this._conference.subject
+        };
+
+        const options = {
+            configOverwrite,
+            onload: this._onIframeLoad,
+            parentNode: this._ref.current,
+            roomName
+        };
+
+        this._api = new JitsiMeetExternalAPI(host, {
+            ...options
+        });
+
+
+        this._api.on('suspendDetected', this._onVideoConferenceEnded);
+        this._api.on('readyToClose', this._onVideoConferenceEnded);
+        this._api.on('videoConferenceJoined',
+            () => {
+                this.props.dispatch(conferenceJoined(this._conference));
+            }
+        );
+
+        const { RemoteControl,
+            RemoteDraw,
+            setupScreenSharingRender,
+            setupAlwaysOnTopRender,
+            initPopupsConfigurationRender,
+            setupWiFiStats,
+            setupPowerMonitorRender
+        } = window.jitsiNodeAPI.jitsiMeetElectronUtils;
+
+        initPopupsConfigurationRender(this._api);
+
+        const iframe = this._api.getIFrame();
+
+        setupScreenSharingRender(this._api);
+        new RemoteControl(iframe); // eslint-disable-line no-new
+        new RemoteDraw(iframe); // eslint-disable-line no-new
+
+        setupAlwaysOnTopRender(this._api);
+
+        setupWiFiStats(iframe);
+        setupPowerMonitorRender(this._api);
+    }
+
+    /**
      * It renders a loading indicator, if appropriate.
      *
      * @returns {?ReactElement}
@@ -179,61 +221,11 @@ class Conference extends Component<Props, State> {
      * @returns {void}
      */
     _navigateToHome(event: Event, room: ?string, serverURL: ?string) {
-
-        // eslint-disable-next-line no-param-reassign
-        serverURL = config.defaultServerURL.replace(/https?:\/\//, '');
-
         this.props.dispatch(push('/', {
             error: event.type === 'error',
             room,
             serverURL
         }));
-    }
-
-    /**
-     * When the script is loaded create the iframe element in this component
-     * and attach utils from jitsi-meet-electron-utils.
-     *
-     * @param {Object} parentNode - Node to which iframe has to be attached.
-     * @returns {void}
-     */
-    _onScriptLoad(parentNode: Object) {
-        const JitsiMeetExternalAPI = window.JitsiMeetExternalAPI;
-
-        const host = this._conference.serverURL.replace(/https?:\/\//, '');
-
-        const configOverwrite = {
-            startWithAudioMuted: false,
-            startWithVideoMuted: true,
-            subject: this._conference.subject
-        };
-
-        this._api = new JitsiMeetExternalAPI(host, {
-            configOverwrite,
-            onload: this._onIframeLoad,
-            parentNode,
-            roomName: this._conference.room
-        });
-        initPopupsConfigurationRender(this._api);
-
-        const iframe = this._api.getIFrame();
-
-        setupScreenSharingRender(this._api);
-        new RemoteControl(iframe); // eslint-disable-line no-new
-        new RemoteDraw(iframe); // eslint-disable-line no-new
-
-        setupAlwaysOnTopRender(this._api);
-
-        setupWiFiStats(iframe);
-        setupPowerMonitorRender(this._api);
-
-        this._api.on('suspendDetected', this._onVideoConferenceEnded);
-        this._api.on('readyToClose', this._onVideoConferenceEnded);
-        this._api.on('videoConferenceJoined',
-            () => {
-                this.props.dispatch(conferenceJoined(this._conference));
-            }
-        );
     }
 
     _onVideoConferenceEnded: (*) => void;
@@ -267,6 +259,6 @@ class Conference extends Component<Props, State> {
             isLoading: false
         });
     }
-}
 
+}
 export default connect()(Conference);

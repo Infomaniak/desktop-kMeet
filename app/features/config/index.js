@@ -11,9 +11,20 @@ export default {
     appName: 'Infomaniak kMeet',
 
     /**
+     * The prefix for application protocol.
+     * You will also need to replace this in package.json.
+     */
+    appProtocolPrefix: 'kmeet',
+
+    /**
      * The default server URL of Jitsi Meet Deployment that will be used.
      */
     defaultServerURL: 'https://kmeet.infomaniak.com',
+
+    /**
+     * The default server Timeout in seconds.
+     */
+    defaultServerTimeout: 30,
 
     /**
      * URL to send feedback.
@@ -28,26 +39,5 @@ export default {
     /**
      * The URL of Terms and Conditions Page.
      */
-    termsAndConditionsURL: 'https://www.infomaniak.com/gtl/rgpd.documents',
-
-    /**
-     * Some of default values for application.
-     */
-    defaults: {
-        alwaysOnTopWindowEnabled: true
-    },
-
-    /**
-     * All needed configurations for storage in our application.
-     * This is including electron-store and redux-persist.
-     */
-    storage: {
-        /**
-         * Key where all redux-persist data is stored.
-         * Note: FULL_STORE_KEY = redux-persist.KEY_PREFIX + storage.rootKey.
-         */
-        rootKey: 'root',
-        settingsKey: 'settings',
-        windowAlwaysOnTopKey: 'windowAlwaysOnTop'
-    }
+    termsAndConditionsURL: 'https://www.infomaniak.com/gtl/rgpd.documents'
 };
