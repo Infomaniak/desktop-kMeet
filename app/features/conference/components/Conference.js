@@ -13,9 +13,6 @@ import { conferenceEnded, conferenceJoined } from '../actions';
 import JitsiMeetExternalAPI from '../external_api';
 import { LoadingIndicator, Wrapper } from '../styled';
 
-const ENABLE_REMOTE_CONTROL = false;
-const ENABLE_REMOTE_DRAW = false;
-
 type Props = {
 
     /**
@@ -191,13 +188,8 @@ class Conference extends Component<Props, State> {
         const iframe = this._api.getIFrame();
 
         setupScreenSharingRender(this._api);
-        if (ENABLE_REMOTE_CONTROL) {
-            new RemoteControl(iframe); // eslint-disable-line no-new
-        }
-
-        if (ENABLE_REMOTE_DRAW) {
-            new RemoteDraw(iframe); // eslint-disable-line no-new
-        }
+        new RemoteControl(iframe); // eslint-disable-line no-new
+        new RemoteDraw(iframe); // eslint-disable-line no-new
 
         setupAlwaysOnTopRender(this._api);
 
