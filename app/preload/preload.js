@@ -5,7 +5,7 @@ const jitsiMeetElectronUtils = require('jitsi-meet-electron-utils');
 const { openExternalLink } = require('../features/utils/openExternalLink');
 
 
-const whitelistedIpcChannels = [ 'protocol-data-msg', 'renderer-ready' ];
+const whitelistedIpcChannels = [ 'protocol-data-msg', 'protocol-data-create-meeting', 'protocol-data-join-meeting', 'protocol-data-plan-meeting', 'renderer-ready' ];
 
 window.jitsiNodeAPI = {
     createElectronStorage,

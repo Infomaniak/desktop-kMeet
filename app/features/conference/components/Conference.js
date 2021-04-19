@@ -74,6 +74,12 @@ class Conference extends Component<Props, State> {
 
         this._onIframeLoad = this._onIframeLoad.bind(this);
         this._onVideoConferenceEnded = this._onVideoConferenceEnded.bind(this);
+        this._listenOnProtocolCreateMeeting
+            = this._listenOnProtocolCreateMeeting.bind(this);
+        this._listenOnProtocolJoinMeeting
+            = this._listenOnProtocolJoinMeeting.bind(this);
+        this._listenOnProtocolPlanMeeting
+            = this._listenOnProtocolPlanMeeting.bind(this);
     }
 
     /**
@@ -174,7 +180,8 @@ class Conference extends Component<Props, State> {
             }
         );
 
-        const { RemoteControl,
+        const {
+            RemoteControl,
             RemoteDraw,
             setupScreenSharingRender,
             setupAlwaysOnTopRender,
@@ -188,6 +195,7 @@ class Conference extends Component<Props, State> {
         const iframe = this._api.getIFrame();
 
         setupScreenSharingRender(this._api);
+
         new RemoteControl(iframe); // eslint-disable-line no-new
         new RemoteDraw(iframe); // eslint-disable-line no-new
 
@@ -195,6 +203,10 @@ class Conference extends Component<Props, State> {
 
         setupWiFiStats(iframe);
         setupPowerMonitorRender(this._api);
+
+        window.jitsiNodeAPI.ipc.on('protocol-data-create-meeting', this._listenOnProtocolCreateMeeting);
+        window.jitsiNodeAPI.ipc.on('protocol-data-join-meeting', this._listenOnProtocolJoinMeeting);
+        window.jitsiNodeAPI.ipc.on('protocol-data-plan-meeting', this._listenOnProtocolPlanMeeting);
     }
 
     /**
@@ -260,5 +272,28 @@ class Conference extends Component<Props, State> {
         });
     }
 
+    _listenOnProtocolCreateMeeting: (*) => void;
+
+    _listenOnProtocolCreateMeeting() {
+        this.props.dispatch(push('/', {
+            event: 'startNewMeeting'
+        }));
+    }
+
+    _listenOnProtocolJoinMeeting: (*) => void;
+
+    _listenOnProtocolJoinMeeting() {
+        this.props.dispatch(push('/', {
+            event: 'joinMeeting'
+        }));
+    }
+
+    _listenOnProtocolPlanMeeting: (*) => void;
+
+    _listenOnProtocolPlanMeeting() {
+        this.props.dispatch(push('/', {
+            event: 'planMeeting'
+        }));
+    }
 }
 export default connect()(Conference);

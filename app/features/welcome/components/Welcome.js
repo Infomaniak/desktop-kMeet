@@ -1,9 +1,9 @@
 // @flow
 import React, { Component } from 'react';
 import type { Dispatch } from 'redux';
+import { compose } from 'redux';
 import { Wrapper } from '../styled';
 import config from '../../config';
-import { compose } from 'redux';
 import { connect } from 'react-redux';
 import JitsiMeetExternalAPI from '../../conference/external_api';
 
@@ -13,6 +13,11 @@ type Props = {
      * Redux dispatch.
      */
     dispatch: Dispatch<*>;
+
+    /**
+     * React Router location object.
+     */
+    location: Object;
 };
 
 /**
@@ -39,6 +44,12 @@ class Welcome extends Component<Props> {
         super(props);
 
         this._ref = React.createRef();
+        this._listenOnProtocolCreateMeeting
+            = this._listenOnProtocolCreateMeeting.bind(this);
+        this._listenOnProtocolJoinMeeting
+            = this._listenOnProtocolJoinMeeting.bind(this);
+        this._listenOnProtocolPlanMeeting
+            = this._listenOnProtocolPlanMeeting.bind(this);
     }
 
     /**
@@ -56,7 +67,8 @@ class Welcome extends Component<Props> {
             ...options
         });
 
-        const { RemoteControl,
+        const {
+            RemoteControl,
             RemoteDraw,
             setupScreenSharingRender,
             initPopupsConfigurationRender
@@ -67,8 +79,27 @@ class Welcome extends Component<Props> {
         const iframe = this._api.getIFrame();
 
         setupScreenSharingRender(this._api);
+
         new RemoteControl(iframe); // eslint-disable-line no-new
         new RemoteDraw(iframe); // eslint-disable-line no-new
+
+        window.jitsiNodeAPI.ipc.on('protocol-data-create-meeting', this._listenOnProtocolCreateMeeting);
+        window.jitsiNodeAPI.ipc.on('protocol-data-join-meeting', this._listenOnProtocolJoinMeeting);
+        window.jitsiNodeAPI.ipc.on('protocol-data-plan-meeting', this._listenOnProtocolPlanMeeting);
+
+        if (this.props.location.state && this.props.location.state.event) {
+            switch (this.props.location.state.event) {
+            case 'startNewMeeting':
+                this._listenOnProtocolCreateMeeting();
+                break;
+            case 'joinMeeting':
+                this._listenOnProtocolJoinMeeting();
+                break;
+            case 'planMeeting':
+                this._listenOnProtocolPlanMeeting();
+                break;
+            }
+        }
     }
 
     /**
@@ -80,6 +111,36 @@ class Welcome extends Component<Props> {
         if (this._api) {
             this._api.dispose();
         }
+        window.jitsiNodeAPI.ipc.removeListener(
+            'protocol-data-create-meeting',
+            this._listenOnProtocolCreateMeeting
+        );
+        window.jitsiNodeAPI.ipc.removeListener(
+            'protocol-data-join-meeting',
+            this._listenOnProtocolJoinMeeting
+        );
+        window.jitsiNodeAPI.ipc.removeListener(
+            'protocol-data-plan-meeting',
+            this._listenOnProtocolPlanMeeting
+        );
+    }
+
+    _listenOnProtocolCreateMeeting: (*) => void;
+
+    _listenOnProtocolCreateMeeting() {
+        this._api.executeCommand('startNewMeeting');
+    }
+
+    _listenOnProtocolJoinMeeting: (*) => void;
+
+    _listenOnProtocolJoinMeeting() {
+        this._api.executeCommand('joinMeeting');
+    }
+
+    _listenOnProtocolPlanMeeting: (*) => void;
+
+    _listenOnProtocolPlanMeeting() {
+        this._api.executeCommand('planMeeting');
     }
 
     /**

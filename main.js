@@ -3,7 +3,10 @@
 const {
     BrowserWindow,
     app,
-    ipcMain
+    ipcMain,
+    Menu,
+    Tray,
+    shell
 } = require('electron');
 const debug = require('electron-debug');
 const isDev = require('electron-is-dev');
@@ -24,8 +27,18 @@ const { openExternalLink } = require('./app/features/utils/openExternalLink');
 const pkgJson = require('./package.json');
 const { existsSync } = require('fs');
 const APP_VERSION = require('./package.json').version;
-
+const i18n = require('./app/i18n').default;
 const showDevTools = Boolean(process.env.SHOW_DEV_TOOLS) || (process.argv.indexOf('--show-dev-tools') > -1);
+const AutoLaunch = require('auto-launch');
+const autoLauncher = new AutoLaunch({
+    name: 'kMeet',
+    isHidden: true
+});
+let autoLauncherEnable = false;
+
+autoLauncher.isEnabled().then(isEnabled => {
+    autoLauncherEnable = isEnabled;
+});
 
 // We need this because of https://github.com/electron/electron/issues/18214
 app.commandLine.appendSwitch('disable-site-isolation-trials');
@@ -33,6 +46,10 @@ app.commandLine.appendSwitch('disable-site-isolation-trials');
 // This allows BrowserWindow.setContentProtection(true) to work on macOS.
 // https://github.com/electron/electron/issues/19880
 app.commandLine.appendSwitch('disable-features', 'IOSurfaceCapturer');
+
+// Enable Opus RED field trial.
+app.commandLine.appendSwitch('force-fieldtrials', 'WebRTC-Audio-Red-For-Opus/Enabled/');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows', 'true');
 
 // Needed until robot.js is fixed: https://github.com/octalmage/robotjs/issues/580
 app.allowRendererProcessReuse = false;
@@ -70,6 +87,113 @@ let webrtcInternalsWindow = null;
 const appProtocolSurplus = `${config.default.appProtocolPrefix}://`;
 let rendererReady = false;
 let protocolDataForFrontApp = null;
+let tray = null;
+
+/**
+ * Sets the application menu. It is hidden on all platforms except macOS because
+ * otherwise copy and paste functionality is not available.
+ */
+function setApplicationMenu() {
+    if (process.platform === 'darwin') {
+        const template = [ {
+            label: app.name,
+            submenu: [
+                {
+                    label: i18n.t('menu.about'),
+                    role: 'about'
+                },
+                { type: 'separator' },
+                {
+                    role: 'services',
+                    submenu: []
+                },
+                { type: 'separator' },
+                { role: 'hide' },
+                { role: 'hideothers' },
+                { role: 'unhide' },
+                { type: 'separator' },
+                { role: 'quit' }
+            ]
+        },
+        {
+            label: i18n.t('menu.edit'),
+            submenu: [ {
+                label: i18n.t('menu.undo'),
+                accelerator: 'CmdOrCtrl+Z',
+                selector: 'undo:'
+            },
+            {
+                label: i18n.t('menu.redo'),
+                accelerator: 'Shift+CmdOrCtrl+Z',
+                selector: 'redo:'
+            },
+            {
+                type: 'separator'
+            },
+            {
+                label: i18n.t('menu.cut'),
+                accelerator: 'CmdOrCtrl+X',
+                selector: 'cut:'
+            },
+            {
+                label: i18n.t('menu.copy'),
+                accelerator: 'CmdOrCtrl+C',
+                selector: 'copy:'
+            },
+            {
+                label: i18n.t('menu.paste'),
+                accelerator: 'CmdOrCtrl+V',
+                selector: 'paste:'
+            },
+            {
+                label: i18n.t('menu.selectAll'),
+                accelerator: 'CmdOrCtrl+A',
+                selector: 'selectAll:'
+            } ]
+        },
+        {
+            label: i18n.t('menu.view'),
+            submenu: [
+                { role: 'reload' },
+                { role: 'forceReload' },
+                { role: 'toggleDevTools' }
+            ]
+        },
+        {
+            label: i18n.t('menu.window'),
+            role: 'window',
+            submenu: [
+                { role: 'minimize' },
+                { role: 'close' }
+            ]
+        } ];
+
+        Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+    } else {
+        Menu.setApplicationMenu(null);
+    }
+}
+
+/**
+ * @returns {string}
+ */
+function getAppPath() {
+    // Path to root directory.
+    let basePath = isDev ? __dirname : app.getAppPath();
+
+    // runtime detection on mac if this is a universal build with app-arm64.asar'
+    // as prepared in https://github.com/electron/universal/blob/master/src/index.ts
+    // if universal build, load the arch-specific real asar as the app does not load otherwise
+    if (process.platform === 'darwin' && existsSync(path.join(app.getAppPath(), '..', 'app-arm64.asar'))) {
+        if (process.arch === 'arm64') {
+            basePath = app.getAppPath().replace('app.asar', 'app-arm64.asar');
+        } else if (process.arch === 'x64') {
+            basePath = app.getAppPath().replace('app.asar', 'app-x64.asar');
+        }
+    }
+
+    return basePath;
+}
 
 /**
  * Opens new window with index.html(Jitsi Meet is loaded in iframe there).
@@ -85,19 +209,10 @@ function createJitsiMeetWindow() {
         defaultHeight: 900
     });
 
-    // Path to root directory.
-    let basePath = isDev ? __dirname : app.getAppPath();
+    setApplicationMenu();
 
-    // runtime detection on mac if this is a universal build with app-arm64.asar'
-    // as prepared in https://github.com/electron/universal/blob/master/src/index.ts
-    // if universal build, load the arch-specific real asar as the app does not load otherwise
-    if (process.platform === 'darwin' && existsSync(path.join(app.getAppPath(), '..', 'app-arm64.asar'))) {
-        if (process.arch === 'arm64') {
-            basePath = app.getAppPath().replace('app.asar', 'app-arm64.asar');
-        } else if (process.arch === 'x64') {
-            basePath = app.getAppPath().replace('app.asar', 'app-x64.asar');
-        }
-    }
+    // Path to root directory.
+    const basePath = getAppPath();
 
     // URL for index.html which will be our entry point.
     const indexURL = URI.format({
@@ -118,6 +233,7 @@ function createJitsiMeetWindow() {
         icon: path.resolve(basePath, './resources/icon.png'),
         minWidth: 800,
         minHeight: 600,
+        fullscreen: false,
         show: false,
         webPreferences: {
             enableBlinkFeatures: 'RTCInsertableStreams,WebAssemblySimd',
@@ -184,8 +300,10 @@ function createJitsiMeetWindow() {
                 delete d.responseHeaders['x-frame-options'];
             }
 
-            c({ cancel: false,
-                responseHeaders: d.responseHeaders });
+            c({
+                cancel: false,
+                responseHeaders: d.responseHeaders
+            });
         }
     );
 
@@ -207,6 +325,9 @@ function createJitsiMeetWindow() {
         mainWindow = null;
     });
     mainWindow.once('ready-to-show', () => {
+        if (process.platform === 'darwin') {
+            app.dock.show();
+        }
         mainWindow.show();
     });
 
@@ -216,6 +337,108 @@ function createJitsiMeetWindow() {
      * it will trigger this event below
      */
     handleProtocolCall(process.argv.pop());
+}
+
+/**
+ * @param event
+ */
+function handleClickOnTrayMenu(event) {
+    if (mainWindow) {
+        if (mainWindow.isMinimized()) {
+            mainWindow.restore();
+        }
+
+        mainWindow.show();
+        mainWindow.webContents.send(event);
+    }
+
+    if (app.isReady() && mainWindow === null) {
+        createJitsiMeetWindow();
+        mainWindow.once('ready-to-show', () => {
+            mainWindow
+                .webContents
+                .send(event);
+        });
+    }
+}
+
+/**
+ * Create the tray menu
+ */
+function createTrayMenu() {
+    const basePath = getAppPath();
+
+    let iconPath = path.resolve(basePath, './resources/icons/icon@2x.png');
+
+    if (process.platform === 'darwin') {
+        iconPath = path.resolve(basePath, './resources/icons/iconTemplate@2x.png');
+    }
+
+    tray = new Tray(iconPath);
+
+    const contextMenu = Menu.buildFromTemplate([
+        {
+            label: i18n.t('menu.createMeeting'),
+            click: () => {
+                handleClickOnTrayMenu('protocol-data-create-meeting');
+            }
+        },
+        {
+            label: i18n.t('menu.joinMeeting'),
+            click: () => {
+                handleClickOnTrayMenu('protocol-data-join-meeting');
+            }
+        },
+        {
+            label: i18n.t('menu.planMeeting'),
+            click: () => {
+                handleClickOnTrayMenu('protocol-data-plan-meeting');
+            }
+        },
+        { type: 'separator' },
+
+        // { label: 'Paramètres' },
+        {
+            label: i18n.t('menu.openOnBoot'),
+            type: 'checkbox',
+            checked: autoLauncherEnable,
+            click: () => {
+                autoLauncher.isEnabled().then(isEnabled => {
+                    autoLauncherEnable = isEnabled;
+                    if (isEnabled) {
+                        autoLauncher.disable();
+                    } else {
+                        autoLauncher.enable();
+                    }
+                })
+                    .catch(err => {
+                        throw err;
+                    });
+            }
+        },
+        {
+            label: i18n.t('menu.openKmeet'),
+            click: () => {
+                shell.openExternal('https://kmeet.infomaniak.com');
+            }
+        },
+        {
+            label: i18n.t('menu.aboutKmeet'),
+            click: () => {
+                shell.openExternal('https://www.infomaniak.com/kmeet');
+            }
+        },
+        { type: 'separator' },
+        {
+            label: i18n.t('menu.quit'),
+            click: () => {
+                app.quit();
+                process.exit(0);
+            }
+        }
+    ]);
+
+    tray.setContextMenu(contextMenu);
 }
 
 /**
@@ -293,7 +516,10 @@ app.on('certificate-error',
     }
 );
 
-app.on('ready', createJitsiMeetWindow);
+app.on('ready', () => {
+    createJitsiMeetWindow();
+    createTrayMenu();
+});
 
 if (isDev) {
     app.on('ready', createWebRTCInternalsWindow);
@@ -318,7 +544,10 @@ app.on('second-instance', (event, commandLine) => {
 });
 
 app.on('window-all-closed', () => {
-    app.quit();
+    // app.quit();
+    if (process.platform === 'darwin') {
+        app.dock.hide();
+    }
 });
 
 // remove so we can register each time as we run the app.

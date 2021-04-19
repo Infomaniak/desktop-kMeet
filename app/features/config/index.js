@@ -8,7 +8,7 @@ export default {
     /**
      * Application name.
      */
-    appName: 'Infomaniak kMeet',
+    appName: 'kMeet',
 
     /**
      * The prefix for application protocol.
@@ -24,7 +24,7 @@ export default {
     /**
      * The default server Timeout in seconds.
      */
-    defaultServerTimeout: 30,
+    defaultServerTimeout: 60,
 
     /**
      * URL to send feedback.

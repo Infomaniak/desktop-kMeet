@@ -1,0 +1,21 @@
+{
+  "menu": {
+    "about": "Informazioni su kMeet",
+    "edit": "Modifica",
+    "undo": "Cancella",
+    "redo": "Applica",
+    "cut": "Tagliare",
+    "copy": "Copia",
+    "paste": "Incolla",
+    "selectAll": "Seleziona tutti",
+    "view": "Vedi",
+    "window": "Finestra",
+    "createMeeting": "Creare una riunione",
+    "joinMeeting": "Partecipa a una riunione",
+    "planMeeting": "Programmare una riunione",
+    "openOnBoot": "Iniziare a usare il computer",
+    "openKmeet": "Aprire kMeet.infomaniak.com",
+    "aboutKmeet": "Informazioni su kMeet",
+    "quit": "Abbandona kMeet"
+  }
+}
