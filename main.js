@@ -29,6 +29,7 @@ const { existsSync } = require('fs');
 const APP_VERSION = require('./package.json').version;
 const i18n = require('./app/i18n').default;
 const showDevTools = Boolean(process.env.SHOW_DEV_TOOLS) || (process.argv.indexOf('--show-dev-tools') > -1);
+const Store = require('electron-store');
 const AutoLaunch = require('auto-launch');
 const autoLauncher = new AutoLaunch({
     name: 'kMeet',
@@ -51,6 +52,13 @@ app.allowRendererProcessReuse = false;
 
 autoUpdater.logger = require('electron-log');
 autoUpdater.logger.transports.file.level = 'info';
+
+const store = new Store();
+
+if (!store.get('enableAutoLauncher')) {
+    store.set('enableAutoLauncher', 1);
+    autoLauncher.enable();
+}
 
 // Enable DevTools also on release builds to help troubleshoot issues. Don't
 // show them automatically though.
@@ -420,7 +428,7 @@ async function createTrayMenu() {
             }
         },
         {
-            label: i18n.t('menu.aboutKmeet'),
+            label: `${i18n.t('menu.aboutKmeet')} ${APP_VERSION}`,
             click: () => {
                 shell.openExternal('https://www.infomaniak.com/kmeet');
             }
