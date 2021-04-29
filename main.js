@@ -34,11 +34,6 @@ const autoLauncher = new AutoLaunch({
     name: 'kMeet',
     isHidden: true
 });
-let autoLauncherEnable = false;
-
-autoLauncher.isEnabled().then(isEnabled => {
-    autoLauncherEnable = isEnabled;
-});
 
 // We need this because of https://github.com/electron/electron/issues/18214
 app.commandLine.appendSwitch('disable-site-isolation-trials');
@@ -365,7 +360,7 @@ function handleClickOnTrayMenu(event) {
 /**
  * Create the tray menu
  */
-function createTrayMenu() {
+async function createTrayMenu() {
     const basePath = getAppPath();
 
     let iconPath = path.resolve(basePath, './resources/icons/icon@2x.png');
@@ -375,6 +370,8 @@ function createTrayMenu() {
     }
 
     tray = new Tray(iconPath);
+
+    let autoLauncherEnable = await autoLauncher.isEnabled();
 
     const contextMenu = Menu.buildFromTemplate([
         {
@@ -516,9 +513,9 @@ app.on('certificate-error',
     }
 );
 
-app.on('ready', () => {
+app.on('ready', async () => {
     createJitsiMeetWindow();
-    createTrayMenu();
+    await createTrayMenu();
 });
 
 if (isDev) {
