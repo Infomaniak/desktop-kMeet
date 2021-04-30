@@ -115,7 +115,13 @@ function setApplicationMenu() {
                 { role: 'hideothers' },
                 { role: 'unhide' },
                 { type: 'separator' },
-                { role: 'quit' }
+                {
+                    label: i18n.t('menu.quit'),
+                    accelerator: 'CmdOrCtrl+Q',
+                    click: () => {
+                        mainWindow.close();
+                    }
+                }
             ]
         },
         {
