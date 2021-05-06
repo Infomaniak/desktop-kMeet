@@ -35,6 +35,7 @@ const autoLauncher = new AutoLaunch({
     name: 'kMeet',
     isHidden: true
 });
+let redirectedToLogin = false;
 
 // We need this because of https://github.com/electron/electron/issues/18214
 app.commandLine.appendSwitch('disable-site-isolation-trials');
@@ -263,6 +264,32 @@ function createJitsiMeetWindow() {
 
     mainWindow.webContents.session.webRequest.onHeadersReceived({ urls: [ '*://*/*' ] },
         (d, c) => {
+            if (d.url.indexOf('auth/login/meet') > 0 || d.url.indexOf('auth/logout') > 0) {
+                redirectedToLogin = '/';
+
+                if (d.url.indexOf('auth/login/meet') > 0) {
+                    const joinUrl = new URL(d.url);
+
+                    redirectedToLogin = joinUrl.searchParams.get('uri');
+                }
+            }
+
+            if (redirectedToLogin !== false) {
+                if (d.url.indexOf('welcomePage.viewed') > 0 || d.url.indexOf(`/meet/conference${redirectedToLogin}/options`) > 0) {
+
+                    const redirectUri = redirectedToLogin;
+
+                    redirectedToLogin = false;
+
+                    mainWindow
+                        .webContents
+                        .send(
+                            'protocol-data-homepage',
+                            redirectUri
+                        );
+                }
+            }
+
             if (d.url.indexOf('welcomePage.joinButton.clicked') > 0) {
                 const joinUrl = new URL(d.url);
                 const searchParams = JSON.parse(joinUrl.searchParams.get('cvar'));

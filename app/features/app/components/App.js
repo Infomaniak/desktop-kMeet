@@ -10,6 +10,7 @@ import { Conference } from '../../conference';
 import config from '../../config';
 import { history } from '../../router';
 import { Welcome } from '../../welcome';
+import { Login } from '../../login';
 import { createConferenceObjectFromURL } from '../../utils';
 
 /**
@@ -28,6 +29,7 @@ class App extends Component<*> {
 
         this._listenOnProtocolMessages
             = this._listenOnProtocolMessages.bind(this);
+        this._listenOnProtocolHomePage = this._listenOnProtocolHomePage.bind(this);
     }
 
     /**
@@ -38,6 +40,7 @@ class App extends Component<*> {
     componentDidMount() {
         // start listening on this events
         window.jitsiNodeAPI.ipc.on('protocol-data-msg', this._listenOnProtocolMessages);
+        window.jitsiNodeAPI.ipc.on('protocol-data-homepage', this._listenOnProtocolHomePage);
 
         // send notification to main process
         window.jitsiNodeAPI.ipc.send('renderer-ready');
@@ -53,6 +56,10 @@ class App extends Component<*> {
         window.jitsiNodeAPI.ipc.removeListener(
             'protocol-data-msg',
             this._listenOnProtocolMessages
+        );
+        window.jitsiNodeAPI.ipc.removeListener(
+            'protocol-data-homepage',
+            this._listenOnProtocolHomePage
         );
     }
 
@@ -79,6 +86,21 @@ class App extends Component<*> {
         this.props.dispatch(push('/conference', conference));
     }
 
+    _listenOnProtocolHomePage: (*) => void;
+
+    /**
+     * Handler when main proccess contact us.
+     *
+     * @param {Object} event - Message event triggered by .
+     * @param {Object} arg - String with room and optionally server url.
+     *
+     * @returns {void}
+     */
+    _listenOnProtocolHomePage(event, uri) {
+        // change route when we are notified
+        this.props.dispatch(push('/login', uri));
+    }
+
     /**
      * Implements React's {@link Component#render()}.
      *
@@ -97,6 +119,9 @@ class App extends Component<*> {
                         <Route
                             component = { Conference }
                             path = '/conference' />
+                        <Route
+                            component = { Login }
+                            path = '/login' />
                     </Switch>
                 </Router>
             </AtlasKitThemeProvider>
