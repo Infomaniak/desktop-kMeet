@@ -189,20 +189,7 @@ function setApplicationMenu() {
  */
 function getAppPath() {
     // Path to root directory.
-    let basePath = isDev ? __dirname : app.getAppPath();
-
-    // runtime detection on mac if this is a universal build with app-arm64.asar'
-    // as prepared in https://github.com/electron/universal/blob/master/src/index.ts
-    // if universal build, load the arch-specific real asar as the app does not load otherwise
-    if (process.platform === 'darwin' && existsSync(path.join(app.getAppPath(), '..', 'app-arm64.asar'))) {
-        if (process.arch === 'arm64') {
-            basePath = app.getAppPath().replace('app.asar', 'app-arm64.asar');
-        } else if (process.arch === 'x64') {
-            basePath = app.getAppPath().replace('app.asar', 'app-x64.asar');
-        }
-    }
-
-    return basePath;
+    return isDev ? __dirname : app.getAppPath();
 }
 
 /**

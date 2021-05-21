@@ -41,11 +41,11 @@
       "artifactName": "kMeet.${ext}",
       "target": [
         {
-          "arch": "universal",
+          "arch": "x64",
           "target": "dmg"
         },
         {
-          "arch": "universal",
+          "arch": "x64",
           "target": "zip"
         }
       ],
