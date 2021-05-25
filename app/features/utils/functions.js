@@ -70,7 +70,7 @@ export function createConferenceObjectFromURL(inputURL: string) {
     let subject = room;
 
     if (slashed.length > 2) {
-        subject = slashed[2];
+        subject = decodeURIComponent(slashed[2]);
     }
 
     // Don't navigate if no room was specified.
