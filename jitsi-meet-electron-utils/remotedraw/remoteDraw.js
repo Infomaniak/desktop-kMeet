@@ -15,8 +15,7 @@ ctx.canvas.height = window.innerHeight;
 var cleaningInterval;
 var draws = [];
 
-ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, {data}) => {
-
+ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
     if (!draws[data.participantId]) {
         draws[data.participantId] = {
             drawing: false,
@@ -43,8 +42,8 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, {data}) => {
             ctx.strokeStyle = draws[data.participantId].color;
 
             if (draws[data.participantId].positions.x) {
-                ctx.moveTo(draws[data.participantId].positions.x, draws[data.participantId].positions.y);
-                ctx.lineTo(data.destX, data.destY);
+                ctx.moveTo(draws[data.participantId].positions.x, draws[data.participantId].positions.y - display.workArea.y);
+                ctx.lineTo(data.destX, data.destY - display.workArea.y);
                 ctx.stroke();
 
                 cleaningInterval = setInterval(() => {

@@ -210,7 +210,7 @@ class RemoteDraw {
         this._screenShareDrawer.loadURL(`file://${__dirname}/remoteDraw.html`);
 
         electron.remote.ipcMain.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, datas) => {
-            this._screenShareDrawer.webContents.send(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, datas);
+            this._screenShareDrawer.webContents.send(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, datas, this._display);
         });
     }
 
@@ -319,7 +319,8 @@ class RemoteDraw {
                     destY,
                     color: data.color,
                     participantId: data.participantId
-                }
+                },
+                display: this._display
             });
 
             break;
@@ -328,23 +329,15 @@ class RemoteDraw {
         case EVENTS.mouseup: {
             this._mouseButtonStatus
                     = MOUSE_ACTIONS_FROM_EVENT_TYPE[data.type];
-            const {
-                width,
-                height
-            } = this._display.bounds;
-            const scaleFactor = this._getDisplayScaleFactor();
-            const destX = data.x * width * scaleFactor;
-            const destY = data.y * height * scaleFactor;
 
             ipcRenderer.send(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, {
                 data: {
                     type: data.type,
-                    destX,
-                    destY,
                     status: this._mouseButtonStatus,
                     color: data.color,
                     participantId: data.participantId
-                }
+                },
+                display: this._display
             });
 
             break;
