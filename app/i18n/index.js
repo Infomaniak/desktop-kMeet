@@ -1,4 +1,6 @@
 import i18n from 'i18next';
+const { app } = require('electron');
+
 import { initReactI18next } from 'react-i18next';
 
 const languages = {
@@ -12,7 +14,7 @@ const languages = {
 i18n
     .use(initReactI18next)
     .init({
-        lng: 'fr',
+        lng: app.getLocale(),
         resources: languages,
         fallbackLng: 'en',
         interpolation: {

@@ -25,7 +25,6 @@ const URI = require('url');
 const config = require('./app/features/config');
 const { openExternalLink } = require('./app/features/utils/openExternalLink');
 const pkgJson = require('./package.json');
-const { existsSync } = require('fs');
 const APP_VERSION = require('./package.json').version;
 const i18n = require('./app/i18n').default;
 const showDevTools = Boolean(process.env.SHOW_DEV_TOOLS) || (process.argv.indexOf('--show-dev-tools') > -1);
