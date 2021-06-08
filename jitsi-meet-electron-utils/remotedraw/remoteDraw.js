@@ -30,7 +30,7 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
     } else if (data.type === 'mousedown') {
         draws[data.participantId].drawing = true;
     } else if (data.type === 'mousemove') {
-
+        draws[data.participantId].color = data.color;
         if (draws[data.participantId].drawing) {
             if (cleaningInterval) {
                 clearInterval(cleaningInterval);
@@ -39,7 +39,7 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
             ctx.beginPath();
             ctx.lineWidth = 5;
             ctx.lineCap = 'round';
-            ctx.strokeStyle = draws[data.participantId].color;
+            ctx.strokeStyle = data.color;
 
             if (draws[data.participantId].positions.x) {
                 ctx.moveTo(draws[data.participantId].positions.x, draws[data.participantId].positions.y - display.workArea.y);
