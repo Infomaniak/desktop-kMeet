@@ -250,6 +250,7 @@ function draw(id, strokeOptions = {}, gco = "source-over", coords = undefined) {
     alg,
     true
   );
+
   const pathData = new Path2D(path);
   draws[id].path = pathData;
   ctx.fill(pathData);
@@ -301,9 +302,12 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
       draws[data.participantId].coords = [];
       cleaningInterval[data.participantId] = setInterval(() => {
         redraw(data.participantId);
-        draws[data.participantId].dirty = false;
+          draws[data.participantId].dirty = false;
+          if (document.getElementById(data.participantId)) {
+              document.getElementById(data.participantId).remove();
+          }
         clearInterval(cleaningInterval[data.participantId]);
-      }, 4000);
+      }, 3000);
 
       break;
     case "mousedown":
