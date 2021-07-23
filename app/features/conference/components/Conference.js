@@ -3,6 +3,7 @@
 import Spinner from '@atlaskit/spinner';
 
 import React, { Component } from 'react';
+import { renderer } from 'react-dom';
 import type { Dispatch } from 'redux';
 import { connect } from 'react-redux';
 import { push } from 'react-router-redux';
@@ -197,7 +198,7 @@ class Conference extends Component<Props, State> {
         setupScreenSharingRender(this._api);
 
         new RemoteControl(iframe); // eslint-disable-line no-new
-        new RemoteDraw(iframe); // eslint-disable-line no-new
+        new RemoteDraw(iframe, renderer); // eslint-disable-line no-new
 
         setupAlwaysOnTopRender(this._api);
 

@@ -19,7 +19,7 @@ export default {
     /**
      * The default server URL of Jitsi Meet Deployment that will be used.
      */
-    defaultServerURL: 'https://kmeet.infomaniak.com',
+    defaultServerURL: 'https://localhost:8080',
 
     /**
      * The default server Timeout in seconds.

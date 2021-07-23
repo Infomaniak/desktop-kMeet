@@ -160,6 +160,8 @@
     "lodash": "4.17.21",
     "moment": "^2.29.1",
     "mousetrap": "^1.6.5",
+    "perfect-freehand": "^0.4.91",
+    "polygon-clipping": "^0.15.3",
     "react": "^16.14.0",
     "react-dom": "^16.14.0",
     "react-i18next": "^11.8.12",

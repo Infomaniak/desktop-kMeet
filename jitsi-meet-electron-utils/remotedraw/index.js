@@ -198,6 +198,7 @@ class RemoteDraw {
             frame: false,
             alwaysOnTop: true,
             backgroundColor: '#00FFFFFF',
+            hasShadow: false,
             webPreferences: {
                 contextIsolation: false,
                 enableRemoteModule: true,
@@ -318,7 +319,8 @@ class RemoteDraw {
                     destX,
                     destY,
                     color: data.color,
-                    participantId: data.participantId
+                    participantId: data.participantId,
+                    nameLabel: data.nameLabel
                 },
                 display: this._display
             });
@@ -335,7 +337,8 @@ class RemoteDraw {
                     type: data.type,
                     status: this._mouseButtonStatus,
                     color: data.color,
-                    participantId: data.participantId
+                    participantId: data.participantId,
+                    nameLabel: data.nameLabel
                 },
                 display: this._display
             });
