@@ -180,9 +180,9 @@ function round(value, precision) {
 function redraw(id) {
 //   draw(id, { size: 15 }, "destination-out", coords);
 //   draws[id].coords = [];
-//   ctx.globalCompositeOperation = 'copy';
-//   ctx.fillStyle = 'rgba(0,0,0,0)';
-//   ctx.fill(draws[id].path);
+  ctx.globalCompositeOperation = 'copy';
+  ctx.fillStyle = 'rgba(0,0,0,0)';
+  ctx.fill(draws[id].path);
 
   // if we dont have an associated interval when this is called that means this was called recursively
   // after the interval has been cleared so we avoid the race condition here.
