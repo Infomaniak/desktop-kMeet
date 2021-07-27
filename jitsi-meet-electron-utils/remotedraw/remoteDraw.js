@@ -99,6 +99,7 @@ function getSvgPathFromStroke(stroke) {
 function getStrokePath(mark, simulatePressure, options, last) {
   const stroke = getStroke(mark.points, {
     ...options,
+    smoothing: 4,
     easing: options.easing.evaluate,
     simulatePressure,
     start: {
@@ -134,6 +135,7 @@ canvas.style.position = "fixed";
 nameLayer.style.position = "fixed";
 nameLayer.style.height = "100%";
 nameLayer.style.width = "100%";
+nameLayer.style.fontFamily = "SuisseIntl";
 document.body.appendChild(nameLayer);
 
 // get canvas 2D context and set him correct size
@@ -178,9 +180,9 @@ function round(value, precision) {
 function redraw(id) {
 //   draw(id, { size: 15 }, "destination-out", coords);
 //   draws[id].coords = [];
-  ctx.globalCompositeOperation = 'copy';
-  ctx.fillStyle = 'rgba(0,0,0,0)';
-  ctx.fill(draws[id].path);
+//   ctx.globalCompositeOperation = 'copy';
+//   ctx.fillStyle = 'rgba(0,0,0,0)';
+//   ctx.fill(draws[id].path);
 
   // if we dont have an associated interval when this is called that means this was called recursively
   // after the interval has been cleared so we avoid the race condition here.
@@ -228,7 +230,13 @@ function draw(id, strokeOptions = {}, gco = "source-over", coords = undefined) {
   ctx.fillStyle = draws[id].color;
   ctx.strokeStyle = draws[id].color;
   ctx.globalCompositeOperation = gco;
+  ctx.lineWidth = 1;
+  ctx.lineCap = 'round';
+  ctx.shadowBlur = 2;
+  ctx.shadowColor = draws[id].color;
 
+  ctx.stroke(draws[id].path);
+  draws[id].dirty = false;
   //   if (lastX && lastY && (x !== lastX || y !== lastY)) {
   //     ctx.lineWidth = size * 2;
   //     ctx.beginPath();
@@ -242,18 +250,18 @@ function draw(id, strokeOptions = {}, gco = "source-over", coords = undefined) {
   //   ctx.arc(x, y, size, 0, Math.PI * 2, true);
   //   ctx.closePath();
   //   ctx.fill();
-  const alg = Object.assign({}, defaultOptions, strokeOptions);
+//   const alg = Object.assign({}, defaultOptions, strokeOptions);
 
-  const path = getStrokePath(
-    { points: coords ?? draws[id].coords },
-    false,
-    alg,
-    true
-  );
+//   const path = getStrokePath(
+//     { points: coords ?? draws[id].coords },
+//     false,
+//     alg,
+//     true
+//   );
 
-  const pathData = new Path2D(path);
-  draws[id].path = pathData;
-  ctx.fill(pathData);
+//   const pathData = new Path2D(path);
+//   draws[id].path = pathData;
+//   ctx.fill(pathData);
 }
 
 function onMouseMove(destX, destY, color, id) {
@@ -264,14 +272,22 @@ function onMouseMove(destX, destY, color, id) {
     label.style.top = destY + 10 + "px";
     label.style.left = destX + "px";
     label.style.backgroundColor = color;
-    draws[id].coords.push({ x: destX, y: destY });
-    document.getElementById(id).style.opacity = 1;
-    draw(id);
+    label.style.opacity = '1';
+    //   draws[id].coords.push({ x: destX, y: destY });
+    draws[id].path.lineTo( destX, destY );
+
+    if (!draws[id].dirty) {
+        draws[id].dirty = true;
+        // requestAnimationFrame(function (id) {
+            draw(id);
+        // });
+    }
+    // draw(id);
   }
 }
 
 ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
-  if (!document.getElementById(data.participantId)) {
+    if (!document.getElementById(data.participantId)) {
     var nameLabel = document.createElement("span");
     nameLabel.style.opacity = 1;
     nameLabel.style.position = "absolute";
@@ -299,26 +315,24 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
   switch (data.type) {
     case "mouseup":
       draws[data.participantId].drawing = false;
-      draws[data.participantId].coords = [];
       cleaningInterval[data.participantId] = setInterval(() => {
         redraw(data.participantId);
           draws[data.participantId].dirty = false;
           if (document.getElementById(data.participantId)) {
               document.getElementById(data.participantId).remove();
           }
-        clearInterval(cleaningInterval[data.participantId]);
       }, 3000);
 
       break;
     case "mousedown":
       if (
-        draws[data.participantId].dirty &&
-        !draws[data.participantId].drawing
+        cleaningInterval[data.participantId]
       ) {
         clearInterval(cleaningInterval[data.participantId]);
       }
       draws[data.participantId].drawing = true;
-      draws[data.participantId].dirty = true;
+      draws[data.participantId].path = new Path2D();
+      draws[data.participantId].path.moveTo(data.destX, data.destY);
 
       break;
     case "mousemove":
