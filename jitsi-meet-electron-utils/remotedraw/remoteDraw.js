@@ -83,21 +83,21 @@ function round(value, precision) {
   return Math.round(value * multiplier) / multiplier;
 }
 
-function redraw(path) {
-  ctx.globalCompositeOperation = 'source-over';
-  ctx.fillStyle = 'rgba(0,0,0,0)';
-  ctx.shadowColor = 'rgba(0,0,0,0)';
-  ctx.shadowBlur = 0;
-  ctx.fill(path);
-}
+// function redraw(path) {
+//   ctx.globalCompositeOperation = 'source-over';
+//   ctx.fillStyle = 'rgba(0,0,0,0)';
+//   ctx.shadowColor = 'rgba(0,0,0,0)';
+//   ctx.shadowBlur = 0;
+//   ctx.fill(path);
+// }
 
 function draw(id, strokeOptions = {}, gco = "source-over", coords = undefined) {
   ctx.fillStyle = draws[id].color;
   ctx.strokeStyle = draws[id].color;
   ctx.globalCompositeOperation = gco;
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 2;
   ctx.lineCap = 'round';
-  ctx.shadowBlur = 2;
+  ctx.shadowBlur = 1;
   ctx.shadowColor = draws[id].color;
 
   ctx.stroke(draws[id].path);
@@ -153,7 +153,7 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
           draws[data.participantId].drawing = false;
           cleaningInterval[data.participantId] = setTimeout(() => {
 
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
           Object.keys(draws).forEach(pid => {
               if (pid !== data.participantId) {
                   draw(pid);
