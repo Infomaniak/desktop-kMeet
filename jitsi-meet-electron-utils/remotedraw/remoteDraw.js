@@ -40,91 +40,6 @@ const defaultOptions = {
   },
 };
 
-/**
- * The following code is needed as string to create a URL from a Blob.
- * The URL is then passed to a WebWorker. Reason for this is to enable
- * use of setInterval that is not throttled when tab is inactive.
- */
-// const code = `
-//       var timer;
-
-//       onmessage = function(request) {
-//           switch (request.data.id) {
-//           case ${SET_INTERVAL}: {
-//               timer = setInterval(() => {
-//                   postMessage({ id: ${INTERVAL_TIMEOUT} });
-//               }, request.data.timeMs);
-//               break;
-//           }
-//           case ${CLEAR_INTERVAL}: {
-//               if (timer) {
-//                   clearInterval(timer);
-//               }
-//               break;
-//           }
-//           }
-//       };
-//   `;
-
-function getSvgPathFromStroke(stroke) {
-  if (!stroke.length) return "";
-
-  const d = stroke.reduce(
-    (acc, [x0, y0], i, arr) => {
-      const [x1, y1] = arr[(i + 1) % arr.length];
-      acc.push(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
-      return acc;
-    },
-    ["M", ...stroke[0], "Q"]
-  );
-
-  d.push("Z");
-  return d.join(" ");
-}
-
-// function getFlatSvgPathFromStroke(stroke) {
-//   const poly = polygonClipping.union([stroke]);
-
-//   const d = [];
-
-//   for (let face of poly) {
-//     for (let points of face) {
-//       d.push(getSvgPathFromStroke(points));
-//     }
-//   }
-
-//   return d.join(" ");
-// }
-
-function getStrokePath(mark, simulatePressure, options, last) {
-  const stroke = getStroke(mark.points, {
-    ...options,
-    smoothing: 4,
-    easing: options.easing.evaluate,
-    simulatePressure,
-    start: {
-      taper: options.taperStart,
-      easing: options.taperStartEasing.evaluate,
-    },
-    end: {
-      taper: options.taperEnd,
-      easing: options.taperEndEasing.evaluate,
-    },
-    last,
-  });
-
-  //   const path = options.clip
-  //     ? getFlatSvgPathFromStroke(stroke)
-  //     : getSvgPathFromStroke(stroke);
-  const path = getSvgPathFromStroke(stroke);
-
-  return path;
-}
-
-// const timerWorkerScript = URL.createObjectURL(
-//   new Blob([code], { type: "application/javascript" })
-// );
-
 // create canvas element and append it to document body
 var canvas = document.createElement("canvas");
 var nameLayer = document.createElement("div");
@@ -147,15 +62,6 @@ var cleaningInterval = {};
 var draws = {};
 var timeouts = {};
 
-// const _maskFrameTimerWorker = new Worker(timerWorkerScript, {
-//   name: "Draw effect worker",
-// });
-// _maskFrameTimerWorker.onmessage = _onFrameTimer;
-
-// _maskFrameTimerWorker.postMessage({
-//     id: SET_INTERVAL,
-//     timeMs: 1000 / 30,
-// });
 
 function _onFrameTimer(response) {
   if (response.data.id === INTERVAL_TIMEOUT) {
@@ -177,56 +83,15 @@ function round(value, precision) {
   return Math.round(value * multiplier) / multiplier;
 }
 
-function redraw(id) {
-//   draw(id, { size: 15 }, "destination-out", coords);
-//   draws[id].coords = [];
-  ctx.globalCompositeOperation = 'copy';
+function redraw(path) {
+  ctx.globalCompositeOperation = 'source-over';
   ctx.fillStyle = 'rgba(0,0,0,0)';
-  ctx.fill(draws[id].path);
-
-  // if we dont have an associated interval when this is called that means this was called recursively
-  // after the interval has been cleared so we avoid the race condition here.
-  //   if (!cleaningInterval[id]) {
-  //       return;
-  //   }
-
-  //   for (let i = 0; i < coords.length - 1; i++) {
-  //     const x = coords[i].x;
-  //     const y = coords[i].y;
-  //     const nextX = coords[i + 1].x;
-  //     const nextY = coords[i + 1].y;
-  //     draw(nextX, nextY, coords[i].dragging, 3, "#000000", id, 0, x, y, "destination-out");
-  //   }
-  //   document.getElementById(id).style.opacity = 0;
-
-  //   const c = hexToRgb(color.split("#")[1]);
-  //   const newAlpha = alpha < 1 ? round(alpha - 0.05, 2) : 1;
-  //   const newColor = "rgba(" + c + ", " + newAlpha + ")";
-
-  //   if (newAlpha < 0) {
-  //     clearTimeout(timeouts[id]);
-  //     draws[id].coords = [];
-  //     draws[id].dirty = false;
-
-  //     return;
-  //   }
-  //   timeouts[id] = setTimeout(() => {
-  //     for (let i = 0; i < coords.length - 1; i++) {
-  //       const x = coords[i].x;
-  //       const y = coords[i].y;
-  //       const nextX = coords[i + 1].x;
-  //       const nextY = coords[i + 1].y;
-  //       document.getElementById(id).style.opacity = newAlpha;
-  //       draw(nextX, nextY, coords[i].dragging, 3, "#000000", id, newAlpha, x, y, "destination-out");
-  //       draw(nextX, nextY, coords[i].dragging, 2, newColor, id, newAlpha, x, y);
-  //     }
-  //     if (!restore) redraw(coords, id, color, newAlpha);
-  //   }, 200);
+  ctx.shadowColor = 'rgba(0,0,0,0)';
+  ctx.shadowBlur = 0;
+  ctx.fill(path);
 }
 
 function draw(id, strokeOptions = {}, gco = "source-over", coords = undefined) {
-  //   const lastX = lx ?? draws[id].positions.x;
-  //   const lastY = ly ?? draws[id].positions.y;
   ctx.fillStyle = draws[id].color;
   ctx.strokeStyle = draws[id].color;
   ctx.globalCompositeOperation = gco;
@@ -237,31 +102,6 @@ function draw(id, strokeOptions = {}, gco = "source-over", coords = undefined) {
 
   ctx.stroke(draws[id].path);
   draws[id].dirty = false;
-  //   if (lastX && lastY && (x !== lastX || y !== lastY)) {
-  //     ctx.lineWidth = size * 2;
-  //     ctx.beginPath();
-  //     ctx.moveTo(lastX, lastY);
-  //     if (shouldStroke) {
-  //       ctx.lineTo(x, y);
-  //       ctx.stroke();
-  //     }
-  //   }
-  //   ctx.beginPath();
-  //   ctx.arc(x, y, size, 0, Math.PI * 2, true);
-  //   ctx.closePath();
-  //   ctx.fill();
-//   const alg = Object.assign({}, defaultOptions, strokeOptions);
-
-//   const path = getStrokePath(
-//     { points: coords ?? draws[id].coords },
-//     false,
-//     alg,
-//     true
-//   );
-
-//   const pathData = new Path2D(path);
-//   draws[id].path = pathData;
-//   ctx.fill(pathData);
 }
 
 function onMouseMove(destX, destY, color, id) {
@@ -273,23 +113,19 @@ function onMouseMove(destX, destY, color, id) {
     label.style.left = destX + "px";
     label.style.backgroundColor = color;
     label.style.opacity = '1';
-    //   draws[id].coords.push({ x: destX, y: destY });
     draws[id].path.lineTo( destX, destY );
 
     if (!draws[id].dirty) {
         draws[id].dirty = true;
-        // requestAnimationFrame(function (id) {
-            draw(id);
-        // });
+        draw(id);
     }
-    // draw(id);
   }
 }
 
 ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
     if (!document.getElementById(data.participantId)) {
     var nameLabel = document.createElement("span");
-    nameLabel.style.opacity = 1;
+    nameLabel.style.opacity = '1';
     nameLabel.style.position = "absolute";
     nameLabel.id = data.participantId;
     nameLabel.style.backgroundColor = data.color;
@@ -314,9 +150,15 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
 
   switch (data.type) {
     case "mouseup":
-      draws[data.participantId].drawing = false;
-      cleaningInterval[data.participantId] = setInterval(() => {
-        redraw(data.participantId);
+          draws[data.participantId].drawing = false;
+          cleaningInterval[data.participantId] = setTimeout(() => {
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+          Object.keys(draws).forEach(pid => {
+              if (pid !== data.participantId) {
+                  draw(pid);
+              }
+          });
           draws[data.participantId].dirty = false;
           if (document.getElementById(data.participantId)) {
               document.getElementById(data.participantId).remove();
@@ -328,7 +170,7 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
       if (
         cleaningInterval[data.participantId]
       ) {
-        clearInterval(cleaningInterval[data.participantId]);
+        clearTimeout(cleaningInterval[data.participantId]);
       }
       draws[data.participantId].drawing = true;
       draws[data.participantId].path = new Path2D();
@@ -337,9 +179,6 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
       break;
     case "mousemove":
       onMouseMove(data.destX, data.destY, data.color, data.participantId);
-      //   draws[data.participantId].positions.x = data.destX;
-      //   draws[data.participantId].positions.y = data.destY - 20;
-
       break;
 
     default:
