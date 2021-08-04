@@ -151,20 +151,6 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
   switch (data.type) {
     case "mouseup":
           draws[data.participantId].drawing = false;
-          cleaningInterval[data.participantId] = setTimeout(() => {
-
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          Object.keys(draws).forEach(pid => {
-              if (pid !== data.participantId) {
-                  draw(pid);
-              }
-          });
-          draws[data.participantId].dirty = false;
-          if (document.getElementById(data.participantId)) {
-              document.getElementById(data.participantId).remove();
-          }
-      }, 3000);
-
       break;
     case "mousedown":
       if (
@@ -178,7 +164,25 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
 
       break;
     case "mousemove":
+      if (
+        cleaningInterval[data.participantId]
+      ) {
+        clearTimeout(cleaningInterval[data.participantId]);
+      }
       onMouseMove(data.destX, data.destY, data.color, data.participantId);
+      cleaningInterval[data.participantId] = setTimeout(() => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            Object.keys(draws).forEach(pid => {
+                if (pid !== data.participantId) {
+                    draw(pid);
+                }
+            });
+            draws[data.participantId].dirty = false;
+            draws[data.participantId].drawing = false;
+            if (document.getElementById(data.participantId)) {
+                document.getElementById(data.participantId).remove();
+            }
+          }, 3000);
       break;
 
     default:
