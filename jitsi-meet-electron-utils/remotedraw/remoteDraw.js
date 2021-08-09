@@ -124,18 +124,18 @@ function onMouseMove(destX, destY, color, id) {
 
 ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
     if (!document.getElementById(data.participantId)) {
-    var nameLabel = document.createElement("span");
-    nameLabel.style.opacity = '1';
-    nameLabel.style.position = "absolute";
-    nameLabel.id = data.participantId;
-    nameLabel.style.backgroundColor = data.color;
-    nameLabel.style.color = "white";
-    nameLabel.style.padding = "5px";
-    nameLabel.style.borderRadius = "2px";
+      var nameLabel = document.createElement("span");
+      nameLabel.style.opacity = '0';
+      nameLabel.style.position = "absolute";
+      nameLabel.id = data.participantId;
+      nameLabel.style.backgroundColor = data.color;
+      nameLabel.style.color = "white";
+      nameLabel.style.padding = "5px";
+      nameLabel.style.borderRadius = "2px";
 
-    const txt = document.createTextNode(data.nameLabel);
-    nameLabel.appendChild(txt);
-    nameLayer.appendChild(nameLabel);
+      const txt = document.createTextNode(data.nameLabel);
+      nameLabel.appendChild(txt);
+      nameLayer.appendChild(nameLabel);
   }
   if (!draws[data.participantId]) {
     draws[data.participantId] = {
