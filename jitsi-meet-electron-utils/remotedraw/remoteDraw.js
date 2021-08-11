@@ -101,6 +101,10 @@ function draw(id, strokeOptions = {}, gco = "source-over", coords = undefined) {
   ctx.shadowColor = draws[id].color;
 
   ctx.stroke(draws[id].path);
+
+  const label = document.getElementById(id);
+  label.style.opacity = '1';
+
   draws[id].dirty = false;
 }
 
@@ -112,7 +116,6 @@ function onMouseMove(destX, destY, color, id) {
     label.style.top = destY + 10 + "px";
     label.style.left = destX + "px";
     label.style.backgroundColor = color;
-    label.style.opacity = '1';
     draws[id].path.lineTo( destX, destY );
 
     if (!draws[id].dirty) {
@@ -177,6 +180,7 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
                 document.getElementById(data.participantId).remove();
             }
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            draws[data.participantId].path = new Path2D();
             Object.keys(draws).forEach(pid => {
                 if (pid !== data.participantId) {
                     draw(pid);
