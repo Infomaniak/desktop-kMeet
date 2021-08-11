@@ -102,9 +102,6 @@ function draw(id, strokeOptions = {}, gco = "source-over", coords = undefined) {
 
   ctx.stroke(draws[id].path);
 
-  const label = document.getElementById(id);
-  label.style.opacity = '1';
-
   draws[id].dirty = false;
 }
 
@@ -112,15 +109,18 @@ function onMouseMove(destX, destY, color, id) {
   draws[id].color = color;
   destY = destY - 20;
   if (draws[id].drawing) {
-    const label = document.getElementById(id);
-    label.style.top = destY + 10 + "px";
-    label.style.left = destX + "px";
-    label.style.backgroundColor = color;
     draws[id].path.lineTo( destX, destY );
 
     if (!draws[id].dirty) {
-        draws[id].dirty = true;
-        draw(id);
+      draws[id].dirty = true;
+      const label = document.getElementById(id);
+      if (label) {
+        label.style.top = destY + 10 + "px";
+        label.style.left = destX + "px";
+        label.style.backgroundColor = color;
+        label.style.opacity = '1';
+      }
+      draw(id);
     }
   }
 }
@@ -146,13 +146,12 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
         clearTimeout(cleaningInterval[data.participantId]);
       }
 
-      if (!document.getElementById(data.participantId)) {
-        var nameLabel = document.createElement("span");
-        nameLabel.style.opacity = '0';
+      var nameLabel = document.getElementById(data.participantId)
+
+      if (!nameLabel) {
+        nameLabel = document.createElement("span");
         nameLabel.style.position = "absolute";
         nameLabel.id = data.participantId;
-        nameLabel.style.top = "-2000px";
-        nameLabel.style.left = "-2000px";
         nameLabel.style.backgroundColor = data.color;
         nameLabel.style.color = "white";
         nameLabel.style.padding = "5px";
@@ -162,6 +161,9 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
         nameLabel.appendChild(txt);
         nameLayer.appendChild(nameLabel);
       }
+      nameLabel.style.opacity = '0';
+      nameLabel.style.top = "-2000px";
+      nameLabel.style.left = "-2000px";
 
       draws[data.participantId].drawing = true;
       draws[data.participantId].path = new Path2D();
