@@ -123,20 +123,6 @@ function onMouseMove(destX, destY, color, id) {
 }
 
 ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
-    if (!document.getElementById(data.participantId)) {
-      var nameLabel = document.createElement("span");
-      nameLabel.style.opacity = '0';
-      nameLabel.style.position = "absolute";
-      nameLabel.id = data.participantId;
-      nameLabel.style.backgroundColor = data.color;
-      nameLabel.style.color = "white";
-      nameLabel.style.padding = "5px";
-      nameLabel.style.borderRadius = "2px";
-
-      const txt = document.createTextNode(data.nameLabel);
-      nameLabel.appendChild(txt);
-      nameLayer.appendChild(nameLabel);
-  }
   if (!draws[data.participantId]) {
     draws[data.participantId] = {
       drawing: false,
@@ -150,14 +136,30 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
 
   switch (data.type) {
     case "mouseup":
-          draws[data.participantId].drawing = false;
+      draws[data.participantId].drawing = false;
       break;
     case "mousedown":
-      if (
-        cleaningInterval[data.participantId]
-      ) {
+      if (cleaningInterval[data.participantId]) {
         clearTimeout(cleaningInterval[data.participantId]);
       }
+
+      if (!document.getElementById(data.participantId)) {
+        var nameLabel = document.createElement("span");
+        nameLabel.style.opacity = '0';
+        nameLabel.style.position = "absolute";
+        nameLabel.id = data.participantId;
+        nameLabel.style.top = "-2000px";
+        nameLabel.style.left = "-2000px";
+        nameLabel.style.backgroundColor = data.color;
+        nameLabel.style.color = "white";
+        nameLabel.style.padding = "5px";
+        nameLabel.style.borderRadius = "2px";
+
+        const txt = document.createTextNode(data.nameLabel);
+        nameLabel.appendChild(txt);
+        nameLayer.appendChild(nameLabel);
+      }
+
       draws[data.participantId].drawing = true;
       draws[data.participantId].path = new Path2D();
       draws[data.participantId].path.moveTo(data.destX, data.destY);
@@ -171,6 +173,9 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
       }
       onMouseMove(data.destX, data.destY, data.color, data.participantId);
       cleaningInterval[data.participantId] = setTimeout(() => {
+            if (document.getElementById(data.participantId)) {
+                document.getElementById(data.participantId).remove();
+            }
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             Object.keys(draws).forEach(pid => {
                 if (pid !== data.participantId) {
@@ -179,9 +184,6 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
             });
             draws[data.participantId].dirty = false;
             draws[data.participantId].drawing = false;
-            if (document.getElementById(data.participantId)) {
-                document.getElementById(data.participantId).remove();
-            }
           }, 3000);
       break;
 
