@@ -105,9 +105,9 @@ function draw(id, strokeOptions = {}, gco = "source-over", coords = undefined) {
   draws[id].dirty = false;
 }
 
-function onMouseMove(destX, destY, color, id) {
+function onMouseMove(destX, destY, color, id, display) {
   draws[id].color = color;
-  destY = destY - 20;
+  destY = destY - display.workArea.y;
   if (draws[id].drawing) {
     draws[id].path.lineTo( destX, destY );
 
@@ -167,7 +167,7 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
 
       draws[data.participantId].drawing = true;
       draws[data.participantId].path = new Path2D();
-      draws[data.participantId].path.moveTo(data.destX, data.destY);
+      draws[data.participantId].path.moveTo(data.destX, data.destY - display.workArea.y);
 
       break;
     case "mousemove":
@@ -176,7 +176,7 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
       ) {
         clearTimeout(cleaningInterval[data.participantId]);
       }
-      onMouseMove(data.destX, data.destY, data.color, data.participantId);
+      onMouseMove(data.destX, data.destY, data.color, data.participantId, display);
       cleaningInterval[data.participantId] = setTimeout(() => {
             if (document.getElementById(data.participantId)) {
                 document.getElementById(data.participantId).remove();
