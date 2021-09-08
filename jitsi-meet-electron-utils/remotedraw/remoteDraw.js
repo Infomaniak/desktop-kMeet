@@ -156,7 +156,7 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
         nameLabel.style.color = "white";
         nameLabel.style.padding = "5px";
         nameLabel.style.borderRadius = "2px";
-        nameLabel.style.fontFamily = "SuisseIntl";
+        nameLabel.style.fontFamily = "SuisseIntl,Helvetica,verdana,serif";
 
         const txt = document.createTextNode(data.nameLabel);
         nameLabel.appendChild(txt);
