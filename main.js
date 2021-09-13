@@ -34,6 +34,9 @@ const autoLauncher = new AutoLaunch({
     name: 'kMeet',
     isHidden: true
 });
+
+autoLauncher.opts.appPath += '" --silent "';
+
 let redirectedToLogin = false;
 
 // We need this because of https://github.com/electron/electron/issues/18214
@@ -205,6 +208,9 @@ function createJitsiMeetWindow() {
         defaultHeight: 900
     });
 
+    // You can open silently the app by giving `--silent` arg
+    const silent = process.argv.indexOf('--silent') >= 0 || process.argv.indexOf('--hidden') >= 0;
+
     setApplicationMenu();
 
     // Path to root directory.
@@ -347,10 +353,12 @@ function createJitsiMeetWindow() {
         mainWindow = null;
     });
     mainWindow.once('ready-to-show', () => {
-        if (process.platform === 'darwin') {
-            app.dock.show();
+        if (!silent && !wasOpenedAtLogin()) {
+            if (process.platform === 'darwin') {
+                app.dock.show();
+            }
+            mainWindow.show();
         }
-        mainWindow.show();
     });
 
     /**
@@ -359,6 +367,24 @@ function createJitsiMeetWindow() {
      * it will trigger this event below
      */
     handleProtocolCall(process.argv.pop());
+}
+
+/**
+ * WasOpenedAtLogin
+ * @returns boolean
+ */
+function wasOpenedAtLogin() {
+    try {
+        if (process.platform === 'darwin') {
+            const loginSettings = app.getLoginItemSettings();
+
+            return loginSettings.wasOpenedAtLogin;
+        }
+
+        return app.commandLine.hasSwitch('hidden');
+    } catch {
+        return false;
+    }
 }
 
 /**
