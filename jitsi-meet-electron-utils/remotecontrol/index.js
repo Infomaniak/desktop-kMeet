@@ -1,5 +1,4 @@
-const electron = require("electron");
-const { remote } = electron;
+const {remote} = require("electron");
 const os = require('os');
 const postis = require("postis");
 const robot = require("robotjs");
@@ -159,6 +158,17 @@ class RemoteControl {
                 = 'Error: Can\'t detect the display that is currently shared';
         }
 
+        remote.globalShortcut.register('CommandOrControl+E', () => {
+
+            this._sendEvent({ type: EVENTS.stop });
+            this._stop();
+
+        })
+
+        for (const win of remote.BrowserWindow.getAllWindows()) {
+            win.webContents.send('REMOTE_CONTROL_UPDATE', {value: true});
+        }
+
         this._sendMessage(response);
     }
 
@@ -170,6 +180,12 @@ class RemoteControl {
         if (this._displayMetricsChangeListener) {
             remote.screen.removeListener('display-metrics-changed', this._displayMetricsChangeListener);
             this._displayMetricsChangeListener = undefined;
+        }
+
+        remote.globalShortcut.unregister('CommandOrControl+E')
+
+        for (const win of remote.BrowserWindow.getAllWindows()) {
+            win.webContents.send('REMOTE_CONTROL_UPDATE', {value: false});
         }
     }
 

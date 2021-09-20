@@ -1,73 +1,108 @@
 <!DOCTYPE html>
-<html>
+<html style="overflow: hidden;">
 
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width">
-  <title>Screen Sharing Tracker</title>
-  <style>
-    html {
-      background-color: #303135e6;
-    }
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport"
+          content="width=device-width">
+    <title>Screen Sharing Tracker</title>
+    <style>
+      html {
+        background-color: #303135e6;
+      }
 
-    body {
-      align-items: center;
-      color: #e4e4e4;
-      display: flex;
-      justify-content: space-between;
-      margin: 0;
-      padding: 6px 16px;
-      -webkit-user-select: none;
-      -webkit-app-region: drag;
-    }
+      body {
+        align-items: center;
+        color: #e4e4e4;
+        display: flex;
+        justify-content: space-between;
+        margin: 0;
+        padding: 6px 16px;
+        -webkit-user-select: none;
+        -webkit-app-region: drag;
+      }
 
-    button {
-      background-color: #b8b8b8;
-      border: 0;
-      border-radius: 4px;
-      color: #282a2f;
-      height: 28px;
-      margin-right: 16px;
-      -webkit-app-region: no-drag;
-    }
+      button {
+        background-color: #b8b8b8;
+        border: 0;
+        border-radius: 4px;
+        color: #282a2f;
+        height: 28px;
+        margin-right: 16px;
+        -webkit-app-region: no-drag;
+      }
 
-    #text-container {
-      font-family:Arial, Helvetica, sans-serif;
-      font-size: 13px;
-      display: flex;
-    }
+      #text-container {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 13px;
+        display: flex;
+      }
 
-    #double-line {
-      font-size: 15px;
-      font-weight:bolder;
-    }
+      #double-line {
+        font-size: 15px;
+        font-weight: bolder;
+      }
 
-    #screen-share-marker-minimize {
-      color: #ababab;
-      font-family:Arial, Helvetica, sans-serif;
-      font-size: 13px;
-      -webkit-app-region: no-drag;
-    }
+      #screen-share-marker-minimize {
+        color: #ababab;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 13px;
+        -webkit-app-region: no-drag;
+      }
 
-    #sharing-identity {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 170px;
-    }
-  </style>
-</head>
+      #sharing-identity {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 170px;
+      }
 
-<body>
-  <span id="double-line">‖</span>
-  <div id="text-container">
-    <span id="sharing-identity"></span><span id="static-text">&nbsp;is sharing your screen.</span>
-  </div>
-  <div>
-    <button id="screen-share-marker-stop">Stop sharing</button>
-    <a id="screen-share-marker-minimize">Hide</a>
-  </div>
-  <script src="screenSharingTracker.js"></script>
-</body>
+      .letter {
+        background-color: #313d52;
+        color: #FFFFFF;
+        border-radius: 3px;
+        box-sizing: border-box;
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1;
+        max-width: 100%;
+        padding: 2px 0 3px 0;
+        text-transform: uppercase;
+        vertical-align: baseline;
+      }
+
+      .inner-letter {
+        display: inline-block;
+        vertical-align: top;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        box-sizing: border-box;
+        padding: 0 4px;
+        max-width: 200px;
+        width: 100%;
+      }
+
+    </style>
+  </head>
+
+  <body style="overflow: hiddden">
+    <span id="double-line">‖</span>
+    <div id="text-container"
+         style="display: block; overflow: hidden">
+      <div style="display: block;">
+        <span id="sharing-identity"></span>
+        <span id="static-text">is sharing your screen.</span>
+      </div>
+      <div style="display: none;"
+           id="remote-control-info">Hit <span class="letter"><span class="inner-letter">CMD/CTRL</span></span> <span class="letter"><span class="inner-letter">E</span></span> to stop remote control </div>
+    </div>
+    <div>
+      <button id="screen-share-marker-stop">Stop sharing</button>
+      <a id="screen-share-marker-minimize">Hide</a>
+    </div>
+    <script src="screenSharingTracker.js"></script>
+  </body>
 
 </html>

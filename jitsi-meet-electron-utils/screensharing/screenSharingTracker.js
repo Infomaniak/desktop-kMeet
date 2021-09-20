@@ -28,3 +28,8 @@ screenShareStop.addEventListener("click", function() {
     });
 });
 
+ipcRenderer.on("REMOTE_CONTROL_UPDATE", function (event, data) {
+    document.getElementById('remote-control-info').style.display = data.value ? 'block' : 'none';
+});
+
+
