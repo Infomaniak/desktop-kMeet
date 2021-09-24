@@ -46,12 +46,19 @@ class ScreenShareMainHook {
         switch (data.name) {
             case SCREEN_SHARE_EVENTS.OPEN_TRACKER:
                 this._createScreenShareTracker();
+                this._createScreenShareBorder();
                 break;
             case SCREEN_SHARE_EVENTS.CLOSE_TRACKER:
                 if (this._screenShareTracker) {
                     this._screenShareTracker.close();
                     this._screenShareTracker = undefined;
                 }
+                ['_screenShareBorderLeft', '_screenShareBorderRight', '_screenShareBorderBottom', '_screenShareBorderTop'].forEach(border => {
+                    if (this[border]) {
+                        this[border].close();
+                        this[border] = undefined;
+                    }
+                })
                 break;
             case SCREEN_SHARE_EVENTS.STOP_SCREEN_SHARE:
                 this._jitsiMeetWindow.webContents.send(SCREEN_SHARE_EVENTS_CHANNEL, { data });
@@ -68,12 +75,14 @@ class ScreenShareMainHook {
      * @return {void}
      */
     _createScreenShareTracker() {
+        console.warn('!!!yolo2')
         if (this._screenShareTracker) {
             return;
         }
 
         // Display always on top screen sharing tracker window in the center bottom of the screen.
         let display = electron.screen.getPrimaryDisplay();
+
         this._screenShareTracker = new electron.BrowserWindow({
             height: TRACKER_SIZE.height,
             width: TRACKER_SIZE.width,
@@ -103,7 +112,6 @@ class ScreenShareMainHook {
         this._screenShareTracker.on('closed', () => {
             this._screenShareTracker = undefined;
         });
-
         // Prevent newly created window to take focus from main application.
         this._screenShareTracker.once('ready-to-show', () => {
             if (this._screenShareTracker && !this._screenShareTracker.isDestroyed()) {
@@ -113,6 +121,130 @@ class ScreenShareMainHook {
 
         this._screenShareTracker
             .loadURL(`file://${__dirname}/screenSharingTracker.html?sharingIdentity=${this._identity}`);
+    }
+
+    /**
+     * Opens an always on top window, in the bottom center of the screen, that lets a user know
+     * a content sharing session is currently active.
+     *
+     * @return {void}
+     */
+    _createScreenShareBorder() {
+        console.warn('!!!yolo', this._screenShareBorderTop)
+        if (this._screenShareBorderTop) {
+            return;
+        }
+
+        // Display always on top screen sharing tracker window in the center bottom of the screen.
+        let display = electron.screen.getPrimaryDisplay();
+        console.log(display)
+        this._screenShareBorderTop = new electron.BrowserWindow({
+            height: 2,
+            width: display.bounds.width,
+            x: 0,
+            y: 0,
+            transparent: true,
+            minimizable: false,
+            maximizable: false,
+            resizable: false,
+            alwaysOnTop: true,
+            focusable: false,
+            fullscreen: false,
+            fullscreenable: false,
+            skipTaskbar: false,
+            frame: false,
+            show: false,
+            webPreferences: {
+                // TODO: these 3 should be removed.
+                contextIsolation: false,
+                enableRemoteModule: true,
+                nodeIntegration: true
+            }
+        });
+        this._screenShareBorderRight = new electron.BrowserWindow({
+            height: display.bounds.height,
+            width: 2,
+            x: display.bounds.width - 2,
+            y: 0,
+            transparent: true,
+            minimizable: false,
+            maximizable: false,
+            resizable: false,
+            alwaysOnTop: true,
+            focusable: false,
+            fullscreen: false,
+            fullscreenable: false,
+            skipTaskbar: true,
+            frame: false,
+            show: false,
+            webPreferences: {
+                // TODO: these 3 should be removed.
+                contextIsolation: false,
+                enableRemoteModule: true,
+                nodeIntegration: true
+            }
+        });
+        this._screenShareBorderBottom = new electron.BrowserWindow({
+            height: 0, // 2,
+            width: 0, //display.bounds.width,
+            x: 0,
+            y: 0, //display.bounds.height + 100,
+            transparent: true,
+            minimizable: false,
+            maximizable: false,
+            resizable: false,
+            alwaysOnTop: true,
+            focusable: false,
+            fullscreen: false,
+            fullscreenable: false,
+            skipTaskbar: true,
+            frame: false,
+            show: false,
+            webPreferences: {
+                // TODO: these 3 should be removed.
+                contextIsolation: false,
+                enableRemoteModule: true,
+                nodeIntegration: true
+            }
+        });
+        this._screenShareBorderLeft = new electron.BrowserWindow({
+            height: display.bounds.height,
+            width: 2,
+            x: 0,
+            y: 0,
+            transparent: true,
+            minimizable: false,
+            maximizable: false,
+            resizable: false,
+            alwaysOnTop: true,
+            focusable: false,
+            fullscreen: false,
+            fullscreenable: false,
+            skipTaskbar: true,
+            frame: false,
+            show: false,
+            webPreferences: {
+                // TODO: these 3 should be removed.
+                contextIsolation: false,
+                enableRemoteModule: true,
+                nodeIntegration: true
+            }
+        });
+
+        [this._screenShareBorderLeft, this._screenShareBorderRight, this._screenShareBorderBottom, this._screenShareBorderTop].forEach(border => {
+            console.warn('là', border, border.setContentProjection)
+            border.setContentProtection(true);
+            border.setIgnoreMouseEvents(true);
+            border.on('closed', () => {
+                border = undefined;
+            });
+            border.once('ready-to-show', () => {
+                if (border && !border.isDestroyed()) {
+                    border.showInactive();
+                }
+            });
+            border.loadURL(`file://${__dirname}/screenSharingBorder.html`);
+        });
     }
 
     /**
