@@ -4,6 +4,8 @@ const electron = require('electron');
 const { SCREEN_SHARE_EVENTS_CHANNEL, SCREEN_SHARE_EVENTS, TRACKER_SIZE } = require('./constants');
 const { isMac } = require('./utils');
 
+const sourceId2Coordinates = require('../node_addons/sourceId2Coordinates');
+
 /**
  * Main process component that sets up electron specific screen sharing functionality, like screen sharing
  * tracker and window selection.
@@ -11,6 +13,7 @@ const { isMac } = require('./utils');
  * always on top screen sharing tracker window.
  */
 class ScreenShareMainHook {
+    display;
     /**
      * Create ScreenShareMainHook linked to jitsiMeetWindow.
      *
@@ -43,22 +46,23 @@ class ScreenShareMainHook {
      * @param {Object} data - Channel specific data.
      */
     _onScreenSharingEvent(event, { data }) {
+        console.log(data)
         switch (data.name) {
             case SCREEN_SHARE_EVENTS.OPEN_TRACKER:
+                console.log(data);
                 this._createScreenShareTracker();
-                this._createScreenShareBorder();
+                this._createScreenShareBorder(data?.details?.sourceId);
                 break;
             case SCREEN_SHARE_EVENTS.CLOSE_TRACKER:
                 if (this._screenShareTracker) {
                     this._screenShareTracker.close();
                     this._screenShareTracker = undefined;
                 }
-                ['_screenShareBorderLeft', '_screenShareBorderRight', '_screenShareBorderBottom', '_screenShareBorderTop'].forEach(border => {
-                    if (this[border]) {
-                        this[border].close();
-                        this[border] = undefined;
-                    }
-                })
+                if (this._screenShareBorder) {
+                    console.log('aezzaazeaezaez');
+                    this._screenShareBorder.close();
+                    this._screenShareBorder = undefined;
+                }
                 break;
             case SCREEN_SHARE_EVENTS.STOP_SCREEN_SHARE:
                 this._jitsiMeetWindow.webContents.send(SCREEN_SHARE_EVENTS_CHANNEL, { data });
@@ -75,7 +79,6 @@ class ScreenShareMainHook {
      * @return {void}
      */
     _createScreenShareTracker() {
-        console.warn('!!!yolo2')
         if (this._screenShareTracker) {
             return;
         }
@@ -108,6 +111,7 @@ class ScreenShareMainHook {
 
         // Avoid this window from being captured.
         this._screenShareTracker.setContentProtection(true);
+        this._screenShareTracker.setVisibleOnAllWorkspaces(true);
 
         this._screenShareTracker.on('closed', () => {
             this._screenShareTracker = undefined;
@@ -129,122 +133,136 @@ class ScreenShareMainHook {
      *
      * @return {void}
      */
-    _createScreenShareBorder() {
-        console.warn('!!!yolo', this._screenShareBorderTop)
+    _createScreenShareBorder(sourceId) {
+        this.setDisplay(sourceId);
+
+    // const screen = electron.screen;
+    //     console.warn('!!!yolo', screen.getAllDisplays());
+
         if (this._screenShareBorderTop) {
             return;
         }
-
+        console.log(this.display)
         // Display always on top screen sharing tracker window in the center bottom of the screen.
-        let display = electron.screen.getPrimaryDisplay();
-        console.log(display)
-        this._screenShareBorderTop = new electron.BrowserWindow({
-            height: 2,
-            width: display.bounds.width,
-            x: 0,
-            y: 0,
-            transparent: true,
-            minimizable: false,
-            maximizable: false,
-            resizable: false,
-            alwaysOnTop: true,
-            focusable: false,
-            fullscreen: false,
-            fullscreenable: false,
-            skipTaskbar: false,
-            frame: false,
-            show: false,
-            webPreferences: {
-                // TODO: these 3 should be removed.
-                contextIsolation: false,
-                enableRemoteModule: true,
-                nodeIntegration: true
-            }
-        });
-        this._screenShareBorderRight = new electron.BrowserWindow({
-            height: display.bounds.height,
-            width: 2,
-            x: display.bounds.width - 2,
-            y: 0,
-            transparent: true,
-            minimizable: false,
-            maximizable: false,
-            resizable: false,
-            alwaysOnTop: true,
-            focusable: false,
-            fullscreen: false,
-            fullscreenable: false,
-            skipTaskbar: true,
-            frame: false,
-            show: false,
-            webPreferences: {
-                // TODO: these 3 should be removed.
-                contextIsolation: false,
-                enableRemoteModule: true,
-                nodeIntegration: true
-            }
-        });
-        this._screenShareBorderBottom = new electron.BrowserWindow({
-            height: 0, // 2,
-            width: 0, //display.bounds.width,
-            x: 0,
-            y: 0, //display.bounds.height + 100,
-            transparent: true,
-            minimizable: false,
-            maximizable: false,
-            resizable: false,
-            alwaysOnTop: true,
-            focusable: false,
-            fullscreen: false,
-            fullscreenable: false,
-            skipTaskbar: true,
-            frame: false,
-            show: false,
-            webPreferences: {
-                // TODO: these 3 should be removed.
-                contextIsolation: false,
-                enableRemoteModule: true,
-                nodeIntegration: true
-            }
-        });
-        this._screenShareBorderLeft = new electron.BrowserWindow({
-            height: display.bounds.height,
-            width: 2,
-            x: 0,
-            y: 0,
-            transparent: true,
-            minimizable: false,
-            maximizable: false,
-            resizable: false,
-            alwaysOnTop: true,
-            focusable: false,
-            fullscreen: false,
-            fullscreenable: false,
-            skipTaskbar: true,
-            frame: false,
-            show: false,
-            webPreferences: {
-                // TODO: these 3 should be removed.
-                contextIsolation: false,
-                enableRemoteModule: true,
-                nodeIntegration: true
-            }
-        });
+        // let display = electron.screen.getPrimaryDisplay();
+        // console.log(display)
+        const display = this.display;
 
-        [this._screenShareBorderLeft, this._screenShareBorderRight, this._screenShareBorderBottom, this._screenShareBorderTop].forEach(border => {
-            console.warn('là', border, border.setContentProjection)
-            border.setContentProtection(true);
-            border.setIgnoreMouseEvents(true);
-            border.on('closed', () => {
-                border = undefined;
-            });
-            border.once('ready-to-show', () => {
-                if (border && !border.isDestroyed()) {
-                    border.showInactive();
+        const bounds = display.bounds;
+        this._screenShareBorder = new electron.BrowserWindow({
+            x: bounds.x - 2,
+            y: bounds.y - 2,
+            width: bounds.width + 4,
+            height: bounds.height + 4,
+            frame: false,
+            transparent: true,
+            hasShadow: false,
+            fullscreenable: false,
+            enableLargerThanScreen: true,
+            focusable: false,
+            skipTaskbar: true,
+            alwaysOnTop: true,
+            minimizable: false,
+            maximizable: false,
+            resizable: false,
+            titleBarStyle: undefined,
+            fullscreen: true,
+            backgroundColor: '#00FFFFFF',
+            movable: false,
+            closable: true,
+            titleBarStyle: 'customButtonsOnHover',
+            webPreferences: {
+                nodeIntegration: true
+            }
+        })
+
+        this._screenShareBorder.setAlwaysOnTop(true, 'screen-saver', 1);
+        this._screenShareBorder.setVisibleOnAllWorkspaces(true);
+        this._screenShareBorder.setIgnoreMouseEvents(true);
+        this._screenShareBorder.loadURL(`file://${__dirname}/screenSharingBorder.html`);
+    }
+
+    /**
+     * Sets the display metrics(x, y, width, height, scaleFactor, etc...) of the display that will be used for the
+     * remote draw.
+     *
+     * @param {string} sourceId - The source id of the desktop sharing stream.
+     * @returns {void}
+     */
+    setDisplay(sourceId) {
+        const { screen } = electron;
+        const displays = screen.getAllDisplays();
+
+        switch (displays.length) {
+        case 0:
+            this.display = undefined;
+            break;
+        case 1:
+            // On Linux probably we'll end up here even if there are
+            // multiple monitors.
+            this.display = displays[0];
+            break;
+            // eslint-disable-next-line no-case-declarations
+        default: { // > 1 display
+            // Remove the type part from the sourceId
+            const parsedSourceId = sourceId.replace('screen:', '');
+            const coordinates = sourceId2Coordinates(parsedSourceId);
+
+            if (coordinates) {
+                // Currently sourceId2Coordinates will return undefined for
+                // any OS except Windows. This code will be executed only on
+                // Windows.
+                const {
+                    x,
+                    y
+                } = coordinates;
+                const display
+                        = screen.getDisplayNearestPoint({
+                            x: x + 1,
+                            y: y + 1
+                        });
+
+                if (typeof display !== 'undefined') {
+                    // We need to use x and y returned from sourceId2Coordinates because the ones returned from
+                    // Electron don't seem to respect the scale factors of the other displays.
+                    const {
+                        width,
+                        height
+                    } = display.bounds;
+
+                    this.display = {
+                        bounds: {
+                            x,
+                            y,
+                            width,
+                            height
+                        },
+                        scaleFactor: display.scaleFactor
+                    };
+                } else {
+                    this.display = undefined;
                 }
-            });
-            border.loadURL(`file://${__dirname}/screenSharingBorder.html`);
-        });
+            } else {
+                // On Mac OS the sourceId = 'screen' + displayId.
+                // Try to match displayId with sourceId.
+                let displayId = Number(parsedSourceId);
+
+                if (isNaN(displayId)) {
+                    // The source id may have the following format "desktop_id:0".
+
+                    const idArr = parsedSourceId.split(':');
+
+                    if (idArr.length <= 1) {
+                        return;
+                    }
+
+                    displayId = Number(idArr[0]);
+                }
+                this.display
+                        = displays.find(display => display.id === displayId);
+            }
+        }
+        }
     }
 
     /**

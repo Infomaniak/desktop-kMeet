@@ -98,7 +98,8 @@ class ScreenShareRenderHook {
             // Send event which should open an always on top tracker window from the main process.
             ipcRenderer.send(SCREEN_SHARE_EVENTS_CHANNEL, {
                 data: {
-                    name: SCREEN_SHARE_EVENTS.OPEN_TRACKER
+                    name: SCREEN_SHARE_EVENTS.OPEN_TRACKER,
+                    ...event
                 }
             });
         } else {

@@ -196,9 +196,20 @@ class RemoteDraw {
             y: this._display.workArea.y,
             transparent: true,
             frame: false,
-            alwaysOnTop: true,
+            fullscreen: true,
+            simpleFullscreen: true,
+            fullscreenable: true,
+            enableLargerThanScreen: true,
             backgroundColor: '#00FFFFFF',
             hasShadow: false,
+            resizable: false,
+            movable: false,
+            minimizable: false,
+            maximizable: false,
+            closable: false,
+            focusable: false,
+            skipTaskbar: true,
+            autoHideMenuBar: true,
             webPreferences: {
                 contextIsolation: false,
                 enableRemoteModule: true,
@@ -206,6 +217,9 @@ class RemoteDraw {
             }
         });
 
+
+        this._screenShareDrawer.setAlwaysOnTop(true, 'pop-up-menu', 5);
+        this._screenShareDrawer.setVisibleOnAllWorkspaces(true);
         this._screenShareDrawer.setIgnoreMouseEvents(true);
         this._screenShareDrawer.setFocusable(false);
         this._screenShareDrawer.loadURL(`file://${__dirname}/remoteDraw.html`);
