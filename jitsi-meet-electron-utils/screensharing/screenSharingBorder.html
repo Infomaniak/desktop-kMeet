@@ -7,8 +7,15 @@
           content="width=device-width">
     <title>Screen Sharing Border</title>
     <style>
+      *::-webkit-scrollbar {
+        display: none;
+        width: 0px;
+      }
+
       html {
         border: 8px solid #0098FF;
+        overflow: hidden;
+        scroll-behavior: hidden;
         width: 100%;
         height: 100%;
         box-sizing: border-box;

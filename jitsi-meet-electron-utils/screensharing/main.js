@@ -59,7 +59,6 @@ class ScreenShareMainHook {
                     this._screenShareTracker = undefined;
                 }
                 if (this._screenShareBorder) {
-                    console.log('aezzaazeaezaez');
                     this._screenShareBorder.close();
                     this._screenShareBorder = undefined;
                 }

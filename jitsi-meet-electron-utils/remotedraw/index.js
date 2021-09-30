@@ -209,7 +209,6 @@ class RemoteDraw {
             closable: false,
             focusable: false,
             skipTaskbar: true,
-            autoHideMenuBar: true,
             webPreferences: {
                 contextIsolation: false,
                 enableRemoteModule: true,
@@ -254,6 +253,10 @@ class RemoteDraw {
         } else {
             response.error
                 = 'Error: Can\'t detect the display that is currently shared';
+            if (this._screenShareDrawer) {
+                this._screenShareDrawer.close();
+                this._screenShareDrawer = undefined;
+            }
         }
 
         this._sendMessage(response);
