@@ -4,6 +4,7 @@ const postis = require("postis");
 const robot = require("robotjs");
 const sourceId2Coordinates = require("../node_addons/sourceId2Coordinates");
 const constants = require("./constants");
+const isMac = () => process.platform === 'darwin';
 const {
     EVENTS,
     KEY_ACTIONS_FROM_EVENT_TYPE,
@@ -166,7 +167,8 @@ class RemoteControl {
         })
 
         for (const win of remote.BrowserWindow.getAllWindows()) {
-            win.webContents.send('REMOTE_CONTROL_UPDATE', {value: true});
+            console.warn({ value: false, isMac: isMac() });
+            win.webContents.send('REMOTE_CONTROL_UPDATE', {value: true, isMac: isMac()});
         }
 
         this._sendMessage(response);
@@ -185,7 +187,8 @@ class RemoteControl {
         remote.globalShortcut.unregister('CommandOrControl+E')
 
         for (const win of remote.BrowserWindow.getAllWindows()) {
-            win.webContents.send('REMOTE_CONTROL_UPDATE', {value: false});
+            console.warn({ value: false, isMac: isMac() });
+            win.webContents.send('REMOTE_CONTROL_UPDATE', {value: false, isMac: isMac()});
         }
     }
 

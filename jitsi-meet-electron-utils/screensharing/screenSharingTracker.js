@@ -29,7 +29,16 @@ screenShareStop.addEventListener("click", function() {
 });
 
 ipcRenderer.on("REMOTE_CONTROL_UPDATE", function (event, data) {
-    document.getElementById('remote-control-info').style.display = data.value ? 'block' : 'none';
+    console.log(JSON.stringify(data))
+    if (document.getElementById('cmd-key')?.style && !data.isMac) {
+        document.getElementById('cmd-key').style.display = 'none';
+    }
+    if (document.getElementById('ctrl-key')?.style && data.isMac) {
+        document.getElementById('ctrl-key').style.display = 'none';
+    }
+    if (document.getElementById('remote-control-info')?.style) {
+        document.getElementById('remote-control-info').style.display = data.value ? 'block' : 'none';
+    }
 });
 
 
