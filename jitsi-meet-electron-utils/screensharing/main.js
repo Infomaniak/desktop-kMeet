@@ -138,7 +138,7 @@ class ScreenShareMainHook {
     // const screen = electron.screen;
     //     console.warn('!!!yolo', screen.getAllDisplays());
 
-        if (this._screenShareBorderTop) {
+        if (this._screenShareBorder) {
             return;
         }
         console.log(this.display)
@@ -147,38 +147,41 @@ class ScreenShareMainHook {
         // console.log(display)
         const display = this.display;
 
-        const bounds = display.bounds;
-        this._screenShareBorder = new electron.BrowserWindow({
-            x: bounds.x - 2,
-            y: bounds.y - 2,
-            width: bounds.width + 4,
-            height: bounds.height + 4,
-            frame: false,
-            transparent: true,
-            hasShadow: false,
-            fullscreenable: false,
-            enableLargerThanScreen: true,
-            focusable: false,
-            skipTaskbar: true,
-            alwaysOnTop: true,
-            minimizable: false,
-            maximizable: false,
-            resizable: false,
-            titleBarStyle: undefined,
-            fullscreen: true,
-            backgroundColor: '#00FFFFFF',
-            movable: false,
-            closable: true,
-            titleBarStyle: 'customButtonsOnHover',
-            webPreferences: {
-                nodeIntegration: true
-            }
-        })
+        const bounds = display?.bounds;
 
-        this._screenShareBorder.setAlwaysOnTop(true, 'screen-saver', 1);
-        this._screenShareBorder.setVisibleOnAllWorkspaces(true);
-        this._screenShareBorder.setIgnoreMouseEvents(true);
-        this._screenShareBorder.loadURL(`file://${__dirname}/screenSharingBorder.html`);
+        if (bounds?.width || bounds?.heights) {
+            this._screenShareBorder = new electron.BrowserWindow({
+                        x: bounds.x - 2,
+                        y: bounds.y - 2,
+                        width: bounds.width + 4,
+                        height: bounds.height + 4,
+                        frame: false,
+                        transparent: true,
+                        hasShadow: false,
+                        fullscreenable: false,
+                        enableLargerThanScreen: true,
+                        focusable: false,
+                        skipTaskbar: true,
+                        alwaysOnTop: true,
+                        minimizable: false,
+                        maximizable: false,
+                        resizable: false,
+                        titleBarStyle: undefined,
+                        fullscreen: true,
+                        backgroundColor: '#00FFFFFF',
+                        movable: false,
+                        closable: true,
+                        webPreferences: {
+                            nodeIntegration: true
+                        }
+                    })
+
+            this._screenShareBorder.setAlwaysOnTop(true, 'screen-saver', 1);
+            this._screenShareBorder.setVisibleOnAllWorkspaces(true);
+            this._screenShareBorder.setIgnoreMouseEvents(true);
+            this._screenShareBorder.loadURL(`file://${__dirname}/screenSharingBorder.html`);
+        }
+
     }
 
     /**
