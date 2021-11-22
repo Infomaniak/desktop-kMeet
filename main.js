@@ -208,8 +208,6 @@ function createJitsiMeetWindow() {
         defaultHeight: 900
     });
 
-    // You can open silently the app by giving `--silent` arg
-    const silent = process.argv.indexOf('--silent') >= 0 || process.argv.indexOf('--hidden') >= 0;
 
     setApplicationMenu();
 
@@ -222,6 +220,10 @@ function createJitsiMeetWindow() {
         protocol: 'file:',
         slashes: true
     });
+
+
+    // You can open silently the app by giving `--silent` arg
+    let silent = process && process.argv && (process.argv.indexOf('--silent') >= 0 || process.argv.indexOf('--hidden') >= 0);
 
     // Options used when creating the main Jitsi Meet window.
     // Use a preload script in order to provide node specific functionality
@@ -353,12 +355,18 @@ function createJitsiMeetWindow() {
         mainWindow = null;
     });
     mainWindow.once('ready-to-show', () => {
+
+        console.log('ready to show', silent);
         if (!silent && !wasOpenedAtLogin()) {
             if (process.platform === 'darwin') {
                 app.dock.show();
             }
             mainWindow.show();
+        } else {
+            mainWindow = null;
+            silent = false; // silent must be used only once
         }
+
     });
 
     /**
