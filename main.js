@@ -363,7 +363,10 @@ function createJitsiMeetWindow() {
             }
             mainWindow.show();
         } else {
-            mainWindow = null;
+            if (process.platform === 'darwin') {
+                app.dock.hide();
+            }
+
             silent = false; // silent must be used only once
         }
 
