@@ -21,7 +21,7 @@ export default {
 
      defaultServerURL: 'https://kmeet.preprod.dev.infomaniak.ch',
      */
-    defaultServerURL: 'http://localhost:8080',
+    defaultServerURL: 'https://kmeet.infomaniak.com',
 
 
     /**
