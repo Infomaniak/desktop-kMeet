@@ -533,6 +533,11 @@ function handleProtocolCall(fullProtocolCall) {
 
     if (app.isReady() && mainWindow === null) {
         createJitsiMeetWindow();
+    } else if (mainWindow) {
+        if (process.platform === 'darwin') {
+            app.dock.show();
+        }
+        mainWindow.show();
     }
 
     protocolDataForFrontApp = inputURL;
