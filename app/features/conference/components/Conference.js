@@ -3,12 +3,13 @@
 import Spinner from '@atlaskit/spinner';
 
 import React, { Component } from 'react';
-import { renderer } from 'react-dom';
 import type { Dispatch } from 'redux';
 import { connect } from 'react-redux';
 import { push } from 'react-router-redux';
 
+import i18n from '../../../i18n';
 import config from '../../config';
+import { getSetting } from '../../settings';
 
 import { conferenceEnded, conferenceJoined } from '../actions';
 import JitsiMeetExternalAPI from '../external_api';
@@ -25,6 +26,26 @@ type Props = {
      * React Router location object.
      */
     location: Object;
+
+    /**
+     * AlwaysOnTop Window Enabled.
+     */
+    _alwaysOnTopWindowEnabled: boolean;
+
+    /**
+     * Disable automatic gain control.
+     */
+     _disableAGC: boolean;
+
+    /**
+     * Default Jitsi Server URL.
+     */
+    _serverURL: string;
+
+    /**
+     * Default Jitsi Server Timeout.
+     */
+    _serverTimeout: number;
 };
 
 type State = {
@@ -91,8 +112,10 @@ class Conference extends Component<Props, State> {
     componentDidMount() {
         const room = this.props.location.state.room;
         const subject = this.props.location.state.subject;
-        const serverTimeout = config.defaultServerTimeout;
-        const serverURL = this.props.location.state.serverURL || config.defaultServerURL;
+        const serverTimeout = this.props._serverTimeout || config.defaultServerTimeout;
+        const serverURL = this.props.location.state.serverURL
+            || this.props._serverURL
+            || config.defaultServerURL;
 
         this._conference = {
             room,
@@ -154,12 +177,44 @@ class Conference extends Component<Props, State> {
         const url = new URL(this._conference.room, this._conference.serverURL);
         const roomName = url.pathname.split('/').pop();
         const host = this._conference.serverURL.replace(/https?:\/\//, '');
+        const searchParameters = Object.fromEntries(url.searchParams);
+        const hashParameters = url.hash.substring(1).split('&')
+            .reduce((res, item) => {
+                const parts = item.split('=');
 
+                res[parts[0]] = parts[1];
+
+                return res;
+            }, {});
+
+        const locale = { lng: i18n.language };
+        const urlParameters = {
+            ...searchParameters,
+            ...locale
+        };
+
+        // override both old and new prejoin config options,
+        // old one for servers that do not understand the new option yet
+        // and new one for newly setup servers where the new option overrides
+        // the old if set.
         const configOverwrite = {
             startWithAudioMuted: false,
             startWithVideoMuted: true,
-            subject: this._conference.subject
+            subject: this._conference.subject,
+            disableAGC: this.props._disableAGC,
+            prejoinPageEnabled: true,
+            prejoinConfig: {
+                enabled: true
+            }
         };
+
+        Object.entries(hashParameters).forEach(([ key, value ]) => {
+            if (key.startsWith('config.')) {
+                const configKey = key.substring('config.'.length);
+
+                configOverwrite[configKey] = value;
+            }
+        });
 
         const options = {
             configOverwrite,
@@ -169,7 +224,8 @@ class Conference extends Component<Props, State> {
         };
 
         this._api = new JitsiMeetExternalAPI(host, {
-            ...options
+            ...options,
+            ...urlParameters
         });
 
 
@@ -198,11 +254,18 @@ class Conference extends Component<Props, State> {
         setupScreenSharingRender(this._api);
 
         new RemoteControl(iframe); // eslint-disable-line no-new
-        new RemoteDraw(iframe, renderer); // eslint-disable-line no-new
+        new RemoteDraw(iframe); // eslint-disable-line no-new
 
-        setupAlwaysOnTopRender(this._api);
+        // Allow window to be on top if enabled in settings
+        if (this.props._alwaysOnTopWindowEnabled) {
+            setupAlwaysOnTopRender(this._api);
+        }
 
-        setupWiFiStats(iframe);
+        // Disable WiFiStats on mac due to jitsi-meet-electron#585
+        if (window.jitsiNodeAPI.platform !== 'darwin') {
+            setupWiFiStats(iframe);
+        }
+
         setupPowerMonitorRender(this._api);
 
         window.jitsiNodeAPI.ipc.on('protocol-data-create-meeting', this._listenOnProtocolCreateMeeting);
@@ -296,5 +359,20 @@ class Conference extends Component<Props, State> {
             event: 'planMeeting'
         }));
     }
+}
+
+/**
+ * Maps (parts of) the redux state to the React props.
+ *
+ * @param {Object} state - The redux state.
+ * @returns {Props}
+ */
+function _mapStateToProps(state: Object) {
+    return {
+        _alwaysOnTopWindowEnabled: getSetting(state, 'alwaysOnTopWindowEnabled', true),
+        _disableAGC: state.settings.disableAGC,
+        _serverURL: state.settings.serverURL,
+        _serverTimeout: state.settings.serverTimeout
+    };
 }
 export default connect()(Conference);

@@ -8,6 +8,7 @@ const {
     Tray,
     shell
 } = require('electron');
+const jc = require('electron-json-config').factory();
 const debug = require('electron-debug');
 const isDev = require('electron-is-dev');
 const { autoUpdater } = require('electron-updater');
@@ -16,10 +17,12 @@ const _ = require('lodash');
 const {
     initPopupsConfigurationMain,
     getPopupTarget,
+    RemoteControlMain,
+    RemoteDrawMain,
     setupAlwaysOnTopMain,
     setupPowerMonitorMain,
     setupScreenSharingMain
-} = require('jitsi-meet-electron-utils');
+} = require('@jitsi/electron-sdk');
 const path = require('path');
 const URI = require('url');
 const config = require('./app/features/config');
@@ -27,17 +30,18 @@ const { openExternalLink } = require('./app/features/utils/openExternalLink');
 const pkgJson = require('./package.json');
 const APP_VERSION = require('./package.json').version;
 const i18n = require('./app/i18n').default;
-const showDevTools = Boolean(process.env.SHOW_DEV_TOOLS) || (process.argv.indexOf('--show-dev-tools') > -1);
-const Store = require('electron-store');
+
+// const Store = require('electron-store');
 const AutoLaunch = require('auto-launch');
 const autoLauncher = new AutoLaunch({
     name: 'kMeet',
     isHidden: true
 });
 
-autoLauncher.opts.appPath += '" --silent "';
-
 let redirectedToLogin = false;
+const showDevTools = false; // Boolean(process.env.SHOW_DEV_TOOLS) || (process.argv.indexOf('--show-dev-tools') > -1);
+
+const ENABLE_REMOTE_CONTROL = false;
 
 // We need this because of https://github.com/electron/electron/issues/18214
 app.commandLine.appendSwitch('disable-site-isolation-trials');
@@ -51,17 +55,26 @@ app.commandLine.appendSwitch('force-fieldtrials', 'WebRTC-Audio-Red-For-Opus/Ena
 app.commandLine.appendSwitch('disable-backgrounding-occluded-windows', 'true');
 
 // Needed until robot.js is fixed: https://github.com/octalmage/robotjs/issues/580
-app.allowRendererProcessReuse = false;
+// app.allowRendererProcessReuse = false;
+
+// Enable optional PipeWire support.
+if (!app.commandLine.hasSwitch('enable-features')) {
+    app.commandLine.appendSwitch('enable-features', 'WebRTCPipeWireCapturer');
+}
 
 autoUpdater.logger = require('electron-log');
 autoUpdater.logger.transports.file.level = 'info';
 
-const store = new Store();
 
-if (!store.get('enableAutoLauncher')) {
-    store.set('enableAutoLauncher', 1);
+if (typeof jc.get('enableAutoLauncher') === 'undefined') {
+    jc.set('enableAutoLauncher', 1);
     autoLauncher.enable();
 }
+
+if (jc.get('enableAutoLauncher') === 1) {
+    autoLauncher.enable();
+}
+
 
 // Enable DevTools also on release builds to help troubleshoot issues. Don't
 // show them automatically though.
@@ -200,7 +213,9 @@ function getAppPath() {
 function createJitsiMeetWindow() {
 
     // Check for Updates.
-    autoUpdater.checkForUpdatesAndNotify();
+    if (!process.mas) {
+        autoUpdater.checkForUpdatesAndNotify();
+    }
 
     // Load the previous window state with fallback to defaults.
     const windowState = windowStateKeeper({
@@ -241,11 +256,10 @@ function createJitsiMeetWindow() {
         show: false,
         webPreferences: {
             enableBlinkFeatures: 'RTCInsertableStreams,WebAssemblySimd',
-            enableRemoteModule: true,
             contextIsolation: false,
             nativeWindowOpen: true,
             partition: 'persist:main',
-            nodeIntegration: true,
+            nodeIntegration: false,
             preload: path.resolve(basePath, './build/preload.js')
         }
     };
@@ -302,15 +316,13 @@ function createJitsiMeetWindow() {
                         joinHost = roomUrl.origin.replace(/https?:\/\//, '');
                         joinRoom = roomUrl.pathname.replace('/', '');
                         joinSubject = joinRoom;
-                    } catch (error) {
-                        console.log(error);
-                    }
+                    } catch (error) { }
 
                     mainWindow
                         .webContents
                         .send(
                             'protocol-data-msg',
-                            `${joinHost}/${joinRoom}/${joinSubject}`
+                            `${joinHost}/${joinRoom}` ///${joinSubject}
                         );
                 }
             }
@@ -342,6 +354,11 @@ function createJitsiMeetWindow() {
     setupAlwaysOnTopMain(mainWindow);
     setupPowerMonitorMain(mainWindow);
     setupScreenSharingMain(mainWindow, config.default.appName, pkgJson.build.appId);
+    if (ENABLE_REMOTE_CONTROL) {
+        new RemoteControlMain(mainWindow); // eslint-disable-line no-new
+    }
+
+    new RemoteDrawMain(mainWindow); // eslint-disable-line no-new
 
     mainWindow.webContents.on('new-window', (event, url, frameName) => {
         const target = getPopupTarget(url, frameName);
@@ -437,6 +454,8 @@ async function createTrayMenu() {
 
     let autoLauncherEnable = await autoLauncher.isEnabled();
 
+    console.log(autoLauncherEnable);
+
     const contextMenu = Menu.buildFromTemplate([
         {
             label: i18n.t('menu.createMeeting'),
@@ -465,11 +484,14 @@ async function createTrayMenu() {
             checked: autoLauncherEnable,
             click: () => {
                 autoLauncher.isEnabled().then(isEnabled => {
+                    console.log(isEnabled);
                     autoLauncherEnable = isEnabled;
                     if (isEnabled) {
                         autoLauncher.disable();
+                        jc.set('enableAutoLauncher', 0);
                     } else {
                         autoLauncher.enable();
+                        jc.set('enableAutoLauncher', 1);
                     }
                 })
                     .catch(err => {
@@ -587,9 +609,9 @@ app.on('ready', async () => {
     await createTrayMenu();
 });
 
-if (isDev) {
-    app.on('ready', createWebRTCInternalsWindow);
-}
+// if (isDev) {
+//     app.on('ready', createWebRTCInternalsWindow);
+// }
 
 app.on('second-instance', (event, commandLine) => {
     /**
