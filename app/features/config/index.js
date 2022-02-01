@@ -23,10 +23,8 @@ export default {
 
     /**
      * The default server URL of Jitsi Meet Deployment that will be used.
-
-     defaultServerURL: 'https://kmeet.preprod.dev.infomaniak.ch',
      */
-    defaultServerURL: 'https://kmeet.preprod.dev.infomaniak.ch',
+    defaultServerURL: 'https://kmeet.infomaniak.com',
 
 
     /**
