@@ -4,7 +4,7 @@ import { AtlasKitThemeProvider } from '@atlaskit/theme';
 import React, { Component } from 'react';
 import { Route, Switch } from 'react-router';
 import { connect } from 'react-redux';
-import { ConnectedRouter as Router, push, replace } from 'react-router-redux';
+import { ConnectedRouter as Router, push } from 'react-router-redux';
 
 import { Conference } from '../../conference';
 import config from '../../config';
@@ -12,6 +12,7 @@ import { history } from '../../router';
 import { createConferenceObjectFromURL } from '../../utils';
 import { Welcome } from '../../welcome';
 import { Login } from '../../login';
+import { replace } from 'react-router-redux/actions';
 
 /**
  * Main component encapsulating the entire application.
@@ -29,6 +30,7 @@ class App extends Component<*> {
 
         this._listenOnProtocolMessages
             = this._listenOnProtocolMessages.bind(this);
+        this._listenOnProtocolHomePage = this._listenOnProtocolHomePage.bind(this);
     }
 
     /**
@@ -39,6 +41,7 @@ class App extends Component<*> {
     componentDidMount() {
         // start listening on this events
         window.jitsiNodeAPI.ipc.on('protocol-data-msg', this._listenOnProtocolMessages);
+        window.jitsiNodeAPI.ipc.on('protocol-data-homepage', this._listenOnProtocolHomePage);
 
         // send notification to main process
         window.jitsiNodeAPI.ipc.send('renderer-ready');
@@ -55,6 +58,10 @@ class App extends Component<*> {
             'protocol-data-msg',
             this._listenOnProtocolMessages
         );
+        window.jitsiNodeAPI.ipc.removeListener(
+            'protocol-data-homepage',
+            this._listenOnProtocolHomePage
+        );
     }
 
     _listenOnProtocolMessages: (*) => void;
@@ -69,9 +76,9 @@ class App extends Component<*> {
      */
     _listenOnProtocolMessages(event, inputURL: string) {
         // Remove trailing slash if one exists.
-        if (inputURL.substr(-1) === '/') {
-            inputURL = inputURL.substr(0, inputURL.length - 1); // eslint-disable-line no-param-reassign
-        }
+        // if (inputURL.substr(-1) === '/') {
+        //     inputURL = inputURL.substr(0, inputURL.length - 1); // eslint-disable-line no-param-reassign
+        // }
 
         const conference = createConferenceObjectFromURL(inputURL);
 

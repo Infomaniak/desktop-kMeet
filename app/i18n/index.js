@@ -1,8 +1,6 @@
 import i18n from 'i18next';
-// const { app } = require('electron');
 
 import { initReactI18next } from 'react-i18next';
-// import moment from 'moment';
 
 const languages = {
     de: { translation: require('./lang/de.json') },
@@ -12,7 +10,7 @@ const languages = {
     it: { translation: require('./lang/it.json') }
 };
 
-const detectedLocale = 'fr';
+const detectedLocale = navigator.language;
 
 i18n
     .use(initReactI18next)
@@ -24,7 +22,5 @@ i18n
             escapeValue: false // not needed for react as it escapes by default
         }
     });
-
-// moment.locale(detectedLocale);
 
 export default i18n;

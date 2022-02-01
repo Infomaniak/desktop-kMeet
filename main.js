@@ -29,9 +29,30 @@ const config = require('./app/features/config');
 const { openExternalLink } = require('./app/features/utils/openExternalLink');
 const pkgJson = require('./package.json');
 const APP_VERSION = require('./package.json').version;
-const i18n = require('./app/i18n').default;
+const i18n = require('i18next').default;
+const { initReactI18next } = require('react-i18next');
 
-// const Store = require('electron-store');
+const languages = {
+    de: { translation: require('./app/i18n/lang/de.json') },
+    en: { translation: require('./app/i18n/lang/en.json') },
+    es: { translation: require('./app/i18n/lang/es.json') },
+    fr: { translation: require('./app/i18n/lang/fr.json') },
+    it: { translation: require('./app/i18n/lang/it.json') }
+};
+
+// This needs to happen here to have access to getLocale() from the main process
+i18n
+    .use(initReactI18next)
+    .init({
+        lng: app.getLocale(),
+        resources: languages,
+        fallbackLng: 'en',
+        interpolation: {
+            escapeValue: false // not needed for react as it escapes by default
+        }
+    });
+
+
 const AutoLaunch = require('auto-launch');
 const autoLauncher = new AutoLaunch({
     name: 'kMeet',
@@ -238,7 +259,9 @@ function createJitsiMeetWindow() {
 
 
     // You can open silently the app by giving `--silent` arg
-    let silent = process && process.argv && (process.argv.indexOf('--silent') >= 0 || process.argv.indexOf('--hidden') >= 0);
+    let silent = process
+        && process.argv
+        && (process.argv.indexOf('--silent') >= 0 || process.argv.indexOf('--hidden') >= 0);
 
     // Options used when creating the main Jitsi Meet window.
     // Use a preload script in order to provide node specific functionality
@@ -322,7 +345,7 @@ function createJitsiMeetWindow() {
                         .webContents
                         .send(
                             'protocol-data-msg',
-                            `${joinHost}/${joinRoom}` ///${joinSubject}
+                            `${joinHost}/${joinRoom}/${joinSubject}`
                         );
                 }
             }
