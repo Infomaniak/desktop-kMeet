@@ -477,8 +477,6 @@ async function createTrayMenu() {
 
     let autoLauncherEnable = await autoLauncher.isEnabled();
 
-    console.log(autoLauncherEnable);
-
     const contextMenu = Menu.buildFromTemplate([
         {
             label: i18n.t('menu.createMeeting'),
@@ -507,7 +505,6 @@ async function createTrayMenu() {
             checked: autoLauncherEnable,
             click: () => {
                 autoLauncher.isEnabled().then(isEnabled => {
-                    console.log(isEnabled);
                     autoLauncherEnable = isEnabled;
                     if (isEnabled) {
                         autoLauncher.disable();
