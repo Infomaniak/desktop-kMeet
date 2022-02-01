@@ -1,7 +1,8 @@
 const { 
     app,
     ipcMain,
-    BrowserWindow
+    BrowserWindow,
+    systemPreferences
 } = require('electron');
 const sourceId2Coordinates = require("../node_addons/sourceId2Coordinates");
 const { SCREEN_SHARE_EVENTS_CHANNEL, SCREEN_SHARE_EVENTS } = require('../screensharing/constants');
