@@ -1,4 +1,4 @@
-const { ipcRenderer, remote } = require('electron');
+const { ipcRenderer } = require('electron');
 const querystring = require('querystring');
 
 const { SCREEN_SHARE_EVENTS_CHANNEL, SCREEN_SHARE_EVENTS } = require('./constants');
@@ -13,7 +13,11 @@ sharingIdentity.innerHTML = querystring.parse(global.location.search)['?sharingI
  * Minimize the window.
  */
 screenShareMinimize.addEventListener("click", function() {
-    remote.BrowserWindow.getFocusedWindow().minimize();
+    ipcRenderer.send(SCREEN_SHARE_EVENTS_CHANNEL, {
+        data: {
+            name: SCREEN_SHARE_EVENTS.HIDE_TRACKER
+        }
+    });
 });
 
 /**
@@ -27,18 +31,4 @@ screenShareStop.addEventListener("click", function() {
         }
     });
 });
-
-ipcRenderer.on("REMOTE_CONTROL_UPDATE", function (event, data) {
-    console.log(JSON.stringify(data))
-    if (document.getElementById('cmd-key')?.style && !data.isMac) {
-        document.getElementById('cmd-key').style.display = 'none';
-    }
-    if (document.getElementById('ctrl-key')?.style && data.isMac) {
-        document.getElementById('ctrl-key').style.display = 'none';
-    }
-    if (document.getElementById('remote-control-info')?.style) {
-        document.getElementById('remote-control-info').style.display = data.value ? 'block' : 'none';
-    }
-});
-
 

@@ -6,6 +6,11 @@ export default {
     aboutURL: 'https://www.infomaniak.com/meet/',
 
     /**
+     * The URL to the source code repository.
+     */
+    sourceURL: 'https://github.com/jitsi/jitsi-meet-electron',
+
+    /**
      * Application name.
      */
     appName: 'kMeet',
@@ -21,7 +26,7 @@ export default {
 
      defaultServerURL: 'https://kmeet.preprod.dev.infomaniak.ch',
      */
-    defaultServerURL: 'https://kmeet.infomaniak.com',
+    defaultServerURL: 'https://kmeet.preprod.dev.infomaniak.ch',
 
 
     /**

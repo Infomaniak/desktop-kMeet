@@ -1,10 +1,11 @@
 /* global __dirname */
+const { exec } = require('child_process');
 const electron = require('electron');
+const os = require('os');
 
 const { SCREEN_SHARE_EVENTS_CHANNEL, SCREEN_SHARE_EVENTS, TRACKER_SIZE } = require('./constants');
 const { isMac } = require('./utils');
-
-const sourceId2Coordinates = require('../node_addons/sourceId2Coordinates');
+const { windowsEnableScreenProtection } = require('../helpers/functions');
 
 /**
  * Main process component that sets up electron specific screen sharing functionality, like screen sharing
@@ -13,7 +14,6 @@ const sourceId2Coordinates = require('../node_addons/sourceId2Coordinates');
  * always on top screen sharing tracker window.
  */
 class ScreenShareMainHook {
-    display;
     /**
      * Create ScreenShareMainHook linked to jitsiMeetWindow.
      *
@@ -46,21 +46,19 @@ class ScreenShareMainHook {
      * @param {Object} data - Channel specific data.
      */
     _onScreenSharingEvent(event, { data }) {
-        console.log(data)
         switch (data.name) {
             case SCREEN_SHARE_EVENTS.OPEN_TRACKER:
-                console.log(data);
                 this._createScreenShareTracker();
-                this._createScreenShareBorder(data?.details?.sourceId);
                 break;
             case SCREEN_SHARE_EVENTS.CLOSE_TRACKER:
                 if (this._screenShareTracker) {
                     this._screenShareTracker.close();
                     this._screenShareTracker = undefined;
                 }
-                if (this._screenShareBorder) {
-                    this._screenShareBorder.close();
-                    this._screenShareBorder = undefined;
+                break;
+            case SCREEN_SHARE_EVENTS.HIDE_TRACKER:
+                if (this._screenShareTracker) {
+                    this._screenShareTracker.minimize();
                 }
                 break;
             case SCREEN_SHARE_EVENTS.STOP_SCREEN_SHARE:
@@ -84,7 +82,6 @@ class ScreenShareMainHook {
 
         // Display always on top screen sharing tracker window in the center bottom of the screen.
         let display = electron.screen.getPrimaryDisplay();
-
         this._screenShareTracker = new electron.BrowserWindow({
             height: TRACKER_SIZE.height,
             width: TRACKER_SIZE.width,
@@ -108,13 +105,19 @@ class ScreenShareMainHook {
             }
         });
 
-        // Avoid this window from being captured.
-        this._screenShareTracker.setContentProtection(true);
-        this._screenShareTracker.setVisibleOnAllWorkspaces(true);
+        // for Windows OS, only enable protection for builds higher or equal to Windows 10 Version 2004
+        // which have the flag WDA_EXCLUDEFROMCAPTURE(which makes the window completely invisible on capture)
+        // For older Windows versions, we leave the window completely visible, including content, on capture,
+        // otherwise we'll have a black content window on share.
+        if (os.platform() !== 'win32' || windowsEnableScreenProtection(os.release())) {
+            // Avoid this window from being captured.
+            this._screenShareTracker.setContentProtection(true);
+        }
 
         this._screenShareTracker.on('closed', () => {
             this._screenShareTracker = undefined;
         });
+
         // Prevent newly created window to take focus from main application.
         this._screenShareTracker.once('ready-to-show', () => {
             if (this._screenShareTracker && !this._screenShareTracker.isDestroyed()) {
@@ -127,164 +130,15 @@ class ScreenShareMainHook {
     }
 
     /**
-     * Opens an always on top window, in the bottom center of the screen, that lets a user know
-     * a content sharing session is currently active.
-     *
-     * @return {void}
-     */
-    _createScreenShareBorder(sourceId) {
-        this.setDisplay(sourceId);
-
-    // const screen = electron.screen;
-    //     console.warn('!!!yolo', screen.getAllDisplays());
-
-        if (this._screenShareBorder) {
-            return;
-        }
-        console.log(this.display)
-        // Display always on top screen sharing tracker window in the center bottom of the screen.
-        // let display = electron.screen.getPrimaryDisplay();
-        // console.log(display)
-        const display = this.display;
-
-        const bounds = display?.bounds;
-
-        if (bounds?.width || bounds?.heights) {
-            this._screenShareBorder = new electron.BrowserWindow({
-                        x: bounds.x - 2,
-                        y: bounds.y - 2,
-                        width: bounds.width + 4,
-                        height: bounds.height + 4,
-                        frame: false,
-                        transparent: true,
-                        hasShadow: false,
-                        fullscreenable: false,
-                        enableLargerThanScreen: true,
-                        focusable: false,
-                        skipTaskbar: true,
-                        alwaysOnTop: true,
-                        minimizable: false,
-                        maximizable: false,
-                        resizable: false,
-                        titleBarStyle: undefined,
-                        fullscreen: true,
-                        backgroundColor: '#00FFFFFF',
-                        movable: false,
-                        closable: true,
-                        webPreferences: {
-                            nodeIntegration: true
-                        }
-                    })
-
-            this._screenShareBorder.setAlwaysOnTop(true, 'screen-saver', 1);
-            this._screenShareBorder.setVisibleOnAllWorkspaces(true);
-            this._screenShareBorder.setIgnoreMouseEvents(true);
-            this._screenShareBorder.loadURL(`file://${__dirname}/screenSharingBorder.html`);
-        }
-
-    }
-
-    /**
-     * Sets the display metrics(x, y, width, height, scaleFactor, etc...) of the display that will be used for the
-     * remote draw.
-     *
-     * @param {string} sourceId - The source id of the desktop sharing stream.
-     * @returns {void}
-     */
-    setDisplay(sourceId) {
-        const { screen } = electron;
-        const displays = screen.getAllDisplays();
-
-        switch (displays.length) {
-        case 0:
-            this.display = undefined;
-            break;
-        case 1:
-            // On Linux probably we'll end up here even if there are
-            // multiple monitors.
-            this.display = displays[0];
-            break;
-            // eslint-disable-next-line no-case-declarations
-        default: { // > 1 display
-            // Remove the type part from the sourceId
-            const parsedSourceId = sourceId.replace('screen:', '');
-            const coordinates = sourceId2Coordinates(parsedSourceId);
-
-            if (coordinates) {
-                // Currently sourceId2Coordinates will return undefined for
-                // any OS except Windows. This code will be executed only on
-                // Windows.
-                const {
-                    x,
-                    y
-                } = coordinates;
-                const display
-                        = screen.getDisplayNearestPoint({
-                            x: x + 1,
-                            y: y + 1
-                        });
-
-                if (typeof display !== 'undefined') {
-                    // We need to use x and y returned from sourceId2Coordinates because the ones returned from
-                    // Electron don't seem to respect the scale factors of the other displays.
-                    const {
-                        width,
-                        height
-                    } = display.bounds;
-
-                    this.display = {
-                        bounds: {
-                            x,
-                            y,
-                            width,
-                            height
-                        },
-                        scaleFactor: display.scaleFactor
-                    };
-                } else {
-                    this.display = undefined;
-                }
-            } else {
-                // On Mac OS the sourceId = 'screen' + displayId.
-                // Try to match displayId with sourceId.
-                let displayId = Number(parsedSourceId);
-
-                if (isNaN(displayId)) {
-                    // The source id may have the following format "desktop_id:0".
-
-                    const idArr = parsedSourceId.split(':');
-
-                    if (idArr.length <= 1) {
-                        return;
-                    }
-
-                    displayId = Number(idArr[0]);
-                }
-                this.display
-                        = displays.find(display => display.id === displayId);
-            }
-        }
-        }
-    }
-
-    /**
      * Verifies whether app has already asked for capture permissions.
      * If it did but the user denied, resets permissions for the app
      *
      * @param {string} bundleId- OSX Application BundleId
      */
     _verifyScreenCapturePermissions(bundleId) {
-        const {
-            hasPromptedForPermission,
-            hasScreenCapturePermission,
-            resetPermissions,
-        } = require('mac-screen-capture-permissions');
-
-        const hasPermission = hasScreenCapturePermission();
-        const promptedAlready = hasPromptedForPermission();
-
-        if (promptedAlready && !hasPermission) {
-            resetPermissions({ bundleId });
+        const hasPermission = electron.systemPreferences.getMediaAccessStatus('screen') === 'granted';
+        if (!hasPermission) {
+            exec('tccutil reset ScreenCapture ' + bundleId);
         }
     }
 }

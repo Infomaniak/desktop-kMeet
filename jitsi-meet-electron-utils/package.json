@@ -1,18 +1,22 @@
 {
-  "name": "jitsi-meet-electron-utils",
-  "version": "2.0.16",
+  "name": "@jitsi/electron-sdk",
+  "version": "3.0.4",
   "description": "Utilities for jitsi-meet-electron project",
   "main": "index.js",
   "scripts": {
     "lint": "eslint .",
     "test": "TESTING=true mocha",
     "validate": "npm ls",
-    "install": "prebuild-install || node-gyp rebuild"
+    "install": "node-gyp-build",
+    "prebuild-darwin-universal": "prebuildify -t 16.0.0 --napi --strip --arch x64+arm64",
+    "prebuild-linux-x64": "prebuildify -t 16.0.0 --napi --strip",
+    "prebuild-win32-x86": "prebuildify -t 16.0.0 --napi --strip",
+    "prebuild-win32-x64": "prebuildify -t 16.0.0 --napi --strip"
   },
   "pre-commit": [
     "lint"
   ],
-  "repository": "https://www.github.com/jitsi/jitsi-meet-electron-utils",
+  "repository": "https://github.com/jitsi/jitsi-meet-electron-sdk",
   "keywords": [
     "jingle",
     "webrtc",
@@ -25,19 +29,24 @@
   "readmeFilename": "README.md",
   "license": "Apache-2.0",
   "gypfile": true,
+  "binary": {
+    "napi_versions": [
+      3
+    ]
+  },
   "dependencies": {
-    "mac-screen-capture-permissions": "^2.0.0",
-    "nan": "^2.14.0",
-    "postis": "^2.2.0",
-    "prebuild-install": "^5.3.0",
-    "robotjs": "0.6.0",
-    "jitsi-meet-logger": "github:jitsi/jitsi-meet-logger#v1.0.0"
+    "@jitsi/logger": "^2.0.0",
+    "@jitsi/robotjs": "^0.6.8",
+    "electron-store": "^8.0.1",
+    "node-addon-api": "^4.2.0",
+    "node-gyp-build": "^4.3.0",
+    "postis": "^2.2.0"
   },
   "devDependencies": {
     "eslint": ">=3",
     "eslint-plugin-jsdoc": "*",
-    "mocha": "^8.2.1",
-    "prebuild": "^9.1.1",
+    "mocha": "^9.1.3",
+    "prebuildify": "^5.0.0",
     "precommit-hook": "3.0.0"
   }
 }

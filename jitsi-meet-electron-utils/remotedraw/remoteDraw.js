@@ -1,6 +1,7 @@
 const { SCREEN_SHARE_DRAW_EVENTS_CHANNEL } = require("./constants");
 const { ipcRenderer } = require("electron");
-const getStroke = require("perfect-freehand").default;
+
+// const getStroke = require("perfect-freehand").default;
 // const polygonClipping = require("polygon-clipping");
 // const { v4: uuidv4 } = require('uuid');
 
@@ -106,8 +107,9 @@ function draw(id, strokeOptions = {}, gco = "source-over", coords = undefined) {
 }
 
 function onMouseMove(destX, destY, color, id, display) {
+  console.log(destX, destY, display)
   draws[id].color = color;
-  destY = destY - display.workArea.y;
+  // destY = destY - display.workArea.y;
   if (draws[id].drawing) {
     draws[id].path.lineTo( destX, destY );
 
@@ -126,6 +128,7 @@ function onMouseMove(destX, destY, color, id, display) {
 }
 
 ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
+  // const display = ipcRenderer.sendSync('jitsi-remotedraw-get-display', data.sourceId);
   if (!draws[data.participantId]) {
     draws[data.participantId] = {
       drawing: false,
@@ -168,7 +171,7 @@ ipcRenderer.on(SCREEN_SHARE_DRAW_EVENTS_CHANNEL, (event, { data, display }) => {
 
       draws[data.participantId].drawing = true;
       draws[data.participantId].path = new Path2D();
-      draws[data.participantId].path.moveTo(data.destX, data.destY - display.workArea.y);
+      draws[data.participantId].path.moveTo(data.destX, data.destY);
 
       break;
     case "mousemove":
