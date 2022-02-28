@@ -35,6 +35,16 @@ const autoLauncher = new AutoLaunch({
     isHidden: true
 });
 
+if (!isDev) {
+    const { init } = require('@sentry/electron');
+
+    init({
+        dsn: 'https://5ea493fa483d428a92a59ddbee888433@sentry.infomaniak.com/40',
+        debug: true,
+        configFile: path.resolve(__dirname, 'sentry.properties')
+    });
+}
+
 autoLauncher.opts.appPath += '" --silent "';
 
 let redirectedToLogin = false;

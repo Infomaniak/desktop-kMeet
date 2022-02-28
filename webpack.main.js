@@ -1,4 +1,13 @@
 const path = require('path');
+const SentryCliPlugin = require('@sentry/webpack-plugin');
+
+const plugins = argv.mode === 'development' ? [] : [
+        new SentryCliPlugin({
+            include: '.',
+            ignore: [ 'node_modules', 'webpack.config.js' ],
+            configFile: 'sentry.properties'
+        })
+    ];
 
 module.exports = {
     target: 'electron-main',
@@ -8,6 +17,8 @@ module.exports = {
         path: path.resolve('./build'),
         filename: '[name].js'
     },
+    devtool: 'source-map',
+    plugins,
     node: {
         __dirname: true
     },
