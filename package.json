@@ -39,7 +39,8 @@
     },
     "mac": {
       "artifactName": "kMeet.${ext}",
-      "target": [{
+      "target": [
+        {
           "arch": "x64",
           "target": "dmg"
         },
@@ -77,7 +78,8 @@
       },
       "maintainer": "Infomaniak",
       "executableName": "kMeet",
-      "target": [{
+      "target": [
+        {
           "arch": "x64",
           "target": "AppImage"
         }
@@ -86,13 +88,15 @@
     "win": {
       "artifactName": "kMeet.${ext}",
       "certificateSubjectName": "INFOMANIAK NETWORK SA",
-      "target": [{
-        "arch": [
-          "ia32",
-          "x64"
-        ],
-        "target": "nsis"
-      }]
+      "target": [
+        {
+          "arch": [
+            "ia32",
+            "x64"
+          ],
+          "target": "nsis"
+        }
+      ]
     },
     "nsis": {
       "oneClick": true,
