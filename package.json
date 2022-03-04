@@ -25,7 +25,7 @@
       "provider": "s3",
       "channel": "latest",
       "bucket": "download",
-      "endpoint": "https://leoupload.infomaniak.com",
+      "endpoint": "https://storage.infomaniak.com",
       "path": "/meet"
     },
     "files": [
