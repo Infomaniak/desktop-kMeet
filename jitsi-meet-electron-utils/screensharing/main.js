@@ -64,7 +64,11 @@ class ScreenShareMainHook {
                 }
                 break;
             case SCREEN_SHARE_EVENTS.STOP_SCREEN_SHARE:
-                this._jitsiMeetWindow.webContents.send(SCREEN_SHARE_EVENTS_CHANNEL, { data });
+                try {
+                    this._jitsiMeetWindow.webContents.send(SCREEN_SHARE_EVENTS_CHANNEL, { data });
+                } catch (e) {
+                    console.log(e);
+                }
                 break;
             default:
                 console.warn(`Unhandled ${SCREEN_SHARE_EVENTS_CHANNEL}: ${data}`);

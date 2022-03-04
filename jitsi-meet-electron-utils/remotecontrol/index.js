@@ -68,66 +68,68 @@ class RemoteControl {
     _setDisplayMetrics(sourceId) {
         const displays = remote.screen.getAllDisplays();
 
-        switch(displays.length) {
-            case 0:
-                this._display = undefined;
-            break;
-            case 1:
-                // On Linux probably we'll end up here even if there are
-                // multiple monitors.
-                this._display = displays[0];
-            break;
-            // eslint-disable-next-line no-case-declarations
-            default: { // > 1 display
-                // Remove the type part from the sourceId
-                const parsedSourceId = sourceId.replace('screen:', '');
-                const coordinates = sourceId2Coordinates(parsedSourceId);
-                if(coordinates) {
-                    // Currently sourceId2Coordinates will return undefined for
-                    // any OS except Windows. This code will be executed only on
-                    // Windows.
-                    const { x, y } = coordinates;
-                    const display
-                        = remote.screen.getDisplayNearestPoint({
-                            x: x + 1,
-                            y: y + 1
-                        });
+        if (displays) {
+            switch (displays.length) {
+                case 0:
+                    this._display = undefined;
+                    break;
+                case 1:
+                    // On Linux probably we'll end up here even if there are
+                    // multiple monitors.
+                    this._display = displays[0];
+                    break;
+                // eslint-disable-next-line no-case-declarations
+                default: { // > 1 display
+                    // Remove the type part from the sourceId
+                    const parsedSourceId = sourceId.replace('screen:', '');
+                    const coordinates = sourceId2Coordinates(parsedSourceId);
+                    if (coordinates) {
+                        // Currently sourceId2Coordinates will return undefined for
+                        // any OS except Windows. This code will be executed only on
+                        // Windows.
+                        const { x, y } = coordinates;
+                        const display
+                            = remote.screen.getDisplayNearestPoint({
+                                x: x + 1,
+                                y: y + 1
+                            });
 
-                    if (typeof display !== 'undefined') {
-                        // We need to use x and y returned from sourceId2Coordinates because the ones returned from
-                        // Electron don't seem to respect the scale factors of the other displays.
-                        const { width, height } = display.bounds;
+                        if (typeof display !== 'undefined') {
+                            // We need to use x and y returned from sourceId2Coordinates because the ones returned from
+                            // Electron don't seem to respect the scale factors of the other displays.
+                            const { width, height } = display.bounds;
 
-                        this._display = {
-                            bounds: {
-                                x,
-                                y,
-                                width,
-                                height
-                            },
-                            scaleFactor: display.scaleFactor
-                        };
-                    } else {
-                        this._display = undefined;
-                    }
-                } else {
-                    // On Mac OS the sourceId = 'screen' + displayId.
-                    // Try to match displayId with sourceId.
-                    let displayId = Number(parsedSourceId);
-
-                    if (isNaN(displayId)) {
-                        // The source id may have the following format "desktop_id:0".
-
-                        const idArr = parsedSourceId.split(":");
-
-                        if (idArr.length <= 1) {
-                            return;
+                            this._display = {
+                                bounds: {
+                                    x,
+                                    y,
+                                    width,
+                                    height
+                                },
+                                scaleFactor: display.scaleFactor
+                            };
+                        } else {
+                            this._display = undefined;
                         }
+                    } else {
+                        // On Mac OS the sourceId = 'screen' + displayId.
+                        // Try to match displayId with sourceId.
+                        let displayId = Number(parsedSourceId);
 
-                        displayId = Number(idArr[0]);
+                        if (isNaN(displayId)) {
+                            // The source id may have the following format "desktop_id:0".
+
+                            const idArr = parsedSourceId.split(":");
+
+                            if (idArr.length <= 1) {
+                                return;
+                            }
+
+                            displayId = Number(idArr[0]);
+                        }
+                        this._display
+                            = displays.find(display => display.id === displayId);
                     }
-                    this._display
-                        = displays.find(display => display.id === displayId);
                 }
             }
         }
