@@ -235,6 +235,8 @@ function createJitsiMeetWindow() {
     // You can open silently the app by giving `--silent` arg
     let silent = process && process.argv && (process.argv.indexOf('--silent') >= 0 || process.argv.indexOf('--hidden') >= 0);
 
+    console.log(`silent initialized: ${silent}`, process.argv.indexOf('--silent') >= 0, process.argv.indexOf('--hidden') >= 0);
+
     // Options used when creating the main Jitsi Meet window.
     // Use a preload script in order to provide node specific functionality
     // to a isolated BrowserWindow in accordance with electron security
@@ -354,6 +356,7 @@ function createJitsiMeetWindow() {
     setupScreenSharingMain(mainWindow, config.default.appName, pkgJson.build.appId);
 
     mainWindow.webContents.on('new-window', (event, url, frameName) => {
+        console.log('new window', url, frameName);
         const target = getPopupTarget(url, frameName);
 
         if (!target || target === 'browser') {
@@ -362,25 +365,34 @@ function createJitsiMeetWindow() {
         }
     });
     mainWindow.on('closed', () => {
+        console.log('closed');
         mainWindow = null;
     });
     mainWindow.once('ready-to-show', () => {
 
-        console.log('ready to show', silent);
-        if (!silent && !wasOpenedAtLogin()) {
-            if (process.platform === 'darwin') {
-                app.dock.show();
-            }
-            mainWindow.show();
-        } else {
+        console.log('ready to show', `silent: ${silent}`, `wasOpenedAtLogin: ${wasOpenedAtLogin()}`);
+
+        let wasOpenedAtLoginHandler = wasOpenedAtLogin;
+
+        if (silent || wasOpenedAtLoginHandler()) {
             if (process.platform === 'darwin') {
                 app.dock.hide();
             }
 
             silent = false; // silent must be used only once
+            wasOpenedAtLoginHandler = () => false; // was openedAtLogin must only be triggered first time app launched
+        } else {
+            if (process.platform === 'darwin') {
+                app.dock.show();
+            }
+            if (mainWindow.isMinimized()) {
+                mainWindow.restore();
+            }
+            mainWindow.show();
         }
-
     });
+
+    console.log(`handle protocol call with ${JSON.stringify(process.argv)}`);
 
     /**
      * When someone tries to enter something like jitsi-meet://test
