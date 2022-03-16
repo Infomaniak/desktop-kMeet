@@ -392,7 +392,6 @@ function createJitsiMeetWindow() {
         }
     });
 
-    console.log(`handle protocol call with ${JSON.stringify(process.argv)}`);
 
     /**
      * When someone tries to enter something like jitsi-meet://test
@@ -542,6 +541,12 @@ function createWebRTCInternalsWindow() {
  * Handler for application protocol links to initiate a conference.
  */
 function handleProtocolCall(fullProtocolCall) {
+    try {
+        console.log(`handle protocol call with ${fullProtocolCall}, app is ready ${app.isReady()} and mainWindow exists ${Boolean(mainWindow)}`);
+    } catch (e) {
+        console.log(`handle protocol call error ${JSON.stringify(e)}`);
+    }
+
     // don't touch when something is bad
     if (
         !fullProtocolCall
