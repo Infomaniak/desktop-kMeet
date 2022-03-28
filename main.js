@@ -45,8 +45,6 @@ if (!isDev) {
     });
 }
 
-autoLauncher.opts.appPath += '" --silent "';
-
 let redirectedToLogin = false;
 
 // We need this because of https://github.com/electron/electron/issues/18214
@@ -231,12 +229,6 @@ function createJitsiMeetWindow() {
         slashes: true
     });
 
-
-    // You can open silently the app by giving `--silent` arg
-    let silent = process && process.argv && (process.argv.indexOf('--silent') >= 0 || process.argv.indexOf('--hidden') >= 0);
-
-    console.log(`silent initialized: ${silent}`, process.argv.indexOf('--silent') >= 0, process.argv.indexOf('--hidden') >= 0);
-
     // Options used when creating the main Jitsi Meet window.
     // Use a preload script in order to provide node specific functionality
     // to a isolated BrowserWindow in accordance with electron security
@@ -370,16 +362,15 @@ function createJitsiMeetWindow() {
     });
     mainWindow.once('ready-to-show', () => {
 
-        console.log('ready to show', `silent: ${silent}`, `wasOpenedAtLogin: ${wasOpenedAtLogin()}`);
+        console.log(`wasOpenedAtLogin: ${wasOpenedAtLogin()}`);
 
         let wasOpenedAtLoginHandler = wasOpenedAtLogin;
 
-        if (silent || wasOpenedAtLoginHandler()) {
+        if (wasOpenedAtLoginHandler()) {
             if (process.platform === 'darwin') {
                 app.dock.hide();
             }
 
-            silent = false; // silent must be used only once
             wasOpenedAtLoginHandler = () => false; // was openedAtLogin must only be triggered first time app launched
         } else {
             if (process.platform === 'darwin') {
@@ -521,6 +512,18 @@ async function createTrayMenu() {
     ]);
 
     tray.setContextMenu(contextMenu);
+    tray.on('click', (e) => {
+        if (process.platform !== 'darwin') {
+            if (app.isReady() && mainWindow === null) {
+                createJitsiMeetWindow();
+            } else if (mainWindow) {
+                
+                mainWindow.show();
+            }
+        }
+    });
+    tray.setIgnoreDoubleClickEvents(true);
+
 }
 
 /**
