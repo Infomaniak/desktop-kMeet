@@ -517,7 +517,9 @@ async function createTrayMenu() {
             if (app.isReady() && mainWindow === null) {
                 createJitsiMeetWindow();
             } else if (mainWindow) {
-                
+                if (mainWindow.isMinimized()) {
+                    mainWindow.restore();
+                }
                 mainWindow.show();
             }
         }
