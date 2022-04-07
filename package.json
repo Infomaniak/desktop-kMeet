@@ -24,9 +24,9 @@
     "publish": {
       "provider": "s3",
       "channel": "latest",
-      "bucket": "download",
-      "endpoint": "https://storage.infomaniak.com",
-      "path": "/meet"
+      "bucket": "meet",
+      "endpoint": "https://download.storage.infomaniak.com",
+      "path": "/"
     },
     "files": [
       "**/*",
