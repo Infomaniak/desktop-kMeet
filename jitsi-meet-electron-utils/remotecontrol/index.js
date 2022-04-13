@@ -186,7 +186,11 @@ class RemoteControl {
             this._displayMetricsChangeListener = undefined;
         }
 
-        remote.globalShortcut.unregister('CommandOrControl+E')
+        try {
+            remote.globalShortcut.unregister('CommandOrControl+E')
+        } catch {
+            // do nothing
+        }
 
         for (const win of remote.BrowserWindow.getAllWindows()) {
             console.warn({ value: false, isMac: isMac() });
