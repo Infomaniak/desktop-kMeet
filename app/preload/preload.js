@@ -1,9 +1,10 @@
-const createElectronStorage = require('redux-persist-electron-storage');
-const { ipcRenderer, remote } = require('electron');
-const os = require('os');
-const jitsiMeetElectronUtils = require('jitsi-meet-electron-utils');
-const { openExternalLink } = require('../features/utils/openExternalLink');
-
+const { ipcRenderer } = require('electron');
+const { RemoteControl, RemoteDraw,
+    setupScreenSharingRender,
+    setupAlwaysOnTopRender,
+    initPopupsConfigurationRender,
+    setupPowerMonitorRender
+} = require('@jitsi/electron-sdk');
 
 const whitelistedIpcChannels = [
     'protocol-data-msg',
@@ -14,12 +15,47 @@ const whitelistedIpcChannels = [
     'renderer-ready'
 ];
 
+/**
+ * Open an external URL.
+ *
+ * @param {string} url - The URL we with to open.
+ * @returns {void}
+ */
+function openExternalLink(url) {
+    ipcRenderer.send('jitsi-open-url', url);
+}
+
+/**
+ * Setup the renderer process.
+ *
+ * @param {*} api - API object.
+ * @param {*} options - Options for what to enable.
+ * @returns {void}
+ */
+function setupRenderer(api, options = {}) {
+    initPopupsConfigurationRender(api);
+
+    const iframe = api.getIFrame();
+
+    setupScreenSharingRender(api);
+
+    if (options.enableRemoteControl) {
+        new RemoteControl(iframe); // eslint-disable-line no-new
+    }
+
+    new RemoteDraw(iframe); // eslint-disable-line no-new
+
+    // Allow window to be on top if enabled in settings
+    if (options.enableAlwaysOnTopWindow) {
+        setupAlwaysOnTopRender(api, null, { showOnPrejoin: true });
+    }
+
+    setupPowerMonitorRender(api);
+}
+
 window.jitsiNodeAPI = {
-    createElectronStorage,
-    osUserInfo: os.userInfo,
     openExternalLink,
-    jitsiMeetElectronUtils,
-    getLocale: remote.app.getLocale,
+    setupRenderer,
     ipc: {
         on: (channel, listener) => {
             if (!whitelistedIpcChannels.includes(channel)) {

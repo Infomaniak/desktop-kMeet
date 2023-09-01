@@ -8,5 +8,6 @@ Jitsi Meet*
 
 build/
 dist/
+
 app/features/conference/external_api.js
-jitsi-meet-electron-utils/
+

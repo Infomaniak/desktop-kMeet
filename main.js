@@ -1,4 +1,4 @@
-/* global __dirname, process */
+/* global __dirname */
 
 const {
     BrowserWindow,
@@ -8,6 +8,8 @@ const {
     Tray,
     shell
 } = require('electron');
+const URI = require('url');
+const contextMenu = require('electron-context-menu');
 const debug = require('electron-debug');
 const isDev = require('electron-is-dev');
 const { autoUpdater } = require('electron-updater');
@@ -16,20 +18,24 @@ const _ = require('lodash');
 const {
     initPopupsConfigurationMain,
     getPopupTarget,
+    RemoteControlMain,
     setupAlwaysOnTopMain,
     setupPowerMonitorMain,
     setupScreenSharingMain
-} = require('jitsi-meet-electron-utils');
+} = require('@jitsi/electron-sdk');
 const path = require('path');
-const URI = require('url');
+const process = require('process');
+const URL = require('url');
 const config = require('./app/features/config');
 const { openExternalLink } = require('./app/features/utils/openExternalLink');
 const pkgJson = require('./package.json');
-const APP_VERSION = require('./package.json').version;
-const i18n = require('./app/i18n').default;
-const showDevTools = Boolean(process.env.SHOW_DEV_TOOLS) || (process.argv.indexOf('--show-dev-tools') > -1);
 const Store = require('electron-store');
 const AutoLaunch = require('auto-launch');
+
+const showDevTools = Boolean(process.env.SHOW_DEV_TOOLS) || (process.argv.indexOf('--show-dev-tools') > -1);
+
+const ENABLE_REMOTE_CONTROL = false;
+
 const autoLauncher = new AutoLaunch({
     name: 'kMeet',
     isHidden: true
@@ -52,14 +58,15 @@ app.commandLine.appendSwitch('disable-site-isolation-trials');
 
 // This allows BrowserWindow.setContentProtection(true) to work on macOS.
 // https://github.com/electron/electron/issues/19880
-app.commandLine.appendSwitch('disable-features', 'IOSurfaceCapturer');
+app.commandLine.appendSwitch('disable-features', 'DesktopCaptureMacV2,IOSurfaceCapturer');
 
 // Enable Opus RED field trial.
 app.commandLine.appendSwitch('force-fieldtrials', 'WebRTC-Audio-Red-For-Opus/Enabled/');
-app.commandLine.appendSwitch('disable-backgrounding-occluded-windows', 'true');
 
-// Needed until robot.js is fixed: https://github.com/octalmage/robotjs/issues/580
-app.allowRendererProcessReuse = false;
+// Wayland: Enable optional PipeWire and window decorations support.
+if (!app.commandLine.hasSwitch('enable-features')) {
+    app.commandLine.appendSwitch('enable-features', 'WebRTCPipeWireCapturer,WaylandWindowDecorations');
+}
 
 autoUpdater.logger = require('electron-log');
 autoUpdater.logger.transports.file.level = 'info';
@@ -70,6 +77,18 @@ if (!store.get('enableAutoLauncher')) {
     store.set('enableAutoLauncher', 1);
     autoLauncher.enable();
 }
+
+// Enable context menu so things like copy and paste work in input fields.
+contextMenu({
+    showLookUpSelection: false,
+    showSearchWithGoogle: false,
+    showCopyImage: false,
+    showCopyImageAddress: false,
+    showSaveImage: false,
+    showSaveImageAs: false,
+    showInspectElement: true,
+    showServices: false
+});
 
 // Enable DevTools also on release builds to help troubleshoot issues. Don't
 // show them automatically though.
@@ -113,7 +132,7 @@ function setApplicationMenu() {
             label: app.name,
             submenu: [
                 {
-                    label: i18n.t('menu.about'),
+                    label: 'menu.about',
                     role: 'about'
                 },
                 { type: 'separator' },
@@ -127,7 +146,7 @@ function setApplicationMenu() {
                 { role: 'unhide' },
                 { type: 'separator' },
                 {
-                    label: i18n.t('menu.quit'),
+                    label: 'menu.quit',
                     accelerator: 'CmdOrCtrl+Q',
                     click: () => {
                         mainWindow.close();
@@ -136,14 +155,14 @@ function setApplicationMenu() {
             ]
         },
         {
-            label: i18n.t('menu.edit'),
+            label: 'menu.edit',
             submenu: [ {
-                label: i18n.t('menu.undo'),
+                label: 'menu.undo',
                 accelerator: 'CmdOrCtrl+Z',
                 selector: 'undo:'
             },
             {
-                label: i18n.t('menu.redo'),
+                label: 'menu.redo',
                 accelerator: 'Shift+CmdOrCtrl+Z',
                 selector: 'redo:'
             },
@@ -151,36 +170,27 @@ function setApplicationMenu() {
                 type: 'separator'
             },
             {
-                label: i18n.t('menu.cut'),
+                label: 'menu.cut',
                 accelerator: 'CmdOrCtrl+X',
                 selector: 'cut:'
             },
             {
-                label: i18n.t('menu.copy'),
+                label: 'menu.copy',
                 accelerator: 'CmdOrCtrl+C',
                 selector: 'copy:'
             },
             {
-                label: i18n.t('menu.paste'),
+                label: 'menu.paste',
                 accelerator: 'CmdOrCtrl+V',
                 selector: 'paste:'
             },
             {
-                label: i18n.t('menu.selectAll'),
+                label: 'menu.selectAll',
                 accelerator: 'CmdOrCtrl+A',
                 selector: 'selectAll:'
             } ]
-        },
-        {
-            label: i18n.t('menu.view'),
-            submenu: [
-                { role: 'reload' },
-                { role: 'forceReload' },
-                { role: 'toggleDevTools' }
-            ]
-        },
-        {
-            label: i18n.t('menu.window'),
+        }, {
+            label: '&Window',
             role: 'window',
             submenu: [
                 { role: 'minimize' },
@@ -208,12 +218,15 @@ function getAppPath() {
 function createJitsiMeetWindow() {
 
     // Check for Updates.
-    autoUpdater.checkForUpdatesAndNotify();
+    if (!process.mas) {
+        autoUpdater.checkForUpdatesAndNotify();
+    }
 
     // Load the previous window state with fallback to defaults.
     const windowState = windowStateKeeper({
         defaultWidth: 1300,
-        defaultHeight: 900
+        defaultHeight: 900,
+        fullScreen: false
     });
 
 
@@ -244,21 +257,77 @@ function createJitsiMeetWindow() {
         fullscreen: false,
         show: false,
         webPreferences: {
-            enableBlinkFeatures: 'RTCInsertableStreams,WebAssemblySimd',
-            enableRemoteModule: true,
+            enableBlinkFeatures: 'WebAssemblyCSP',
             contextIsolation: false,
-            nativeWindowOpen: true,
-            partition: 'persist:main',
-            nodeIntegration: true,
-            preload: path.resolve(basePath, './build/preload.js')
+            nodeIntegration: false,
+            preload: path.resolve(basePath, './build/preload.js'),
+            sandbox: false
         }
+    };
+
+    const windowOpenHandler = ({ url, frameName }) => {
+        const target = getPopupTarget(url, frameName);
+
+        if (!target || target === 'browser') {
+            openExternalLink(url);
+
+            return { action: 'deny' };
+        }
+
+        if (target === 'electron') {
+            return { action: 'allow' };
+        }
+
+        return { action: 'deny' };
     };
 
     mainWindow = new BrowserWindow(options);
     windowState.manage(mainWindow);
     mainWindow.loadURL(indexURL);
 
-    mainWindow.webContents.userAgent += ` Infomaniak/${APP_VERSION}`;
+    mainWindow.webContents.setWindowOpenHandler(windowOpenHandler);
+
+    if (isDev) {
+        mainWindow.webContents.session.clearCache();
+    }
+
+    // Block access to file:// URLs.
+    const fileFilter = {
+        urls: [ 'file://*' ]
+    };
+
+    mainWindow.webContents.session.webRequest.onBeforeSendHeaders(fileFilter, (details, callback) => {
+        const requestedPath = path.resolve(URL.fileURLToPath(details.url));
+        const appBasePath = path.resolve(basePath);
+
+        if (!requestedPath.startsWith(appBasePath)) {
+            callback({ cancel: true });
+            console.warn(`Rejected file URL: ${details.url}`);
+
+            return;
+        }
+
+        callback({ cancel: false });
+    });
+
+    // Block redirects.
+    const allowedRedirects = [
+        'http:',
+        'https:',
+        'ws:',
+        'wss:'
+    ];
+
+    mainWindow.webContents.addListener('will-redirect', (ev, url) => {
+        const requestedUrl = new URL.URL(url);
+
+        if (!allowedRedirects.includes(requestedUrl.protocol)) {
+            console.warn(`Disallowing redirect to ${url}`);
+            ev.preventDefault();
+        }
+    });
+
+    mainWindow.webContents.userAgent += ` Infomaniak/${pkgJson.version}`;
 
     mainWindow.webContents.session.webRequest.onHeadersReceived({ urls: [ '*://*/*' ] },
         (d, c) => {
@@ -330,8 +399,15 @@ function createJitsiMeetWindow() {
                 }
             }
 
-            if (d.responseHeaders['x-frame-options']) {
-                delete d.responseHeaders['x-frame-options'];
+            delete d.responseHeaders['x-frame-options'];
+
+            if (d.responseHeaders['content-security-policy']) {
+                const cspFiltered = d.responseHeaders['content-security-policy'][0]
+                    .split(';')
+                    .filter(x => x.indexOf('frame-ancestors') === -1)
+                    .join(';');
+
+                d.responseHeaders['content-security-policy'] = [ cspFiltered ];
             }
 
             c({
@@ -340,12 +416,6 @@ function createJitsiMeetWindow() {
             });
         }
     );
-
-
-    initPopupsConfigurationMain(mainWindow);
-    setupAlwaysOnTopMain(mainWindow);
-    setupPowerMonitorMain(mainWindow);
-    setupScreenSharingMain(mainWindow, config.default.appName, pkgJson.build.appId);
 
     mainWindow.webContents.on('new-window', (event, url, frameName) => {
         console.log('new window', url, frameName);
@@ -356,6 +426,27 @@ function createJitsiMeetWindow() {
             openExternalLink(url);
         }
     });
+
+    // Block opening any external applications.
+    mainWindow.webContents.session.setPermissionRequestHandler((_, permission, callback, details) => {
+        if (permission === 'openExternal') {
+            console.warn(`Disallowing opening ${details.externalURL}`);
+            callback(false);
+
+            return;
+        }
+
+        callback(true);
+    });
+
+    initPopupsConfigurationMain(mainWindow);
+    setupAlwaysOnTopMain(mainWindow, null, windowOpenHandler);
+    setupPowerMonitorMain(mainWindow);
+    setupScreenSharingMain(mainWindow, config.default.appName, pkgJson.build.appId);
+    if (ENABLE_REMOTE_CONTROL) {
+        new RemoteControlMain(mainWindow); // eslint-disable-line no-new
+    }
+
     mainWindow.on('closed', () => {
         console.log('closed');
         mainWindow = null;
@@ -382,7 +473,6 @@ function createJitsiMeetWindow() {
             mainWindow.show();
         }
     });
-
 
     /**
      * When someone tries to enter something like jitsi-meet://test
@@ -449,67 +539,67 @@ async function createTrayMenu() {
 
     let autoLauncherEnable = await autoLauncher.isEnabled();
 
-    const contextMenu = Menu.buildFromTemplate([
-        {
-            label: i18n.t('menu.createMeeting'),
-            click: () => {
-                handleClickOnTrayMenu('protocol-data-create-meeting');
-            }
-        },
-        {
-            label: i18n.t('menu.joinMeeting'),
-            click: () => {
-                handleClickOnTrayMenu('protocol-data-join-meeting');
-            }
-        },
-        {
-            label: i18n.t('menu.planMeeting'),
-            click: () => {
-                handleClickOnTrayMenu('protocol-data-plan-meeting');
-            }
-        },
-        { type: 'separator' },
+    // const contextMenu = Menu.buildFromTemplate([
+    //     {
+    //         label: i18n.t('menu.createMeeting'),
+    //         click: () => {
+    //             handleClickOnTrayMenu('protocol-data-create-meeting');
+    //         }
+    //     },
+    //     {
+    //         label: i18n.t('menu.joinMeeting'),
+    //         click: () => {
+    //             handleClickOnTrayMenu('protocol-data-join-meeting');
+    //         }
+    //     },
+    //     {
+    //         label: i18n.t('menu.planMeeting'),
+    //         click: () => {
+    //             handleClickOnTrayMenu('protocol-data-plan-meeting');
+    //         }
+    //     },
+    //     { type: 'separator' },
 
-        // { label: 'Paramètres' },
-        {
-            label: i18n.t('menu.openOnBoot'),
-            type: 'checkbox',
-            checked: autoLauncherEnable,
-            click: () => {
-                autoLauncher.isEnabled().then(isEnabled => {
-                    autoLauncherEnable = isEnabled;
-                    if (isEnabled) {
-                        autoLauncher.disable();
-                    } else {
-                        autoLauncher.enable();
-                    }
-                })
-                    .catch(err => {
-                        throw err;
-                    });
-            }
-        },
-        {
-            label: i18n.t('menu.openKmeet'),
-            click: () => {
-                shell.openExternal('https://kmeet.infomaniak.com');
-            }
-        },
-        {
-            label: `${i18n.t('menu.aboutKmeet')} ${APP_VERSION}`,
-            click: () => {
-                shell.openExternal('https://www.infomaniak.com/kmeet');
-            }
-        },
-        { type: 'separator' },
-        {
-            label: i18n.t('menu.quit'),
-            click: () => {
-                app.quit();
-                process.exit(0);
-            }
-        }
-    ]);
+    //     // { label: 'Paramètres' },
+    //     {
+    //         label: i18n.t('menu.openOnBoot'),
+    //         type: 'checkbox',
+    //         checked: autoLauncherEnable,
+    //         click: () => {
+    //             autoLauncher.isEnabled().then(isEnabled => {
+    //                 autoLauncherEnable = isEnabled;
+    //                 if (isEnabled) {
+    //                     autoLauncher.disable();
+    //                 } else {
+    //                     autoLauncher.enable();
+    //                 }
+    //             })
+    //                 .catch(err => {
+    //                     throw err;
+    //                 });
+    //         }
+    //     },
+    //     {
+    //         label: i18n.t('menu.openKmeet'),
+    //         click: () => {
+    //             shell.openExternal('https://kmeet.infomaniak.com');
+    //         }
+    //     },
+    //     {
+    //         label: `${i18n.t('menu.aboutKmeet')} ${pkgJson.version}`,
+    //         click: () => {
+    //             shell.openExternal('https://www.infomaniak.com/kmeet');
+    //         }
+    //     },
+    //     { type: 'separator' },
+    //     {
+    //         label: i18n.t('menu.quit'),
+    //         click: () => {
+    //             app.quit();
+    //             process.exit(0);
+    //         }
+    //     }
+    // ]);
 
     tray.setContextMenu(contextMenu);
     tray.on('click', (e) => {
@@ -616,7 +706,8 @@ app.on('certificate-error',
 
 app.on('ready', async () => {
     createJitsiMeetWindow();
-    await createTrayMenu();
+
+    // await createTrayMenu();
 });
 
 if (isDev) {
@@ -684,4 +775,11 @@ ipcMain.on('renderer-ready', () => {
             .webContents
             .send('protocol-data-msg', protocolDataForFrontApp);
     }
+});
+
+/**
+ * Handle opening external links in the main process.
+ */
+ipcMain.on('jitsi-open-url', (event, someUrl) => {
+    openExternalLink(someUrl);
 });

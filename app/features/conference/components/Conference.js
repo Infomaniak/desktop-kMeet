@@ -3,16 +3,22 @@
 import Spinner from '@atlaskit/spinner';
 
 import React, { Component } from 'react';
-import { renderer } from 'react-dom';
 import type { Dispatch } from 'redux';
 import { connect } from 'react-redux';
 import { push } from 'react-router-redux';
 
+import i18n from '../../../i18n';
 import config from '../../config';
+
+// import { getSetting } from '../../settings';
+
+import { parseURLParams } from '../../utils/parseURLParams';
 
 import { conferenceEnded, conferenceJoined } from '../actions';
 import JitsiMeetExternalAPI from '../external_api';
 import { LoadingIndicator, Wrapper } from '../styled';
+
+const ENABLE_REMOTE_CONTROL = false;
 
 type Props = {
 
@@ -25,6 +31,26 @@ type Props = {
      * React Router location object.
      */
     location: Object;
+
+    /**
+     * AlwaysOnTop Window Enabled.
+     */
+    _alwaysOnTopWindowEnabled: boolean;
+
+    /**
+     * Disable automatic gain control.
+     */
+     _disableAGC: boolean;
+
+    /**
+     * Default Jitsi Server URL.
+     */
+    _serverURL: string;
+
+    /**
+     * Default Jitsi Server Timeout.
+     */
+    _serverTimeout: number;
 };
 
 type State = {
@@ -91,8 +117,10 @@ class Conference extends Component<Props, State> {
     componentDidMount() {
         const room = this.props.location.state.room;
         const subject = this.props.location.state.subject;
-        const serverTimeout = config.defaultServerTimeout;
-        const serverURL = this.props.location.state.serverURL || config.defaultServerURL;
+        const serverTimeout = this.props._serverTimeout || config.defaultServerTimeout;
+        const serverURL = this.props.location.state.serverURL
+            || this.props._serverURL
+            || config.defaultServerURL;
 
         this._conference = {
             room,
@@ -132,6 +160,21 @@ class Conference extends Component<Props, State> {
     }
 
     /**
+     * Handle joining another another meeing while in one.
+     *
+     * @param {Object} prevProps - The previous props.
+     * @returns {void}
+     */
+    componentDidUpdate(prevProps) {
+        if (prevProps.location.key !== this.props.location.key) {
+
+            // Simulate a re-mount so the new meeting is joined.
+            this.componentWillUnmount();
+            this.componentDidMount();
+        }
+    }
+
+    /**
      * Implements React's {@link Component#render()}.
      *
      * @returns {ReactElement}
@@ -151,25 +194,56 @@ class Conference extends Component<Props, State> {
      * @returns {void}
      */
     _loadConference() {
+        const appProtocolSurplus = `${config.appProtocolPrefix}://`;
+
+        // replace the custom url with https, otherwise new URL() raises 'Invalid URL'.
+        if (this._conference.serverURL.startsWith(appProtocolSurplus)) {
+            this._conference.serverURL = this._conference.serverURL.replace(appProtocolSurplus, 'https://');
+        }
         const url = new URL(this._conference.room, this._conference.serverURL);
         const roomName = url.pathname.split('/').pop();
         const host = this._conference.serverURL.replace(/https?:\/\//, '');
+        const searchParameters = Object.fromEntries(url.searchParams);
+        const hashParameters = parseURLParams(url);
 
-        const configOverwrite = {
-            startWithAudioMuted: false,
-            startWithVideoMuted: true,
-            subject: this._conference.subject
+        const locale = { lng: i18n.language };
+        const urlParameters = {
+            ...searchParameters,
+            ...locale
         };
+
+        // override both old and new prejoin config options,
+        // old one for servers that do not understand the new option yet
+        // and new one for newly setup servers where the new option overrides
+        // the old if set.
+        const configOverwrite = {
+            disableAGC: this.props._disableAGC,
+            prejoinPageEnabled: true,
+            subject: this._conference.subject,
+            prejoinConfig: {
+                enabled: true
+            }
+        };
+
+        Object.entries(hashParameters).forEach(([ key, value ]) => {
+            if (key.startsWith('config.')) {
+                const configKey = key.substring('config.'.length);
+
+                configOverwrite[configKey] = value;
+            }
+        });
 
         const options = {
             configOverwrite,
             onload: this._onIframeLoad,
             parentNode: this._ref.current,
-            roomName
+            roomName,
+            sandbox: 'allow-scripts allow-same-origin allow-popups allow-forms'
         };
 
         this._api = new JitsiMeetExternalAPI(host, {
-            ...options
+            ...options,
+            ...urlParameters
         });
 
 
@@ -181,33 +255,11 @@ class Conference extends Component<Props, State> {
             }
         );
 
-        const {
-            RemoteControl,
-            RemoteDraw,
-            setupScreenSharingRender,
-            setupAlwaysOnTopRender,
-            initPopupsConfigurationRender,
-            setupWiFiStats,
-            setupPowerMonitorRender
-        } = window.jitsiNodeAPI.jitsiMeetElectronUtils;
-
-        initPopupsConfigurationRender(this._api);
-
-        const iframe = this._api.getIFrame();
-
-        setupScreenSharingRender(this._api);
-
-        new RemoteControl(iframe); // eslint-disable-line no-new
-        new RemoteDraw(iframe, renderer); // eslint-disable-line no-new
-
-        setupAlwaysOnTopRender(this._api);
-
-        setupWiFiStats(iframe);
-        setupPowerMonitorRender(this._api);
-
-        window.jitsiNodeAPI.ipc.on('protocol-data-create-meeting', this._listenOnProtocolCreateMeeting);
-        window.jitsiNodeAPI.ipc.on('protocol-data-join-meeting', this._listenOnProtocolJoinMeeting);
-        window.jitsiNodeAPI.ipc.on('protocol-data-plan-meeting', this._listenOnProtocolPlanMeeting);
+        // Setup Jitsi Meet Electron SDK on this renderer.
+        window.jitsiNodeAPI.setupRenderer(this._api, {
+            enableRemoteControl: ENABLE_REMOTE_CONTROL,
+            enableAlwaysOnTopWindow: this.props._alwaysOnTopWindowEnabled
+        });
     }
 
     /**
@@ -273,15 +325,11 @@ class Conference extends Component<Props, State> {
         });
     }
 
-    _listenOnProtocolCreateMeeting: (*) => void;
-
     _listenOnProtocolCreateMeeting() {
         this.props.dispatch(push('/', {
             event: 'startNewMeeting'
         }));
     }
-
-    _listenOnProtocolJoinMeeting: (*) => void;
 
     _listenOnProtocolJoinMeeting() {
         this.props.dispatch(push('/', {
@@ -289,12 +337,26 @@ class Conference extends Component<Props, State> {
         }));
     }
 
-    _listenOnProtocolPlanMeeting: (*) => void;
-
     _listenOnProtocolPlanMeeting() {
         this.props.dispatch(push('/', {
             event: 'planMeeting'
         }));
     }
 }
-export default connect()(Conference);
+
+/**
+ * Maps (parts of) the redux state to the React props.
+ *
+ * @param {Object} state - The redux state.
+ * @returns {Props}
+ */
+function _mapStateToProps(state: Object) {
+    return {
+        _alwaysOnTopWindowEnabled: true, //getSetting(state, 'alwaysOnTopWindowEnabled', true),
+        _disableAGC: state.settings.disableAGC,
+        _serverURL: state.settings.serverURL,
+        _serverTimeout: state.settings.serverTimeout
+    };
+}
+
+export default connect(_mapStateToProps)(Conference);

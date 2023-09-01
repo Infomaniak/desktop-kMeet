@@ -3,15 +3,15 @@ import { AtlasKitThemeProvider } from '@atlaskit/theme';
 
 import React, { Component } from 'react';
 import { Route, Switch } from 'react-router';
-import { ConnectedRouter as Router, push, replace } from 'react-router-redux';
 import { connect } from 'react-redux';
+import { ConnectedRouter as Router, push } from 'react-router-redux';
 
 import { Conference } from '../../conference';
 import config from '../../config';
 import { history } from '../../router';
+import { createConferenceObjectFromURL } from '../../utils';
 import { Welcome } from '../../welcome';
 import { Login } from '../../login';
-import { createConferenceObjectFromURL } from '../../utils';
 
 /**
  * Main component encapsulating the entire application.
@@ -68,13 +68,18 @@ class App extends Component<*> {
     /**
      * Handler when main proccess contact us.
      *
-     * @param {Object} event - Message event triggered by .
-     * @param {Object} arg - String with room and optionally server url.
+     * @param {Object} event - Message event.
+     * @param {string} inputURL - String with room name.
      *
      * @returns {void}
      */
-    _listenOnProtocolMessages(event, arg) {
-        const conference = createConferenceObjectFromURL(arg);
+    _listenOnProtocolMessages(event, inputURL: string) {
+        // Remove trailing slash if one exists.
+        if (inputURL.slice(-1) === '/') {
+            inputURL = inputURL.slice(0, -1); // eslint-disable-line no-param-reassign
+        }
+
+        const conference = createConferenceObjectFromURL(inputURL);
 
         // Don't navigate if conference couldn't be created
         if (!conference) {
@@ -82,7 +87,6 @@ class App extends Component<*> {
         }
 
         // change route when we are notified
-        this.props.dispatch(replace('/'));
         this.props.dispatch(push('/conference', conference));
     }
 

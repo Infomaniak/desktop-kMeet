@@ -2,7 +2,6 @@ const path = require('path');
 const SentryCliPlugin = require('@sentry/webpack-plugin');
 
 module.exports = (env, argv) => {
-
     const plugins = argv.mode === 'development' ? [] : [
         new SentryCliPlugin({
             include: '.',
@@ -10,7 +9,6 @@ module.exports = (env, argv) => {
             configFile: 'sentry.properties'
         })
     ];
-
 
     return {
         target: 'electron-main',
@@ -26,7 +24,7 @@ module.exports = (env, argv) => {
             __dirname: true
         },
         externals: [ {
-            'jitsi-meet-electron-utils': 'require(\'jitsi-meet-electron-utils\')',
+            '@jitsi/electron-sdk': 'require(\'@jitsi/electron-sdk\')',
             'electron-debug': 'require(\'electron-debug\')',
             'electron-reload': 'require(\'electron-reload\')'
         } ],

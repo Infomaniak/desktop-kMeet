@@ -1,26 +1,29 @@
 {
   "name": "kmeet-electron",
-  "version": "1.1.40",
+  "version": "1.2.0",
   "description": "Electron application for Infomaniak Meet",
   "main": "./build/main.js",
   "productName": "kMeet",
+  "private": true,
   "scripts": {
     "start": "webpack --config ./webpack.main.js --mode development && concurrently \"npm:watch\" \"electron ./build/main.js\"",
     "clean": "rm -rf node_modules build dist",
     "lint": "eslint . && flow",
     "build": "webpack --config ./webpack.main.js --mode production && webpack --config ./webpack.renderer.js --mode production",
     "dist": "npm run build && electron-builder",
-    "postinstall": "electron-builder install-app-deps",
-    "validate": "npm ls",
-    "watch": "webpack --config ./webpack.renderer.js --mode development --watch --watch-poll",
-    "publish": "npm run build && electron-builder -p always"
+    "postinstall": "patch-package",
+    "watch": "webpack --config ./webpack.renderer.js --mode development --watch --watch-options-poll=1000",
+    "validate": "npm ls"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   },
   "build": {
     "appId": "com.infomaniak.meet",
     "productName": "kMeet",
     "generateUpdatesFilesForAllChannels": true,
-    "afterPack": "scripts/linux-sandbox-fix.js",
-    "afterSign": "scripts/notarize.js",
+    "afterSign": "./notarize.js",
+    "npmRebuild": false,
     "publish": {
       "provider": "s3",
       "channel": "latest",
@@ -29,7 +32,7 @@
       "path": "/"
     },
     "files": [
-      "**/*",
+      "build",
       "resources",
       "!app",
       "!main.js"
@@ -41,48 +44,75 @@
       "artifactName": "kMeet.${ext}",
       "target": [
         {
-          "arch": "x64",
+          "arch": "universal",
           "target": "dmg"
         },
         {
-          "arch": "x64",
+          "arch": "universal",
           "target": "zip"
         }
       ],
       "category": "public.app-category.video",
       "darkModeSupport": true,
       "hardenedRuntime": true,
-      "entitlements": "resources/entitlements.mac.plist",
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist",
       "asarUnpack": "**/*.node",
+      "notarize": false,
       "extendInfo": {
         "NSMicrophoneUsageDescription": "kMeet requires access to your camera in order to make video-calls.",
         "NSCameraUsageDescription": "kMeet requires access to your microphone in order to make calls (audio/video).",
-        "LSMultipleInstancesProhibited": true,
-        "CFBundleURLTypes": [
-          {
-            "CFBundleTypeRole": "Viewer",
-            "CFBundleURLSchemes": "kmeet"
-          }
-        ]
+        "LSMultipleInstancesProhibited": true
       }
+    },
+    "mas": {
+      "entitlements": "resources/entitlements.mas.plist",
+      "entitlementsInherit": "resources/entitlements.mas.inherit.plist",
+      "hardenedRuntime": false
     },
     "linux": {
       "artifactName": "kMeet-${arch}.${ext}",
       "category": "VideoConference;AudioVideo;Audio;Video;Network",
       "description": "Infomaniak Meet Desktop App",
+      "desktop": {
+        "Comment[de]": "Infomaniak Meet Desktop App",
+        "Comment[es]": "Infomaniak Meet Desktop App",
+        "Comment[fr]": "Infomaniak Meet Desktop App",
+        "Comment[it]": "Infomaniak Meet Desktop App",
+        "MimeType": "x-scheme-handler/kmeet"
+      },
       "mimeTypes": [
         "x-scheme-handler/kmeet"
       ],
-      "desktop": {
-        "MimeType": "x-scheme-handler/kmeet"
-      },
       "maintainer": "Infomaniak",
       "executableName": "kMeet",
       "target": [
         {
           "arch": "x64",
           "target": "AppImage"
+        },
+        {
+          "arch": "x64",
+          "target": "deb"
+        },
+        {
+          "arch": "arm64",
+          "target": "AppImage"
+        },
+        {
+          "arch": "arm64",
+          "target": "deb"
         }
+      ]
+    },
+    "deb": {
+      "depends": [
+        "libgtk-3-0",
+        "libnss3",
+        "libxtst6",
+        "xdg-utils",
+        "libatspi2.0-0",
+        "libuuid1"
       ]
     },
     "win": {
@@ -110,6 +140,7 @@
     },
     "protocols": {
       "name": "kmeet-protocol",
+      "role": "Viewer",
       "schemes": [
         "kmeet"
       ]
@@ -130,83 +161,82 @@
   "readmeFilename": "README.md",
   "license": "proprietary",
   "dependencies": {
-    "@atlaskit/avatar": "14.1.7",
-    "@atlaskit/button": "^10.1.3",
-    "@atlaskit/css-reset": "3.0.8",
-    "@atlaskit/droplist": "7.0.19",
-    "@atlaskit/field-text": "7.1.0",
-    "@atlaskit/icon": "15.0.3",
-    "@atlaskit/navigation": "33.3.10",
-    "@atlaskit/onboarding": "6.2.0",
-    "@atlaskit/page": "8.0.12",
-    "@atlaskit/panel": "^0.3.5",
-    "@atlaskit/spinner": "9.0.13",
-    "@atlaskit/theme": "7.0.5",
-    "@atlaskit/toggle": "^5.0.15",
-    "@jitsi/js-utils": "^1.0.6",
+    "@jitsi/electron-sdk": "workspace:@jitsi/electron-sdk",
     "@sentry/electron": "^3.0.2",
     "auto-launch": "^5.0.5",
-    "electron-context-menu": "^2.5.0",
     "electron-debug": "^3.2.0",
-    "electron-is-dev": "^1.2.0",
-    "electron-log": "^4.3.2",
-    "electron-notarize": "1.0.0",
     "electron-reload": "^1.5.0",
-    "electron-store": "^5.2.0",
-    "electron-updater": "^4.3.8",
-    "electron-window-state": "^5.0.3",
-    "history": "4.7.2",
-    "i18next": "^19.9.2",
-    "jitsi-meet-electron-utils": "file:jitsi-meet-electron-utils",
-    "lodash": "4.17.21",
-    "moment": "^2.29.1",
-    "mousetrap": "^1.6.5",
-    "perfect-freehand": "^0.4.91",
-    "polygon-clipping": "^0.15.3",
-    "react": "^16.14.0",
-    "react-dom": "^16.14.0",
-    "react-i18next": "^11.8.12",
-    "react-redux": "^5.1.2",
-    "react-router-redux": "^5.0.0-alpha.9",
-    "redux": "^4.0.5",
-    "redux-logger": "^3.0.6",
-    "redux-persist": "^5.10.0",
-    "redux-persist-electron-storage": "^2.1.0",
-    "source-map-support": "^0.5.19",
-    "styled-components": "^3.4.10"
+    "electron-store": "^5.2.0"
   },
   "devDependencies": {
-    "@babel/core": "7.9.0",
-    "@babel/plugin-proposal-class-properties": "7.8.3",
-    "@babel/plugin-proposal-export-namespace-from": "7.8.3",
-    "@babel/plugin-transform-flow-strip-types": "7.9.0",
-    "@babel/preset-env": "7.9.0",
-    "@babel/preset-flow": "7.9.0",
-    "@babel/preset-react": "7.9.4",
-    "@svgr/webpack": "5.4.0",
-    "babel-eslint": "10.0.3",
-    "babel-loader": "8.1.0",
-    "babel-plugin-inline-react-svg": "1.0.1",
-    "concurrently": "5.1.0",
-    "css-loader": "3.5.0",
-    "electron": "12.0.4",
-    "electron-builder": "22.10.5",
+    "@atlaskit/button": "^10.1.3",
+    "@atlaskit/css-reset": "^3.0.8",
+    "@atlaskit/droplist": "^7.0.19",
+    "@atlaskit/field-text": "^7.1.0",
+    "@atlaskit/icon": "^15.0.3",
+    "@atlaskit/navigation": "^33.3.10",
+    "@atlaskit/onboarding": "^6.2.0",
+    "@atlaskit/page": "^8.0.12",
+    "@atlaskit/spinner": "^9.0.13",
+    "@atlaskit/theme": "^7.0.5",
+    "@atlaskit/toggle": "^5.0.15",
+    "@babel/core": "^7.17.8",
+    "@babel/plugin-proposal-class-properties": "^7.16.7",
+    "@babel/plugin-proposal-export-namespace-from": "^7.16.7",
+    "@babel/plugin-transform-flow-strip-types": "^7.16.7",
+    "@babel/preset-env": "^7.16.11",
+    "@babel/preset-flow": "^7.16.7",
+    "@babel/preset-react": "^7.16.7",
+    "@hapi/bourne": "^3.0.0",
+    "@jitsi/js-utils": "2.0.5",
     "@sentry/cli": "^1.73.0",
     "@sentry/webpack-plugin": "^1.18.8",
+    "@svgr/webpack": "^6.2.1",
+    "babel-eslint": "10.0.3",
+    "babel-loader": "^8.2.3",
+    "concurrently": "5.1.0",
+    "css-loader": "^6.7.1",
+    "electron": "25.3.0",
+    "electron-builder": "24.4.0",
+    "electron-context-menu": "^2.5.0",
+    "electron-is-dev": "^1.2.0",
+    "electron-log": "^4.3.2",
+    "electron-notarize": "1.1.1",
     "electron-react-devtools": "0.5.3",
+    "electron-updater": "5.0.5",
+    "electron-window-state": "^5.0.3",
     "eslint": "6.5.1",
     "eslint-config-jitsi": "github:jitsi/eslint-config-jitsi#1.0.2",
     "eslint-plugin-flowtype": "4.7.0",
     "eslint-plugin-import": "2.20.2",
     "eslint-plugin-jsdoc": "22.1.0",
     "eslint-plugin-react": "7.19.0",
-    "file-loader": "6.0.0",
+    "file-loader": "^6.2.0",
     "flow-bin": "0.109.0",
-    "html-webpack-plugin": "4.0.4",
+    "history": "^4.10.1",
+    "html-webpack-plugin": "^5.5.0",
+    "i18next": "^19.9.2",
+    "moment": "^2.29.2",
+    "mousetrap": "^1.6.5",
     "patch-package": "6.2.2",
-    "style-loader": "1.1.3",
-    "svg-inline-loader": "0.8.0",
-    "webpack": "4.42.1",
-    "webpack-cli": "3.3.11"
-  }
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
+    "react-i18next": "^11.8.12",
+    "react-redux": "^5.1.2",
+    "react-router-redux": "^5.0.0-alpha.9",
+    "redux": "^4.1.2",
+    "redux-logger": "^3.0.6",
+    "redux-persist": "^5.10.0",
+    "source-map-support": "^0.5.19",
+    "style-loader": "^3.3.1",
+    "styled-components": "^3.4.10",
+    "webpack": "^5.76.0",
+    "webpack-cli": "^4.9.2"
+  },
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  },
+  "packageManager": "yarn@3.2.2"
 }

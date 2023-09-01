@@ -6,6 +6,11 @@ export default {
     aboutURL: 'https://www.infomaniak.com/meet/',
 
     /**
+     * The URL to the source code repository.
+     */
+    sourceURL: 'https://github.com/jitsi/jitsi-meet-electron',
+
+    /**
      * Application name.
      */
     appName: 'kMeet',
@@ -15,6 +20,12 @@ export default {
      * You will also need to replace this in package.json.
      */
     appProtocolPrefix: 'kmeet',
+
+    /**
+    * The prefix for application protocol.
+    * You will also need to replace this in package.json.
+    */
+    appProtocolPrefix: 'jitsi-meet',
 
     /**
      * The default server URL of Jitsi Meet Deployment that will be used.
@@ -28,6 +39,11 @@ export default {
      * The default server Timeout in seconds.
      */
     defaultServerTimeout: 60,
+
+    /**
+     * The default server Timeout in seconds.
+     */
+    defaultServerTimeout: 30,
 
     /**
      * URL to send feedback.

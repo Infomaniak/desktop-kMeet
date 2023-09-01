@@ -1,11 +1,9 @@
 // @flow
 import React, { Component } from 'react';
-import type { Dispatch } from 'redux';
 import { compose } from 'redux';
+import type { Dispatch } from 'redux';
 import { Wrapper } from '../styled';
-import config from '../../config';
 import { connect } from 'react-redux';
-import JitsiMeetExternalAPI from '../../conference/external_api';
 
 type Props = {
 
@@ -18,6 +16,40 @@ type Props = {
      * React Router location object.
      */
     location: Object;
+
+    /**
+     * I18next translate function.
+     */
+     t: Function;
+};
+
+type State = {
+
+    /**
+     * Timer for animating the room name geneeration.
+     */
+    animateTimeoutId: ?TimeoutID,
+
+    /**
+     * Generated room name.
+     */
+    generatedRoomname: string,
+
+    /**a
+     * Current room name placeholder.
+     */
+    roomPlaceholder: string,
+
+    /**
+     * Timer for re-generating a new room name.
+     */
+    updateTimeoutId: ?TimeoutID,
+
+    /**
+     * URL of the room to join.
+     * If this is not a url it will be treated as room name for default domain.
+     */
+    url: string;
 };
 
 /**
@@ -58,30 +90,30 @@ class Welcome extends Component<Props> {
      * @returns {void}
      */
     componentDidMount() {
-        const host = config.defaultServerURL.replace(/https?:\/\//, '');
-        const options = {
-            parentNode: this._ref.current
-        };
+        // const host = config.defaultServerURL.replace(/https?:\/\//, '');
+        // const options = {
+        //     parentNode: this._ref.current
+        // };
 
-        this._api = new JitsiMeetExternalAPI(host, {
-            ...options
-        });
+        // this._api = new JitsiMeetExternalAPI(host, {
+        //     ...options
+        // });
 
-        const {
-            RemoteControl,
-            RemoteDraw,
-            setupScreenSharingRender,
-            initPopupsConfigurationRender
-        } = window.jitsiNodeAPI.jitsiMeetElectronUtils;
+        // const {
+        //     RemoteControl,
+        //     RemoteDraw,
+        //     setupScreenSharingRender,
+        //     initPopupsConfigurationRender
+        // } = window.jitsiNodeAPI.jitsiMeetElectronUtils;
 
-        initPopupsConfigurationRender(this._api);
+        // initPopupsConfigurationRender(this._api);
 
-        const iframe = this._api.getIFrame();
+        // const iframe = this._api.getIFrame();
 
-        setupScreenSharingRender(this._api);
+        // setupScreenSharingRender(this._api);
 
-        new RemoteControl(iframe); // eslint-disable-line no-new
-        new RemoteDraw(iframe); // eslint-disable-line no-new
+        // new RemoteControl(iframe); // eslint-disable-line no-new
+        // new RemoteDraw(iframe); // eslint-disable-line no-new
 
         window.jitsiNodeAPI.ipc.on('protocol-data-create-meeting', this._listenOnProtocolCreateMeeting);
         window.jitsiNodeAPI.ipc.on('protocol-data-join-meeting', this._listenOnProtocolJoinMeeting);
@@ -152,6 +184,30 @@ class Welcome extends Component<Props> {
         return (
             <Wrapper innerRef = { this._ref } />
         );
+    }
+
+    _updateRoomname: () => void;
+
+    /**
+     * Triggers the generation of a new room name and initiates an animation of
+     * its changing.
+     *
+     * @protected
+     * @returns {void}
+     */
+    _updateRoomname() {
+        const generatedRoomname = generateRoomWithoutSeparator();
+        const roomPlaceholder = '';
+        const updateTimeoutId = setTimeout(this._updateRoomname, 10000);
+
+        this._clearTimeouts();
+        this.setState(
+            {
+                generatedRoomname,
+                roomPlaceholder,
+                updateTimeoutId
+            },
+            () => this._animateRoomnameChanging(generatedRoomname));
     }
 }
 
