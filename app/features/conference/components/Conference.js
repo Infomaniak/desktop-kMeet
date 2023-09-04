@@ -10,14 +10,13 @@ import { push } from 'react-router-redux';
 import i18n from '../../../i18n';
 import config from '../../config';
 
-// import { getSetting } from '../../settings';
+import { getSetting } from '../../settings';
 
 import { parseURLParams } from '../../utils/parseURLParams';
 
 import { conferenceEnded, conferenceJoined } from '../actions';
 import JitsiMeetExternalAPI from '../external_api';
 import { LoadingIndicator, Wrapper } from '../styled';
-import { getSetting } from '../../settings';
 
 const ENABLE_REMOTE_CONTROL = false;
 

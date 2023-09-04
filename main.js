@@ -379,7 +379,7 @@ function createJitsiMeetWindow() {
                         // console.log('joinUrl');
                         // console.log(joinUrl);
                         // eslint-disable-next-line no-new
-                        const roomUrl = new URL.URL(joinSubject);
+                        const roomUrl = new URL.URL(`${config.default.defaultServerURL}/${joinSubject}`);
 
                         console.log('roomUrl');
                         console.log(roomUrl);
