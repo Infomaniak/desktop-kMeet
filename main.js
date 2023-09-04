@@ -335,7 +335,9 @@ function createJitsiMeetWindow() {
                 redirectedToLogin = '/';
 
                 if (d.url.indexOf('auth/login/meet') > 0) {
-                    const joinUrl = new URL(d.url);
+                    console.log('d.url');
+                    console.log(d.url);
+                    const joinUrl = new URL.URL(d.url);
 
                     redirectedToLogin = joinUrl.searchParams.get('uri');
                 }
@@ -358,7 +360,9 @@ function createJitsiMeetWindow() {
             }
 
             if (d.url.indexOf('welcomePage.joinButton.clicked') > 0) {
-                const joinUrl = new URL(d.url);
+                console.log('d.url');
+                console.log(d.url);
+                const joinUrl = new URL.URL(d.url);
                 const searchParams = JSON.parse(joinUrl.searchParams.get('cvar'));
 
                 if (rendererReady) {
@@ -369,8 +373,16 @@ function createJitsiMeetWindow() {
                     let joinSubject = _.findLast(searchParams, o => o[0] === 'room_subject')[1];
 
                     try {
+                        console.log('joinSubject');
+                        console.log(joinSubject);
+
+                        // console.log('joinUrl');
+                        // console.log(joinUrl);
                         // eslint-disable-next-line no-new
-                        const roomUrl = new URL(joinSubject);
+                        const roomUrl = new URL.URL(joinSubject);
+
+                        console.log('roomUrl');
+                        console.log(roomUrl);
 
                         joinHost = roomUrl.origin.replace(/https?:\/\//, '');
                         joinRoom = roomUrl.pathname.replace('/', '');
@@ -451,8 +463,8 @@ function createJitsiMeetWindow() {
         console.log('closed');
         mainWindow = null;
     });
-    mainWindow.once('ready-to-show', () => {
 
+    mainWindow.once('ready-to-show', () => {
         console.log(`wasOpenedAtLogin: ${wasOpenedAtLogin()}`);
 
         let wasOpenedAtLoginHandler = wasOpenedAtLogin;
@@ -537,7 +549,7 @@ async function createTrayMenu() {
 
     tray = new Tray(iconPath);
 
-    let autoLauncherEnable = await autoLauncher.isEnabled();
+    const autoLauncherEnable = await autoLauncher.isEnabled();
 
     // const contextMenu = Menu.buildFromTemplate([
     //     {
@@ -602,7 +614,7 @@ async function createTrayMenu() {
     // ]);
 
     tray.setContextMenu(contextMenu);
-    tray.on('click', (e) => {
+    tray.on('click', e => {
         if (process.platform !== 'darwin') {
             if (app.isReady() && mainWindow === null) {
                 createJitsiMeetWindow();

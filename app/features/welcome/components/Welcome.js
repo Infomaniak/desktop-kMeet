@@ -4,6 +4,9 @@ import { compose } from 'redux';
 import type { Dispatch } from 'redux';
 import { Wrapper } from '../styled';
 import { connect } from 'react-redux';
+import { generateRoomWithoutSeparator } from '@jitsi/js-utils/random';
+import JitsiMeetExternalAPI from '../../conference/external_api';
+import config from '../../config';
 
 type Props = {
 
@@ -35,7 +38,7 @@ type State = {
      */
     generatedRoomname: string,
 
-    /**a
+    /**
      * Current room name placeholder.
      */
     roomPlaceholder: string,
@@ -90,14 +93,14 @@ class Welcome extends Component<Props> {
      * @returns {void}
      */
     componentDidMount() {
-        // const host = config.defaultServerURL.replace(/https?:\/\//, '');
-        // const options = {
-        //     parentNode: this._ref.current
-        // };
+        const host = config.defaultServerURL.replace(/https?:\/\//, '');
+        const options = {
+            parentNode: this._ref.current
+        };
 
-        // this._api = new JitsiMeetExternalAPI(host, {
-        //     ...options
-        // });
+        this._api = new JitsiMeetExternalAPI(host, {
+            ...options
+        });
 
         // const {
         //     RemoteControl,
@@ -132,6 +135,8 @@ class Welcome extends Component<Props> {
                 break;
             }
         }
+
+        // this._updateRoomname();
     }
 
     /**
@@ -159,18 +164,33 @@ class Welcome extends Component<Props> {
 
     _listenOnProtocolCreateMeeting: (*) => void;
 
+    /**
+     * Todo.
+     *
+     * @returns {void}
+     */
     _listenOnProtocolCreateMeeting() {
         this._api.executeCommand('startNewMeeting');
     }
 
     _listenOnProtocolJoinMeeting: (*) => void;
 
+    /**
+     * Todo.
+     *
+     * @returns {void}
+     */
     _listenOnProtocolJoinMeeting() {
         this._api.executeCommand('joinMeeting');
     }
 
     _listenOnProtocolPlanMeeting: (*) => void;
 
+    /**
+     * Todo.
+     *
+     * @returns {void}
+     */
     _listenOnProtocolPlanMeeting() {
         this._api.executeCommand('planMeeting');
     }

@@ -17,6 +17,7 @@ import { parseURLParams } from '../../utils/parseURLParams';
 import { conferenceEnded, conferenceJoined } from '../actions';
 import JitsiMeetExternalAPI from '../external_api';
 import { LoadingIndicator, Wrapper } from '../styled';
+import { getSetting } from '../../settings';
 
 const ENABLE_REMOTE_CONTROL = false;
 
@@ -325,18 +326,33 @@ class Conference extends Component<Props, State> {
         });
     }
 
+    /**
+     * Todo.
+     *
+     * @returns {void}
+     */
     _listenOnProtocolCreateMeeting() {
         this.props.dispatch(push('/', {
             event: 'startNewMeeting'
         }));
     }
 
+    /**
+     * Todo.
+     *
+     * @returns {void}
+     */
     _listenOnProtocolJoinMeeting() {
         this.props.dispatch(push('/', {
             event: 'joinMeeting'
         }));
     }
 
+    /**
+     * Todo.
+     *
+     * @returns {void}
+     */
     _listenOnProtocolPlanMeeting() {
         this.props.dispatch(push('/', {
             event: 'planMeeting'
@@ -352,7 +368,7 @@ class Conference extends Component<Props, State> {
  */
 function _mapStateToProps(state: Object) {
     return {
-        _alwaysOnTopWindowEnabled: true, //getSetting(state, 'alwaysOnTopWindowEnabled', true),
+        _alwaysOnTopWindowEnabled: getSetting(state, 'alwaysOnTopWindowEnabled', true),
         _disableAGC: state.settings.disableAGC,
         _serverURL: state.settings.serverURL,
         _serverTimeout: state.settings.serverTimeout

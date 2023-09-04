@@ -18,3 +18,9 @@ npm-debug.log
 
 build/*
 dist/
+.vscode/settings.json
+.yarn
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
