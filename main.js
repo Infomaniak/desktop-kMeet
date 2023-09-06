@@ -325,8 +325,6 @@ function createJitsiMeetWindow() {
                 redirectedToLogin = '/';
 
                 if (d.url.indexOf('auth/login/meet') > 0) {
-                    console.log('d.url');
-                    console.log(d.url);
                     const joinUrl = new URL.URL(d.url);
 
                     redirectedToLogin = joinUrl.searchParams.get('uri');
@@ -350,8 +348,6 @@ function createJitsiMeetWindow() {
             }
 
             if (d.url.indexOf('welcomePage.joinButton.clicked') > 0) {
-                console.log('d.url');
-                console.log(d.url);
                 const joinUrl = new URL.URL(d.url);
                 const searchParams = JSON.parse(joinUrl.searchParams.get('cvar'));
 
@@ -450,24 +446,31 @@ function createJitsiMeetWindow() {
         mainWindow = null;
     });
 
+    // LEGACY V1
+    // mainWindow.once('ready-to-show', () => {
+    //     console.log(`wasOpenedAtLogin: ${wasOpenedAtLogin()}`);
+
+    //     let wasOpenedAtLoginHandler = wasOpenedAtLogin;
+
+    //     if (wasOpenedAtLoginHandler()) {
+    //         if (process.platform === 'darwin') {
+    //             app.dock.hide();
+    //         }
+
+    //         wasOpenedAtLoginHandler = () => false; // was openedAtLogin must only be triggered first time app launched
+    //     } else {
+    //         if (process.platform === 'darwin') {
+    //             app.dock.show();
+    //         }
+    //         if (mainWindow.isMinimized()) {
+    //             mainWindow.restore();
+    //         }
+    //         mainWindow.show();
+    //     }
+    // });
+
     mainWindow.once('ready-to-show', () => {
-        console.log(`wasOpenedAtLogin: ${wasOpenedAtLogin()}`);
-
-        let wasOpenedAtLoginHandler = wasOpenedAtLogin;
-
-        if (wasOpenedAtLoginHandler()) {
-            if (process.platform === 'darwin') {
-                app.dock.hide();
-            }
-
-            wasOpenedAtLoginHandler = () => false; // was openedAtLogin must only be triggered first time app launched
-        } else {
-            if (process.platform === 'darwin') {
-                app.dock.show();
-            }
-            if (mainWindow.isMinimized()) {
-                mainWindow.restore();
-            }
+        if (!wasOpenedAtLogin()) {
             mainWindow.show();
         }
     });
