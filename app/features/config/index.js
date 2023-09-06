@@ -22,28 +22,17 @@ export default {
     appProtocolPrefix: 'kmeet',
 
     /**
-    * The prefix for application protocol.
-    * You will also need to replace this in package.json.
-    */
-    appProtocolPrefix: 'jitsi-meet',
-
-    /**
      * The default server URL of Jitsi Meet Deployment that will be used.
 
      defaultServerURL: 'https://kmeet.preprod.dev.infomaniak.ch',
      */
-    defaultServerURL: 'https://kmeet.infomaniak.com',
+    defaultServerURL: 'https://kmeet.preprod.dev.infomaniak.ch',
 
 
     /**
      * The default server Timeout in seconds.
      */
     defaultServerTimeout: 60,
-
-    /**
-     * The default server Timeout in seconds.
-     */
-    defaultServerTimeout: 30,
 
     /**
      * URL to send feedback.
