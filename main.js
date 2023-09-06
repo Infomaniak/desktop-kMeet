@@ -21,15 +21,17 @@ const {
     RemoteControlMain,
     setupAlwaysOnTopMain,
     setupPowerMonitorMain,
-    setupScreenSharingMain
-} = require('@jitsi/electron-sdk');
+    setupScreenSharingMain,
+    RemoteDrawMain
+} = require('@infomaniak/jitsi-meet-electron-sdk');
 const path = require('path');
 const process = require('process');
 const URL = require('url');
 const config = require('./app/features/config');
 const { openExternalLink } = require('./app/features/utils/openExternalLink');
 const pkgJson = require('./package.json');
-const Store = require('electron-store');
+
+// const Store = require('electron-store');
 const AutoLaunch = require('auto-launch');
 
 const showDevTools = Boolean(process.env.SHOW_DEV_TOOLS) || (process.argv.indexOf('--show-dev-tools') > -1);
@@ -71,12 +73,12 @@ if (!app.commandLine.hasSwitch('enable-features')) {
 autoUpdater.logger = require('electron-log');
 autoUpdater.logger.transports.file.level = 'info';
 
-const store = new Store();
+// const store = new Store();
 
-if (!store.get('enableAutoLauncher')) {
-    store.set('enableAutoLauncher', 1);
-    autoLauncher.enable();
-}
+// if (!store.get('enableAutoLauncher')) {
+//     store.set('enableAutoLauncher', 1);
+// }
+autoLauncher.enable();
 
 // Enable context menu so things like copy and paste work in input fields.
 contextMenu({
@@ -132,11 +134,6 @@ function setApplicationMenu() {
             label: app.name,
             submenu: [
                 {
-                    label: 'menu.about',
-                    role: 'about'
-                },
-                { type: 'separator' },
-                {
                     role: 'services',
                     submenu: []
                 },
@@ -145,24 +142,17 @@ function setApplicationMenu() {
                 { role: 'hideothers' },
                 { role: 'unhide' },
                 { type: 'separator' },
-                {
-                    label: 'menu.quit',
-                    accelerator: 'CmdOrCtrl+Q',
-                    click: () => {
-                        mainWindow.close();
-                    }
-                }
+                { role: 'quit' }
             ]
-        },
-        {
-            label: 'menu.edit',
+        }, {
+            label: 'Edit',
             submenu: [ {
-                label: 'menu.undo',
+                label: 'Undo',
                 accelerator: 'CmdOrCtrl+Z',
                 selector: 'undo:'
             },
             {
-                label: 'menu.redo',
+                label: 'Redo',
                 accelerator: 'Shift+CmdOrCtrl+Z',
                 selector: 'redo:'
             },
@@ -170,22 +160,22 @@ function setApplicationMenu() {
                 type: 'separator'
             },
             {
-                label: 'menu.cut',
+                label: 'Cut',
                 accelerator: 'CmdOrCtrl+X',
                 selector: 'cut:'
             },
             {
-                label: 'menu.copy',
+                label: 'Copy',
                 accelerator: 'CmdOrCtrl+C',
                 selector: 'copy:'
             },
             {
-                label: 'menu.paste',
+                label: 'Paste',
                 accelerator: 'CmdOrCtrl+V',
                 selector: 'paste:'
             },
             {
-                label: 'menu.selectAll',
+                label: 'Select All',
                 accelerator: 'CmdOrCtrl+A',
                 selector: 'selectAll:'
             } ]
@@ -459,6 +449,8 @@ function createJitsiMeetWindow() {
         new RemoteControlMain(mainWindow); // eslint-disable-line no-new
     }
 
+    new RemoteDrawMain(mainWindow); // eslint-disable-line no-new
+
     mainWindow.on('closed', () => {
         console.log('closed');
         mainWindow = null;
@@ -551,69 +543,69 @@ async function createTrayMenu() {
 
     const autoLauncherEnable = await autoLauncher.isEnabled();
 
-    // const contextMenu = Menu.buildFromTemplate([
-    //     {
-    //         label: i18n.t('menu.createMeeting'),
-    //         click: () => {
-    //             handleClickOnTrayMenu('protocol-data-create-meeting');
-    //         }
-    //     },
-    //     {
-    //         label: i18n.t('menu.joinMeeting'),
-    //         click: () => {
-    //             handleClickOnTrayMenu('protocol-data-join-meeting');
-    //         }
-    //     },
-    //     {
-    //         label: i18n.t('menu.planMeeting'),
-    //         click: () => {
-    //             handleClickOnTrayMenu('protocol-data-plan-meeting');
-    //         }
-    //     },
-    //     { type: 'separator' },
+    const trayContextMenu = Menu.buildFromTemplate([
+        {
+            label: 'Create meeting',
+            click: () => {
+                handleClickOnTrayMenu('protocol-data-create-meeting');
+            }
+        },
+        {
+            label: 'Join meeting',
+            click: () => {
+                handleClickOnTrayMenu('protocol-data-join-meeting');
+            }
+        },
+        {
+            label: 'Plan meeting',
+            click: () => {
+                handleClickOnTrayMenu('protocol-data-plan-meeting');
+            }
+        },
+        { type: 'separator' },
 
-    //     // { label: 'Paramètres' },
-    //     {
-    //         label: i18n.t('menu.openOnBoot'),
-    //         type: 'checkbox',
-    //         checked: autoLauncherEnable,
-    //         click: () => {
-    //             autoLauncher.isEnabled().then(isEnabled => {
-    //                 autoLauncherEnable = isEnabled;
-    //                 if (isEnabled) {
-    //                     autoLauncher.disable();
-    //                 } else {
-    //                     autoLauncher.enable();
-    //                 }
-    //             })
-    //                 .catch(err => {
-    //                     throw err;
-    //                 });
-    //         }
-    //     },
-    //     {
-    //         label: i18n.t('menu.openKmeet'),
-    //         click: () => {
-    //             shell.openExternal('https://kmeet.infomaniak.com');
-    //         }
-    //     },
-    //     {
-    //         label: `${i18n.t('menu.aboutKmeet')} ${pkgJson.version}`,
-    //         click: () => {
-    //             shell.openExternal('https://www.infomaniak.com/kmeet');
-    //         }
-    //     },
-    //     { type: 'separator' },
-    //     {
-    //         label: i18n.t('menu.quit'),
-    //         click: () => {
-    //             app.quit();
-    //             process.exit(0);
-    //         }
-    //     }
-    // ]);
+        // { label: 'Paramètres' },
+        {
+            label: 'Start on computer boot',
+            type: 'checkbox',
+            checked: autoLauncherEnable,
+            click: () => {
+                autoLauncher.isEnabled().then(isEnabled => {
+                    autoLauncherEnable = isEnabled;
+                    if (isEnabled) {
+                        autoLauncher.disable();
+                    } else {
+                        autoLauncher.enable();
+                    }
+                })
+                    .catch(err => {
+                        throw err;
+                    });
+            }
+        },
+        {
+            label: 'Open kMeet',
+            click: () => {
+                shell.openExternal('https://kmeet.infomaniak.com');
+            }
+        },
+        {
+            label: `About kMeet ${pkgJson.version}`,
+            click: () => {
+                shell.openExternal('https://www.infomaniak.com/kmeet');
+            }
+        },
+        { type: 'separator' },
+        {
+            label: 'Quit',
+            click: () => {
+                app.quit();
+                process.exit(0);
+            }
+        }
+    ]);
 
-    tray.setContextMenu(contextMenu);
+    tray.setContextMenu(trayContextMenu);
     tray.on('click', e => {
         if (process.platform !== 'darwin') {
             if (app.isReady() && mainWindow === null) {
@@ -719,7 +711,7 @@ app.on('certificate-error',
 app.on('ready', async () => {
     createJitsiMeetWindow();
 
-    // await createTrayMenu();
+    await createTrayMenu();
 });
 
 if (isDev) {

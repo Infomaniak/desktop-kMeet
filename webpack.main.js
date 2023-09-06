@@ -24,7 +24,7 @@ module.exports = (env, argv) => {
             __dirname: true
         },
         externals: [ {
-            '@jitsi/electron-sdk': 'require(\'@jitsi/electron-sdk\')',
+            '@infomaniak/jitsi-meet-electron-sdk': 'require(\'@infomaniak/jitsi-meet-electron-sdk\')',
             'electron-debug': 'require(\'electron-debug\')',
             'electron-reload': 'require(\'electron-reload\')'
         } ],

@@ -4,7 +4,7 @@ const { RemoteControl, RemoteDraw,
     setupAlwaysOnTopRender,
     initPopupsConfigurationRender,
     setupPowerMonitorRender
-} = require('@jitsi/electron-sdk');
+} = require('@infomaniak/jitsi-meet-electron-sdk');
 
 const whitelistedIpcChannels = [
     'protocol-data-msg',
@@ -43,7 +43,7 @@ function setupRenderer(api, options = {}) {
         new RemoteControl(iframe); // eslint-disable-line no-new
     }
 
-    // new RemoteDraw(iframe); // eslint-disable-line no-new
+    new RemoteDraw(iframe); // eslint-disable-line no-new
 
     // Allow window to be on top if enabled in settings
     if (options.enableAlwaysOnTopWindow) {

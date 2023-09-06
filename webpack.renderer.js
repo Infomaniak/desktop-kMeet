@@ -75,7 +75,7 @@ module.exports = {
         ]
     },
     externals: [ {
-        '@jitsi/electron-sdk': 'require(\'@jitsi/electron-sdk\')'
+        '@infomaniak/jitsi-meet-electron-sdk': 'require(\'@infomaniak/jitsi-meet-electron-sdk\')'
     } ],
     resolve: {
         modules: [
