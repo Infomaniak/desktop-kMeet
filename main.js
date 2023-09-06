@@ -359,28 +359,22 @@ function createJitsiMeetWindow() {
                     let joinHost = _.findLast(
                         searchParams, o => o[0] === 'room_hostname'
                     )[1].replace(/https?:\/\//, '');
-                    let joinRoom = _.findLast(searchParams, o => o[0] === 'conference_name')[1];
-                    let joinSubject = _.findLast(searchParams, o => o[0] === 'room_subject')[1];
+                    const joinRoom = _.findLast(searchParams, o => o[0] === 'conference_name')[1];
+                    const joinSubject = _.findLast(searchParams, o => o[0] === 'room_subject')[1];
 
                     try {
-                        console.log('joinSubject');
-                        console.log(joinSubject);
-
-                        // console.log('joinUrl');
-                        // console.log(joinUrl);
                         // eslint-disable-next-line no-new
                         const roomUrl = new URL.URL(`${config.default.defaultServerURL}/${joinSubject}`);
 
-                        console.log('roomUrl');
-                        console.log(roomUrl);
-
                         joinHost = roomUrl.origin.replace(/https?:\/\//, '');
-                        joinRoom = roomUrl.pathname.replace('/', '');
-                        joinSubject = joinRoom;
+
+                        // joinRoom = roomUrl.pathname.replace('/', '');
+                        // joinSubject = joinRoom;
                     } catch (error) {
                         console.log(error);
                     }
-
+                    console.log('analytics event redirect');
+                    console.log(`${joinHost}/${joinRoom}/${joinSubject}`);
                     mainWindow
                         .webContents
                         .send(
