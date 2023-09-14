@@ -36,22 +36,20 @@ const AutoLaunch = require('auto-launch');
 
 const showDevTools = Boolean(process.env.SHOW_DEV_TOOLS) || (process.argv.indexOf('--show-dev-tools') > -1);
 
-const ENABLE_REMOTE_CONTROL = false;
+const ENABLE_REMOTE_CONTROL = true;
 
 const autoLauncher = new AutoLaunch({
     name: 'kMeet',
     isHidden: true
 });
 
-if (!isDev) {
-    const { init } = require('@sentry/electron');
+// if (!isDev) {
+//     const { init } = require('@sentry/electron');
 
-    init({
-        dsn: 'https://5ea493fa483d428a92a59ddbee888433@sentry.infomaniak.com/40',
-        debug: true,
-        configFile: path.resolve(__dirname, 'sentry.properties')
-    });
-}
+//     init({
+//         dsn: 'https://5ea493fa483d428a92a59ddbee888433@sentry.infomaniak.com/40'
+//     });
+// }
 
 let redirectedToLogin = false;
 

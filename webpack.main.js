@@ -1,9 +1,9 @@
 const path = require('path');
-const SentryCliPlugin = require('@sentry/webpack-plugin');
+const { sentryWebpackPlugin } = require('@sentry/webpack-plugin');
 
 module.exports = (env, argv) => {
     const plugins = argv.mode === 'development' ? [] : [
-        new SentryCliPlugin({
+        sentryWebpackPlugin({
             include: '.',
             ignore: [ 'node_modules', 'webpack.config.js' ],
             configFile: 'sentry.properties'
