@@ -43,7 +43,7 @@ function setupRenderer(api, options = {}) {
         new RemoteControl(iframe); // eslint-disable-line no-new
     }
 
-    new RemoteDraw(iframe); // eslint-disable-line no-new
+    new RemoteDraw(api); // eslint-disable-line no-new
 
     // Allow window to be on top if enabled in settings
     if (options.enableAlwaysOnTopWindow) {
