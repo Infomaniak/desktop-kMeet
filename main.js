@@ -43,13 +43,13 @@ const autoLauncher = new AutoLaunch({
     isHidden: true
 });
 
-// if (!isDev) {
-//     const { init } = require('@sentry/electron');
+if (!isDev) {
+    const { init } = require('@sentry/electron');
 
-//     init({
-//         dsn: 'https://5ea493fa483d428a92a59ddbee888433@sentry.infomaniak.com/40'
-//     });
-// }
+    init({
+        dsn: 'https://5ea493fa483d428a92a59ddbee888433@sentry.infomaniak.com/40'
+    });
+}
 
 let redirectedToLogin = false;
 
@@ -536,7 +536,7 @@ async function createTrayMenu() {
 
     tray = new Tray(iconPath);
 
-    const autoLauncherEnable = await autoLauncher.isEnabled();
+    let autoLauncherEnable = await autoLauncher.isEnabled();
 
     const trayContextMenu = Menu.buildFromTemplate([
         {
