@@ -31,7 +31,7 @@ const config = require('./app/features/config');
 const { openExternalLink } = require('./app/features/utils/openExternalLink');
 const pkgJson = require('./package.json');
 
-// const Store = require('electron-store');
+const Store = require('electron-store');
 const AutoLaunch = require('auto-launch');
 
 const showDevTools = Boolean(process.env.SHOW_DEV_TOOLS) || (process.argv.indexOf('--show-dev-tools') > -1);
@@ -71,12 +71,12 @@ if (!app.commandLine.hasSwitch('enable-features')) {
 autoUpdater.logger = require('electron-log');
 autoUpdater.logger.transports.file.level = 'info';
 
-// const store = new Store();
+const store = new Store();
 
-// if (!store.get('enableAutoLauncher')) {
-//     store.set('enableAutoLauncher', 1);
-// }
-autoLauncher.enable();
+if (!store.get('enableAutoLauncher')) {
+    store.set('enableAutoLauncher', 1);
+    autoLauncher.enable();
+}
 
 // Enable context menu so things like copy and paste work in input fields.
 contextMenu({
@@ -573,9 +573,9 @@ async function createTrayMenu() {
                         autoLauncher.enable();
                     }
                 })
-                    .catch(err => {
-                        throw err;
-                    });
+                .catch(err => {
+                    throw err;
+                });
             }
         },
         {
