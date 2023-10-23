@@ -30,6 +30,7 @@ const URL = require('url');
 const config = require('./app/features/config');
 const { openExternalLink } = require('./app/features/utils/openExternalLink');
 const pkgJson = require('./package.json');
+const builderJson = require('./electron-builder.json');
 
 const Store = require('electron-store');
 const AutoLaunch = require('auto-launch');
@@ -431,7 +432,7 @@ function createJitsiMeetWindow() {
     initPopupsConfigurationMain(mainWindow);
     setupAlwaysOnTopMain(mainWindow, null, windowOpenHandler);
     setupPowerMonitorMain(mainWindow);
-    setupScreenSharingMain(mainWindow, config.default.appName, pkgJson.build.appId);
+    setupScreenSharingMain(mainWindow, config.default.appName, builderJson.appId);
     if (ENABLE_REMOTE_CONTROL) {
         new RemoteControlMain(mainWindow); // eslint-disable-line no-new
     }
