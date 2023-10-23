@@ -367,8 +367,7 @@ function createJitsiMeetWindow() {
                     } catch (error) {
                         console.log(error);
                     }
-                    console.log('analytics event redirect');
-                    console.log(`${joinHost}/${joinRoom}/${joinSubject}`);
+
                     mainWindow
                         .webContents
                         .send(
