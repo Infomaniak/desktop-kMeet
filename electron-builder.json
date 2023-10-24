@@ -21,6 +21,7 @@
     ]
   },
   "afterSign": "./notarize.js",
+  "afterPack": "scripts/linux-sandbox-fix.js",
   "npmRebuild": false,
   "deb": {
     "artifactName": "${name}_${version}-1_${arch}.${ext}",

@@ -12,16 +12,16 @@ exports.default = async function notarizing(context) {
     const appName = context.packager.appInfo.productFilename;
     const appPath = `${appOutDir}/${appName}.app`;
 
-    if (process.env.APPLE_ID && process.env.APPLE_ID_PASSWORD && process.env.TEAM_ID) {
+    if (process.env.APPLEID && process.env.APPLEIDPASS) {
         console.log(`Notarizing ${appPath} with user & password`);
 
         return await notarize({
             tool: 'notarytool',
             appBundleId: builderJson.appId,
             appPath,
-            appleId: process.env.APPLE_ID,
-            appleIdPassword: process.env.APPLE_ID_PASSWORD,
-            teamId: process.env.TEAM_ID
+            appleId: process.env.APPLEID,
+            appleIdPassword: process.env.APPLEIDPASS,
+            teamId: process.env.APPLETEAMID
         });
     } else if (process.env.API_KEY_FILE && process.env.API_KEY_ID && process.env.API_KEY_ISSUER_ID) {
         console.log(`Notarizing ${appPath} with API key`);
