@@ -48,7 +48,7 @@ if (!isDev) {
     const { init } = require('@sentry/electron');
 
     init({
-        dsn: 'https://5ea493fa483d428a92a59ddbee888433@sentry.infomaniak.com/40'
+        dsn: 'https://9ea9e1754d9b40be10f2f7c28ff07185@sentry-kchat.infomaniak.com/9'
     });
 }
 
