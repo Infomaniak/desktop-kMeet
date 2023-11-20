@@ -103,6 +103,7 @@
     "sign": true
   },
   "win": {
+    "artifactName": "${name}-${version}-${os}.${ext}",
     "certificateSubjectName": "INFOMANIAK NETWORK SA",
     "target": [
       {
