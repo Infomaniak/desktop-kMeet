@@ -34,7 +34,6 @@
       "libuuid1"
     ]
   },
-  "asarUnpack": "**/*.node",
   "linux": {
     "category": "VideoConference;AudioVideo;Audio;Video;Network",
     "description": "Infomaniak Meet Desktop App",
