@@ -86,7 +86,10 @@
     "hardenedRuntime": true,
     "entitlements": "entitlements.mac.plist",
     "entitlementsInherit": "entitlements.mac.plist",
-    "asarUnpack": "**/*.node",
+    "asarUnpack": [
+      "./node_modules/@infomaniak/jitsi-meet-electron-sdk/prebuilds/*/*.node",
+      "**/*.node"
+    ],
     "notarize": false,
     "extendInfo": {
       "NSMicrophoneUsageDescription": "kMeet requires access to your camera in order to make video-calls.",
