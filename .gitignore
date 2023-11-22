@@ -25,3 +25,4 @@ dist/
 !.yarn/sdks
 !.yarn/versions
 .env
+.env.sentry-build-plugin
