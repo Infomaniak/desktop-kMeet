@@ -6,7 +6,10 @@ module.exports = (env, argv) => {
         sentryWebpackPlugin({
             include: '.',
             ignore: [ 'node_modules', 'webpack.config.js' ],
-            configFile: 'sentry.properties'
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+            org: 'sentry',
+            project: 'kmeet-desktop',
+            url: 'https://sentry-kchat.infomaniak.com/'
         })
     ];
 
