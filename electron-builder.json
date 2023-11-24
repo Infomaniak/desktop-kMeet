@@ -1,7 +1,7 @@
 {
   "publish": {
     "provider": "s3",
-    "channel": "latest",
+    "channel": "alpha",
     "bucket": "meet",
     "endpoint": "https://download.storage.infomaniak.com",
     "path": "/"
