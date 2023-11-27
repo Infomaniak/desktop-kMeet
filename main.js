@@ -34,6 +34,7 @@ const builderJson = require('./electron-builder.json');
 
 const Store = require('electron-store');
 const AutoLaunch = require('auto-launch');
+const { default: updateManager } = require('./autoUpdate');
 
 const showDevTools = Boolean(process.env.SHOW_DEV_TOOLS) || (process.argv.indexOf('--show-dev-tools') > -1);
 
@@ -208,7 +209,11 @@ function createJitsiMeetWindow() {
 
     // Check for Updates.
     if (!process.mas) {
-        autoUpdater.checkForUpdatesAndNotify();
+        // autoUpdater.checkForUpdatesAndNotify();
+
+        setTimeout(() => {
+            updateManager._checkForUpdates();
+        }, 5000);
     }
 
     // Load the previous window state with fallback to defaults.
