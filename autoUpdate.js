@@ -53,7 +53,7 @@ export class UpdateManager {
 
         autoUpdater.on('update-available', info => {
             this.versionAvailable = info.version;
-            console.info(`[kChat] available version ${info.version}`);
+            console.info(`available version ${info.version}`);
             this._notify();
         });
 
