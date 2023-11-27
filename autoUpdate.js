@@ -1,7 +1,5 @@
-// @flow
-
 import { ipcMain, app, BrowserWindow } from 'electron';
-import { autoUpdater, CancellationToken, UpdateInfo } from 'electron-updater';
+import { autoUpdater, CancellationToken } from 'electron-updater';
 import { displayRestartToUpgrade, displayUpgrade } from './notifications';
 
 // Public constants
@@ -28,13 +26,13 @@ const NEXT_CHECK = 3600000; // 1 hour
  * start the app from directory B
 **/
 export class UpdateManager {
-    lastNotification: ?TimeoutID;
-    lastCheck: ?TimeoutID;
-    cancellationToken: ?CancellationToken;
-    versionDownloaded: ?string;
-    downloadedInfo: ?UpdateInfo;
-    versionAvailable: ?string;
-    versionDownloaded: ?string;
+    lastNotification
+    lastCheck
+    cancellationToken
+    versionDownloaded
+    downloadedInfo
+    versionAvailable
+    versionDownloaded
 
     /**
      * Todo.
@@ -74,8 +72,6 @@ export class UpdateManager {
         }
     }
 
-    _checkForUpdates: () => void;
-
     /**
      * Todo.
      *
@@ -93,8 +89,6 @@ export class UpdateManager {
         }
     }
 
-    _notify: () => void;
-
     /**
      * Todo.
      *
@@ -105,8 +99,6 @@ export class UpdateManager {
         displayUpgrade(this.versionAvailable || 'unknown', this._handleDownload);
     }
 
-    _notifyUpgrade: () => void;
-
     /**
      * Todo.
      *
@@ -116,8 +108,6 @@ export class UpdateManager {
         ipcMain.emit(UPDATE_DOWNLOADED, null, this.downloadedInfo);
         displayRestartToUpgrade(this.versionDownloaded || 'unknown', this._handleUpdate);
     }
-
-    _notifyDownloaded: () => void;
 
     /**
      * Todo.
@@ -131,8 +121,6 @@ export class UpdateManager {
 
         autoUpdater.downloadUpdate(this.cancellationToken);
     }
-
-    _handleDownload: () => void;
 
     /**
      * Todo.
@@ -160,8 +148,6 @@ export class UpdateManager {
             autoUpdater.quitAndInstall(false);
         });
     }
-
-    _handleUpdate: () => void;
 }
 
 const updateManager = new UpdateManager();

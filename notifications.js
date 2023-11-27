@@ -1,4 +1,3 @@
-// @flow
 import { app, Notification } from 'electron';
 import path from 'path';
 import process from 'process';
@@ -58,14 +57,16 @@ export class UpgradeNotification extends Notification {
     }
 }
 
-let upgrade: NewVersionNotification;
+let upgrade;
 
 /**
  * Todo.
  *
+ * @param {string} version
+ * @param {Function} handleUpgrade
  * @returns {void}
  */
-export function displayUpgrade(version: string, handleUpgrade: () => void): void {
+export function displayUpgrade(version, handleUpgrade) {
     if (!Notification.isSupported()) {
         console.error('notification not supported');
 
@@ -90,7 +91,7 @@ let restartToUpgrade;
  *
  * @returns {void}
  */
-export function displayRestartToUpgrade(version: string, handleUpgrade: () => void): void {
+export function displayRestartToUpgrade(version, handleUpgrade) {
     if (!Notification.isSupported()) {
         console.error('notification not supported');
 
