@@ -46,6 +46,23 @@ export class UpdateManager {
         this._notifyDownloaded = this._notifyDownloaded.bind(this);
         this._handleDownload = this._handleDownload.bind(this);
         this._handleUpdate = this._handleUpdate.bind(this);
+
+        autoUpdater.on('error', err => {
+            console.error(`There was an error while trying to update: ${err}`);
+        });
+
+        autoUpdater.on('update-available', info => {
+            this.versionAvailable = info.version;
+            console.info(`[kChat] available version ${info.version}`);
+            this._notify();
+        });
+
+        autoUpdater.on('update-downloaded', info => {
+            this.versionDownloaded = info.version;
+            this.downloadedInfo = info;
+            console.info(`downloaded version ${info.version}`);
+            this._notifyDownloaded();
+        });
     }
 
     /**
