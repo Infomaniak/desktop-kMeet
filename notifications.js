@@ -1,13 +1,14 @@
 import { app, Notification } from 'electron';
 import path from 'path';
 import process from 'process';
+import { localizeMessage } from './i18nManager';
 
 const assetsDir = path.resolve(app.getAppPath(), 'assets');
 const appIconURL = path.resolve(assetsDir, 'appicon_48.png');
 
 const defaultOptions = {
-    title: 'New desktop version available',
-    body: 'A new version is available for you to download now.',
+    title: localizeMessage('notification.downloadnotification.title'),
+    body: localizeMessage('notification.downloadnotification.body'),
     silent: false,
     icon: appIconURL,
     urgency: 'normal'
@@ -44,8 +45,8 @@ export class UpgradeNotification extends Notification {
     constructor() {
         const options = { ...defaultOptions };
 
-        options.title = 'Click to restart and install update';
-        options.body = 'A new desktop version is ready to install now.';
+        options.title = localizeMessage('notification.upgradenotification.title');
+        options.body = localizeMessage('notification.upgradenotification.body');
         if (process.platform === 'win32') {
             options.icon = appIconURL;
         } else if (process.platform === 'darwin') {
