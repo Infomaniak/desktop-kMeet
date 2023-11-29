@@ -3,6 +3,7 @@ import { autoUpdater, CancellationToken } from 'electron-updater';
 import { displayRestartToUpgrade, displayUpgrade } from './notifications';
 
 // Public constants
+// Exported to be used to listen to autoupdate events elsewhere.
 export const UPDATE_AVAILABLE = 'update-available';
 export const UPDATE_DOWNLOADED = 'update-downloaded';
 export const NO_UPDATE_AVAILABLE = 'no-update-available';
@@ -13,7 +14,10 @@ autoUpdater.disableWebInstaller = true;
 const NEXT_NOTIFY = 86400000; // 24 hours
 const NEXT_CHECK = 3600000; // 1 hour
 
-/** to test this during development
+/**
+ * Class for handling auto updates from the app via electron-builder autoupdate.
+ *
+ * to test this during development
  * add the following to electron-builder.json in the publish entry
     {
       "provider": "generic",
@@ -35,7 +39,9 @@ export class UpdateManager {
     versionDownloaded
 
     /**
-     * Todo.
+     * Initializes a new {@code UpdateManager} instance.
+     *
+     * @inheritdoc
      */
     constructor() {
         this.cancellationToken = new CancellationToken();
@@ -66,7 +72,7 @@ export class UpdateManager {
     }
 
     /**
-     * Todo.
+     * Launches a new version check and schedules periodic checks every hour.
      *
      * @returns {void}
      */
@@ -90,7 +96,8 @@ export class UpdateManager {
     }
 
     /**
-     * Todo.
+     * Notifies via a desktop notification of either a new available version
+     * or when a version has downloaded and is ready to install.
      *
      * @returns {void}
      */
@@ -107,7 +114,7 @@ export class UpdateManager {
     }
 
     /**
-     * Todo.
+     * Displays available update notification.
      *
      * @returns {void}
      */
@@ -117,7 +124,7 @@ export class UpdateManager {
     }
 
     /**
-     * Todo.
+     * Displays install ready notification.
      *
      * @returns {void}
      */
@@ -127,7 +134,7 @@ export class UpdateManager {
     }
 
     /**
-     * Todo.
+     * Launches update download.
      *
      * @returns {void}
      */
@@ -140,7 +147,7 @@ export class UpdateManager {
     }
 
     /**
-     * Todo.
+     * Installs update and relaunches app on the new version.
      *
      * @returns {void}
      */
