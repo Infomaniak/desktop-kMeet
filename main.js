@@ -81,7 +81,9 @@ if (!store.get('enableAutoLauncher')) {
     autoLauncher.enable();
 }
 
-i18nManager.setLocale('fr');
+if (!i18nManager.setLocale(app.getLocale())) {
+    i18nManager.setLocale(app.getLocaleCountryCode());
+}
 
 // Enable context menu so things like copy and paste work in input fields.
 contextMenu({

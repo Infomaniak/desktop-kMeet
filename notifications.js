@@ -7,8 +7,6 @@ const assetsDir = path.resolve(app.getAppPath(), 'assets');
 const appIconURL = path.resolve(assetsDir, 'appicon_48.png');
 
 const defaultOptions = {
-    title: localizeMessage('notification.downloadnotification.title'),
-    body: localizeMessage('notification.downloadnotification.body'),
     silent: false,
     icon: appIconURL,
     urgency: 'normal'
@@ -24,6 +22,8 @@ export class NewVersionNotification extends Notification {
     constructor() {
         const options = { ...defaultOptions };
 
+        options.title = localizeMessage('notification.downloadnotification.title');
+        options.body = localizeMessage('notification.downloadnotification.body');
         if (process.platform === 'win32') {
             options.icon = appIconURL;
         } else if (process.platform === 'darwin') {
