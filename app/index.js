@@ -5,6 +5,8 @@
  */
 import '@atlaskit/css-reset';
 
+import * as Sentry from '@sentry/electron/renderer';
+
 import Spinner from '@atlaskit/spinner';
 import { SpotlightManager } from '@atlaskit/onboarding';
 
@@ -21,6 +23,19 @@ import './i18n';
  * Component encapsulating App component with redux store using provider.
  */
 class Root extends Component<*> {
+    /**
+     * Initializes a new {@code Root} instance.
+     *
+     * @inheritdoc
+     */
+    constructor() {
+        super();
+
+        Sentry.init({
+            dsn: 'https://9ea9e1754d9b40be10f2f7c28ff07185@sentry-kchat.infomaniak.com/9'
+        });
+    }
+
     /**
      * Implements React's {@link Component#render()}.
      *

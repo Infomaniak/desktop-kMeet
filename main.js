@@ -34,6 +34,8 @@ const builderJson = require('./electron-builder.json');
 
 const Store = require('electron-store');
 const AutoLaunch = require('auto-launch');
+const { default: updateManager } = require('./autoUpdate');
+const { default: i18nManager, localizeMessage } = require('./i18nManager');
 
 const showDevTools = Boolean(process.env.SHOW_DEV_TOOLS) || (process.argv.indexOf('--show-dev-tools') > -1);
 
@@ -78,6 +80,8 @@ if (!store.get('enableAutoLauncher')) {
     store.set('enableAutoLauncher', 1);
     autoLauncher.enable();
 }
+
+i18nManager.setLocale('fr');
 
 // Enable context menu so things like copy and paste work in input fields.
 contextMenu({
@@ -133,6 +137,11 @@ function setApplicationMenu() {
             label: app.name,
             submenu: [
                 {
+                    label: localizeMessage('menu.about'),
+                    role: 'about'
+                },
+                { type: 'separator' },
+                {
                     role: 'services',
                     submenu: []
                 },
@@ -141,17 +150,18 @@ function setApplicationMenu() {
                 { role: 'hideothers' },
                 { role: 'unhide' },
                 { type: 'separator' },
-                { role: 'quit' }
+                { label: localizeMessage('menu.quit'),
+                    role: 'quit' }
             ]
         }, {
-            label: 'Edit',
+            label: localizeMessage('menu.edit'),
             submenu: [ {
-                label: 'Undo',
+                label: localizeMessage('menu.undo'),
                 accelerator: 'CmdOrCtrl+Z',
                 selector: 'undo:'
             },
             {
-                label: 'Redo',
+                label: localizeMessage('menu.redo'),
                 accelerator: 'Shift+CmdOrCtrl+Z',
                 selector: 'redo:'
             },
@@ -159,22 +169,22 @@ function setApplicationMenu() {
                 type: 'separator'
             },
             {
-                label: 'Cut',
+                label: localizeMessage('menu.cut'),
                 accelerator: 'CmdOrCtrl+X',
                 selector: 'cut:'
             },
             {
-                label: 'Copy',
+                label: localizeMessage('menu.copy'),
                 accelerator: 'CmdOrCtrl+C',
                 selector: 'copy:'
             },
             {
-                label: 'Paste',
+                label: localizeMessage('menu.paste'),
                 accelerator: 'CmdOrCtrl+V',
                 selector: 'paste:'
             },
             {
-                label: 'Select All',
+                label: localizeMessage('menu.selectAll'),
                 accelerator: 'CmdOrCtrl+A',
                 selector: 'selectAll:'
             } ]
@@ -208,7 +218,11 @@ function createJitsiMeetWindow() {
 
     // Check for Updates.
     if (!process.mas) {
-        autoUpdater.checkForUpdatesAndNotify();
+        // autoUpdater.checkForUpdatesAndNotify();
+
+        setTimeout(() => {
+            updateManager._checkForUpdates();
+        }, 5000);
     }
 
     // Load the previous window state with fallback to defaults.
@@ -540,19 +554,19 @@ async function createTrayMenu() {
 
     const trayContextMenu = Menu.buildFromTemplate([
         {
-            label: 'Create meeting',
+            label: localizeMessage('menu.createMeeting'),
             click: () => {
                 handleClickOnTrayMenu('protocol-data-create-meeting');
             }
         },
         {
-            label: 'Join meeting',
+            label: localizeMessage('menu.joinMeeting'),
             click: () => {
                 handleClickOnTrayMenu('protocol-data-join-meeting');
             }
         },
         {
-            label: 'Plan meeting',
+            label: localizeMessage('menu.planMeeting'),
             click: () => {
                 handleClickOnTrayMenu('protocol-data-plan-meeting');
             }
@@ -561,7 +575,7 @@ async function createTrayMenu() {
 
         // { label: 'Paramètres' },
         {
-            label: 'Start on computer boot',
+            label: localizeMessage('menu.openOnBoot'),
             type: 'checkbox',
             checked: autoLauncherEnable,
             click: () => {
@@ -579,20 +593,20 @@ async function createTrayMenu() {
             }
         },
         {
-            label: 'Open kMeet',
+            label: localizeMessage('menu.openKmeet'),
             click: () => {
                 shell.openExternal('https://kmeet.infomaniak.com');
             }
         },
         {
-            label: `About kMeet ${pkgJson.version}`,
+            label: localizeMessage('menu.aboutKmeet2', 'About kMeet', { version: pkgJson.version }),
             click: () => {
                 shell.openExternal('https://www.infomaniak.com/kmeet');
             }
         },
         { type: 'separator' },
         {
-            label: 'Quit',
+            label: localizeMessage('menu.quit'),
             click: () => {
                 app.quit();
                 process.exit(0);

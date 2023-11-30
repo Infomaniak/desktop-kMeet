@@ -58,7 +58,7 @@ type State = {
 /**
  * Welcome Component.
  */
-class Welcome extends Component<Props> {
+class Welcome extends Component<Props, State> {
 
     /**
      * External API object.
