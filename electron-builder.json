@@ -108,15 +108,7 @@
     "sign": "./scripts/winsign.js",
     "artifactName": "${name}-${version}-${os}.${ext}",
     "certificateSubjectName": "INFOMANIAK NETWORK SA",
-    "target": [
-      {
-        "arch": [
-          "ia32",
-          "x64"
-        ],
-        "target": ["nsis", "msi"]
-      }
-    ],
+    "target": ["nsis", "msi"],
     "publisherName": "CN=\"INFOMANIAK NETWORK SA\", O=\"INFOMANIAK NETWORK SA\", L=Les Acacias, S=Genève, C=CH"
   },
   "nsis": {
