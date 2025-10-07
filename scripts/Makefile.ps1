@@ -1,0 +1,616 @@
+# This build script is heavily based on the mattermost desktop script just slightly simplified
+Param (
+    [parameter(Position=0)]$makeRule
+)
+
+################################################################################
+# Logging functions
+################################################################################
+#Region
+function Print {
+    Param (
+       [String]$message,
+       [Switch]$NoNewLine
+   )
+   if ($NoNewLine) {
+       Write-Host " $message" -NoNewLine
+   } else {
+       Write-Host " $message"
+   }
+}
+
+function Print-Info {
+   Param (
+       [String]$message,
+       [Switch]$NoNewLine
+   )
+   if ([String]::IsNullOrEmpty($message)) {
+       return
+   }
+
+   Write-Host "[" -NoNewLine
+   Write-Host "+" -NoNewLine -ForegroundColor Green
+   Write-Host "]" -NoNewLine
+
+   if ($NoNewLine) {
+       Write-Host " $message" -NoNewLine
+   } else {
+       Write-Host " $message"
+   }
+}
+
+function Print-Warning {
+   Param (
+       [String]$message,
+       [Switch]$NoNewLine
+   )
+   if ([String]::IsNullOrEmpty($message)) {
+       return
+   }
+
+   Write-Host "[" -NoNewLine
+   Write-Host "!" -NoNewLine -ForegroundColor Magenta
+   Write-Host "]" -NoNewLine
+
+   if ($NoNewLine) {
+       Write-Host " $message" -NoNewLine
+   } else {
+       Write-Host " $message"
+   }
+}
+
+function Print-Error {
+   Param (
+       [String]$message,
+       [Switch]$NoNewLine
+   )
+   if ([String]::IsNullOrEmpty($message)) {
+       return
+   }
+
+   Write-Host "[" -NoNewLine
+   Write-Host "-" -NoNewLine -ForegroundColor Red
+   Write-Host "]" -NoNewLine
+
+   if ($NoNewLine) {
+       Write-Host " $message" -NoNewLine
+   } else {
+       Write-Host " $message"
+   }
+}
+#EndRegion
+
+################################################################################
+# OS related functions
+################################################################################
+#Region
+function Check-Command($cmdname) {
+    return [bool](Get-Command -Name $cmdname -ErrorAction SilentlyContinue)
+}
+
+function Refresh-Path {
+    $env:Path =
+        [System.Environment]::GetEnvironmentVariable("Path", "Machine") +
+        ";" +
+        [System.Environment]::GetEnvironmentVariable("Path", "User")
+}
+
+function Get-RootDir {
+    return "$(Split-Path $PSCommandPath)\..\"
+}
+
+# src: https://superuser.com/a/756696/456258
+function Is-Admin {
+    return ([Security.Principal.WindowsPrincipal] `
+            [Security.Principal.WindowsIdentity]::GetCurrent() `
+            ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+#EndRegion
+
+################################################################################
+# Check and install of dependencies related functions
+################################################################################
+#Region
+function Check-Deps {
+    Param (
+        [Switch]
+        $verbose,
+        [Switch]
+        $throwable
+    )
+
+    if ($PSVersionTable.PSVersion.Major -lt 5) {
+        Print-Error "You need at least PowerShell 5.0 to execute this Makefile. Operation aborted."
+        exit
+    }
+
+    [array]$missing = @()
+
+    if ($verbose) { Print-Info "Checking choco dependency..." }
+    if (!(Check-Command "choco")) {
+        if ($verbose) { Print-Error "choco dependency missing." }
+        $missing += "choco"
+    }
+
+    if ($verbose) { Print-Info "Checking git dependency..." }
+    if (!(Check-Command "git")) {
+        if ($verbose) { Print-Error "git dependency missing." }
+        $missing += "git"
+    }
+
+    if ($verbose) { Print-Info "Checking nodejs/npm dependency..." }
+    # Testing if the folder is not empty first is needed otherwise if there is
+    # a file called like that in the path where the makefile is invocated, the
+    # check will succeed while it is plain wrong.
+    if ([string]::IsNullOrEmpty($(Get-NpmDir)) -or
+        # We could have used the builtin Test-Path cmdlet instead but it is
+        # tested for folders as well. We need to test for a file existence
+        # here.
+        ![System.IO.File]::Exists("$(Get-NpmDir)\npm.cmd") -or
+        ![System.IO.File]::Exists("$(Get-NpmDir)\node.exe")) {
+            if ($verbose) { Print-Error "nodejs/npm dependency missing." }
+        $missing += "npm"
+    }
+
+    if ($verbose) { Print-Info "Checking wix dependency..." }
+    if ([string]::IsNullOrEmpty($(Get-WixDir)) -or
+        ![System.IO.File]::Exists("$(Get-WixDir)\heat.exe") -or
+        ![System.IO.File]::Exists("$(Get-WixDir)\candle.exe") -or
+        ![System.IO.File]::Exists("$(Get-WixDir)\light.exe")) {
+        if ($verbose) { Print-Error "wix dependency missing." }
+        $missing += "wix"
+    }
+
+    if ($verbose) { Print-Info "Checking signtool dependency..." }
+    if ([string]::IsNullOrEmpty($(Get-SignToolDir)) -or
+        ![System.IO.File]::Exists("$(Get-SignToolDir)\signtool.exe")) {
+        if ($verbose) { Print-Error "signtool dependency missing." }
+        $missing += "signtool"
+    }
+    if ($verbose) { Print-Info "Checking jq dependency..." }
+    if (!(Check-Command "jq")) {
+        if ($verbose) { Print-Error "jq dependency missing." }
+        $missing += "jq"
+    }
+
+    if ($throwable -and $missing.Count -gt 0) {
+        throw "com.infomaniak.makefile.deps.missing"
+    }
+
+    return $missing
+}
+
+function Install-Deps {
+    [array]$missing = Check-Deps -Verbose
+
+    if ($missing -eq $null) {
+        Print-Info "All dependencies met; exiting dependencies installation..."
+        return
+    }
+
+    if (-not (Is-Admin)) {
+        throw "com.infomaniak.makefile.deps.notadmin"
+    }
+
+    foreach ($missingItem in $missing) {
+        switch ($missingItem) {
+            "choco" {
+                Print-Info "Installing chocolatey..."
+                Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+                break;
+            }
+            "git" {
+                Print-Info "Installing git..."
+                choco install git --yes
+                break;
+            }
+            "wix" {
+                Install-Wix
+                break;
+            }
+            "signtool" {
+                Print-Info "Installing Windows 10 SDK (for signtool)..."
+                choco install windows-sdk-10.1 --yes
+                break;
+            }
+            "npm" {
+                Print-Info "Installing nodejs-lts (with npm)..."
+                choco install nodejs-lts --yes
+                break;
+            }
+            "jq" {
+                Print-Info "Installing jq"
+                choco install jq --yes
+                break;
+            }
+        }
+
+        Print-Info "Refreshing PATH..."
+        Refresh-Path
+    }
+
+    InstallDeps-Electron
+}
+
+function Install-Wix {
+    Print-Info "Downloading wixtoolset..."
+    # choco is using 3.11 which causes problems building on remote ssh due to dotnet3.5
+    # choco install wixtoolset --yes
+    $WebClient = New-Object System.Net.WebClient
+    # if they ever fix the installer we can move to 3.11
+    $WebClient.DownloadFile("https://github.com/wixtoolset/wix3/releases/download/wix3112rtm/wix311.exe",".\scripts\wix.exe")
+    #$WebClient.DownloadFile("https://github.com/wixtoolset/wix3/releases/download/wix3104rtm/wix310.exe",".\scripts\wix.exe")
+    Print-Info "Installing wixtoolset..."
+    # todo: check hash
+    .\scripts\wix.exe -q
+    if ($LastExitCode -ne $null) {
+        throw "com.infomaniak.makefile.deps.wix"
+    }
+    Print-Info "wixtoolset installed!"
+}
+#EndRegion
+
+################################################################################
+# Research of dependencies related functions
+################################################################################
+#Region
+function Get-WixDir {
+    $progFile = (${env:ProgramFiles(x86)}, ${env:ProgramFiles} -ne $null)[0]
+    $wixDirs = @(Get-ChildItem -Path $progFile -Recurse -Filter "*wix toolset*" -Attributes Directory -Depth 2 -ErrorAction SilentlyContinue)
+    if ($wixDirs[0] -eq $null) {
+        return $null
+    }
+    $wixDir = Join-Path -Path "$progFile" -ChildPath "$($wixDirs[0])"
+    $wixDir = Join-Path -Path "$wixDir" -ChildPath "bin"
+    return $wixDir
+}
+
+function Get-SignToolDir {
+    $progFile = (${env:ProgramFiles(x86)}, ${env:ProgramFiles} -ne $null)[0]
+    $signToolDir = Join-Path -Path "$progFile" -ChildPath "Windows Kits\10\bin\"
+    # Check if we are on 64 bits or not.
+    if ($env:PROCESSOR_ARCHITECTURE -ilike '*64*') {
+        $arch = "x64"
+    } else {
+        $arch = "x86"
+    }
+    [array]$signToolExes = (
+        Get-ChildItem -Path "$signToolDir" -Filter "signtool.exe" -Recurse -ErrorAction SilentlyContinue -Force | % {
+            if ($_.FullName -ilike '*x64*') {
+                return $_.FullName;
+            }
+        }
+    )
+    if ($signToolExes -eq $null -or
+        [string]::IsNullOrEmpty($signToolExes[0])) {
+        return $null
+    }
+
+    if (Test-Path $signToolExes[0]) {
+        return Split-Path $signToolExes[0]
+    }
+    return $null
+}
+
+function Get-NpmDir {
+    # npm is always installed as a nodejs dependency. 64 bits version available.
+    # C:\Program Files\nodejs\npm with a shortcut leading to
+    # C:\Program Files\nodejs\node_modules\npm\bin
+    $progFile = ${env:ProgramFiles}
+    $npmDir = Join-Path -Path "$progFile" -ChildPath "nodejs"
+    if ([System.IO.File]::Exists("$npmDir\npm.cmd")) {
+        return $npmDir
+    }
+    $progFile = ${env:ProgramW6432}
+    $npmDir = Join-Path -Path "$progFile" -ChildPath "nodejs"
+    if ([System.IO.File]::Exists("$npmDir\npm.cmd")) {
+        return $npmDir
+    }
+    return $null
+}
+#EndRegion
+
+################################################################################
+# Build functions
+################################################################################
+#region
+function Prepare-Path {
+
+    # As we may need to install new dependencies, make sure the PATH env
+    # variable is not too large. Some CI envs like AppVeyor have already the
+    # PATH env variable defined at the maximum which prevents new strings to
+    # be added to it. We will remove all the stuff added for programs in
+    # Program Files (64 bits and 32 bits variants) except the path of our
+    # dependencies.
+    # src.: https://gist.github.com/wget/a102f89c301014836aaa49a98dd06ee2
+    $oldPath = $env:Path
+
+    [array]$newPath
+    # Cleanup the PATH from everything contained in Program Files...
+    $newPath = ($env:Path -split ';') | Where-Object { $_ -notlike "C:\Program Files*" }
+    # ...except from Git
+    $newPath += ($env:Path -split ';') | Where-Object { $_ -like "C:\Program Files*\*Git*" }
+    $env:Path = $newPath -join ';'
+    Print-Info "Reducing and reordering PATH from `n    ""$oldPath""`n    to`n    ""$env:Path"""
+
+    # Prepending ensures we are using our own path here to avoid the paths the
+    # user might have defined to interfere.
+
+    # Prepend the PATH with npm/nodejs dir
+    Print-Info "Checking if npm dir is already in the PATH..."
+    $env:Path = "$(Get-NpmDir)" + ";" + $env:Path
+
+    # Prepend the PATH with wix dir
+    Print-Info "Checking if wix dir is already in the PATH..."
+    $env:Path = "$(Get-WixDir)" + ";" + $env:Path
+
+    # Prepend the PATH with signtool dir
+    Print-Info "Checking if signtool dir is already in the PATH..."
+    $env:Path = "$(Get-SignToolDir)" + ";" + $env:Path
+}
+
+function Catch-Interruption {
+    [console]::TreatControlCAsInput = $true
+    while ($true) {
+        if ([console]::KeyAvailable) {
+            $key = Read-Host
+            #$key = [system.console]::readkey($true)
+            if (($key.modifiers -band [consolemodifiers]"control") -and
+                ($key.key -eq "C")) {
+                Print-Warning "Ctrl-C pressed. Cancelling the build process and restoring computer state..."
+                Restore-ComputerState
+                exit
+            }
+        }
+    }
+}
+
+function Backup-ComputerState {
+    $env:COM_IK_MAKEFILE_PATH_BACKUP = $env:Path
+
+    Push-Location "$(Get-RootDir)"
+    # Needed because for native apps, PowerShell doesn't change the
+    # process current path location
+    #src.: https://stackoverflow.com/a/4725090/3514658
+    [Environment]::CurrentDirectory = $PWD
+
+    # Refresh path because it might have been made durty in the current shell
+    Refresh-Path
+}
+
+function Restore-ComputerState {
+
+    Print-Info "Restoring PATH..."
+    $env:Path = $env:COM_IK_MAKEFILE_PATH_BACKUP
+
+    Print-Info "Restoring current working directory..."
+    Pop-location
+    [Environment]::CurrentDirectory = $PWD
+
+    # Remove all COM_IK_MAKEFILE_ prefixed env variable
+    foreach ($item in (Get-Item -Path Env:*)) {
+        if ($item.Name -imatch 'COM_IK_MAKEFILE_') {
+            Print-Info "Removing Mattermost env variable: $($item.Name)..."
+            Remove-Item env:\$($item.Name)
+        }
+    }
+}
+
+function Run-BuildId {
+    Print-Info -NoNewLine "Getting build date..."
+    $env:COM_IK_MAKEFILE_BUILD_DATE = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd")
+    Print " [$env:COM_IK_MAKEFILE_BUILD_DATE]"
+
+    # Generate build version ids
+    #
+    # nodejs/npm does require to have semver parsable versions:
+    # major.minor.patch
+    # Non number values are allowed only if they are not starting the dot verion.
+    # 4.3.0-rc2 is allowed but 4.3.rc2 is not
+    #
+    # wix toolset supports semver up to the revision dot syntax:
+    # major.minor.patch.revision.
+    # ProductVersion Property is defined as
+    # [0-255].[0-255].[0-65535]
+    # 8      , 8     , 16 signed bit
+    # File Version is defined as
+    # [0-65535].[0-65535].[0-65535].[0-65535]
+    # 16       , 16      , 16      , 16 signed bit
+    #
+    # Other chars other than numbers should be removed.
+    # Versions like v4.3.0-rc0 shoud be. We are thus forcing to
+    # have a format like 4.3.0.rc0.
+    # When the last tag is not present or not a parsable semver version, we are
+    # taking the number of revisions reachable from the HEAD of the current branch
+    # (other branches are not taken into account).
+    # Example:
+    # $ git rev-list --count --first-parent HEAD
+    # 645
+    # Using the date is unreliable, because this requires to have a precision at
+    # seconds, leading to an overflow of the integer range supported by wix.
+    # 4.3.0.20190512074020 is not accepted and fails with the following error:
+    # candle.exe : error CNDL0001 : Value was either too large or too small for an Int32.
+    # Exception Type: System.OverflowException
+    # Add the revision only if we are not building a tag
+
+    $version = "$(jq -r '.version' package.json)"
+    $winVersion = "$($version -Replace '-','.' -Replace '[^0-9.]')"
+
+    Print-Info "Checking build id tag validity... [$version]"
+    [version]$appVersion = New-Object -TypeName System.Version
+    [void][version]::TryParse($winVersion, [ref]$appVersion)
+    if (!($appVersion)) {
+        # if we couldn't parse, it might be a -develop or something similar, so we just add a
+        # number there that will change overtime. Most likely this is a PR to be tested
+        $revision = "$(git rev-list --all --count)"
+        $winVersion = "$($version -Replace '-.*').${revision}"
+        [void][version]::TryParse($winVersion, [ref]$appVersion)
+        if (!($appVersion)) {
+            Print-Error "Non parsable tag detected. Fallbacking to version 0.0.0."
+            $version = "0.0.0"
+        }
+    }
+
+    Print-Info -NoNewLine "Getting build id version..."
+    $env:COM_IK_MAKEFILE_BUILD_ID = "$version"
+    Print " [$env:COM_IK_MAKEFILE_BUILD_ID]"
+
+    Print-Info -NoNewLine "Getting build id version for msi..."
+    $env:COM_IK_MAKEFILE_BUILD_ID_MSI = $winVersion.Split('.')[0..3] -Join '.'
+    Print " [$env:COM_IK_MAKEFILE_BUILD_ID_MSI]"
+
+    Print-Info -NoNewLine "Getting build id version for node/npm..."
+    $env:COM_IK_MAKEFILE_BUILD_ID_NODE = $version
+    Print " [$env:COM_IK_MAKEFILE_BUILD_ID_NODE]"
+}
+
+function InstallDeps-Electron {
+    Print-Info "Installing nodejs/electron dependencies (running npm ci)..."
+    npm i -g node-gyp
+    node-gyp install
+    node-gyp install --devdir="$env:USERPROFILE\.electron-gyp" --target=$(jq -r .devDependencies.electron package.json) --dist-url="https://electronjs.org/headers"
+    node-gyp install --devdir="$env:USERPROFILE\.electron-gyp" --target=$(jq -r .devDependencies.electron package.json) --dist-url="https://electronjs.org/headers" --arch arm64
+    node-gyp install --devdir="$env:USERPROFILE\.electron-gyp" --target=$(jq -r .devDependencies.electron package.json) --dist-url="https://electronjs.org/headers" --arch ia32
+    npm ci
+}
+
+function Run-BuildElectron {
+    Print-Info "Packaging nodejs/electron for Windows"
+    # NSIS
+    # npm run dist
+
+    # MSI
+    npm run dist:msi
+}
+
+function Get-Cert {
+    if (Test-Path 'env:PFXOLD') {
+        Print-Info "Getting windows certificate"
+        [IO.File]::WriteAllBytes("./kchat-desktop-windows.pfx", [Convert]::FromBase64String($env:PFX))
+        $password = "$env:PFX_KEY" | convertto-securestring -asplaintext -force
+        Print-Info "Importing certificate into the machine"
+        Import-PfxCertificate -filepath "./kchat-desktop-windows.pfx" cert:\localMachine\my -password $password
+    } else {
+        Print-Warning "No env:PFX environment variable found, build will not be signed."
+    }
+}
+
+function Remove-Cert {
+    if (Test-Path 'env:PFXOLD') {
+        Print-Info "Removing windows certificate"
+        Remove-Item -path "./kchat-desktop-windows.pfx"
+    }
+}
+
+function Run-Build {
+    Check-Deps -Verbose -Throwable
+    Prepare-Path
+    Write-AWSCredentials
+    # Get-Cert
+    Run-BuildId
+    Run-BuildElectron
+    Remove-Cert
+}
+
+function Run-Test {
+    Check-Deps -Verbose -Throwable
+    Prepare-Path
+    npm test
+}
+
+function Write-AWSCredentials {
+    $awsDirectoryPath = "$env:USERPROFILE\.aws"
+    $awsCredentialsPath = "$awsDirectoryPath\credentials"
+
+    # Ensure the .aws directory exists
+    if (-not (Test-Path $awsDirectoryPath)) {
+        New-Item -ItemType Directory -Path $awsDirectoryPath -Force
+    }
+
+    $content = @"
+[default]
+aws_access_key_id = $env:AWS_ACCESS_KEY_ID
+aws_secret_access_key = $env:AWS_SECRET_ACCESS_KEY
+
+"@
+
+    $content | Out-File -FilePath $awsCredentialsPath -Encoding ascii
+
+    # Log to verify credentials file creation
+    if (Test-Path $awsCredentialsPath) {
+        Write-Host "AWS credentials file created successfully at $awsCredentialsPath"
+    } else {
+        Write-Host "Failed to create AWS credentials file at $awsCredentialsPath"
+    }
+}
+#EndRegion
+
+################################################################################
+# Main function
+################################################################################
+#Region
+function Main {
+    try {
+        if ($makeRule -eq $null) {
+            Print-Info "No argument passed to the make file. Executing ""all"" rule."
+            $makeRule = "all"
+        }
+
+        Backup-ComputerState
+
+        switch ($makeRule.toLower()) {
+            "all" {
+                Install-Deps
+                Run-Build
+            }
+            "build" {
+                Install-Deps
+                Run-Build
+            }
+            "install-deps" {
+                Install-Deps
+            }
+            "install-cert" {
+                Get-Cert
+            }
+            "remove-cert" {
+                Remove-Cert
+            }
+            default {
+                Print-Error "Makefile argument ""$_"" is invalid. Build process aborted."
+            }
+        }
+
+        $env:COM_IK_MAKEFILE_EXECUTION_SUCCESS = $true
+        $exitCode = 0
+
+    } catch {
+        switch ($_.Exception.Message) {
+            "com.infomaniak.makefile.deps.missing" {
+                Print-Error "The following dependencies are missing: $($missing -Join ', ').`n    Please install dependencies as an administrator:`n    # makefile.ps1 install-deps"
+                $exitCode = -1
+            }
+            "com.infomaniak.makefile.deps.notadmin" {
+                Print-Error "Installing dependencies requires admin privileges. Operation aborted.`n    Please reexecute this makefile as an administrator:`n    # makefile.ps1 install-deps"
+                $exitCode = -2
+            }
+            "com.infomaniak.makefile.deps.wix" {
+                Print-Error "There was nothing wrong with your source code,but we found a problem installing wix toolset and couldn't continue. please try re-running the job."
+                $exitCode = -3
+            }
+            default {
+                Print-Error "Another error occurred: $_"
+                $exitCode = -100
+            }
+        }
+    } finally {
+        if (!($env:COM_IK_MAKEFILE_EXECUTION_SUCCESS)) {
+            Print-Warning "Makefile interrupted by Ctrl + C or by another interruption handler."
+        }
+        Restore-ComputerState
+        exit $exitCode
+    }
+}
+
+Main
+#EndRegion

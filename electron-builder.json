@@ -1,7 +1,7 @@
 {
   "publish": {
     "provider": "s3",
-    "channel": "latest",
+    "channel": "beta",
     "bucket": "meet",
     "endpoint": "https://download.storage.infomaniak.com",
     "path": "/"
@@ -105,6 +105,7 @@
     "sign": true
   },
   "win": {
+    "sign": "./scripts/winsign.js",
     "artifactName": "${name}-${version}-${os}.${ext}",
     "certificateSubjectName": "INFOMANIAK NETWORK SA",
     "target": [
@@ -113,7 +114,7 @@
           "ia32",
           "x64"
         ],
-        "target": "nsis"
+        "target": ["nsis", "msi"]
       }
     ],
     "publisherName": "CN=\"INFOMANIAK NETWORK SA\", O=\"INFOMANIAK NETWORK SA\", L=Les Acacias, S=Genève, C=CH"
@@ -125,5 +126,8 @@
     "runAfterFinish": true,
     "createDesktopShortcut": false,
     "include": "scripts/installer.nsh"
+  },
+  "msi": {
+    "perMachine": true
   }
 }
