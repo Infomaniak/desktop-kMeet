@@ -5,7 +5,7 @@ exports.default = async config => {
     const filePath = `${config.path}`;
 
     // `"${process.env.SM_INSTALL_DIR}"`;
-    const smctlDir = 'C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools';
+    const smctlDir = 'C:\\Program Files\\DigiCert\\DigiCert Keylocker Tools';
 
     // `"${process.env.SIGNTOOL_DIR}"`;
     const signToolDir = 'C:\\Program Files (x86)\\Windows Kits\\10\\App Certification Kit';

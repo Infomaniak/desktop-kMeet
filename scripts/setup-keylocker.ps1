@@ -44,11 +44,11 @@ try {
   certutil -decode "${env:SM_CLIENT_CERT_FILE}.b64" $env:SM_CLIENT_CERT_FILE
 
   Write-Host "[$whoami] Verifying SM Tools install..."
-  & "C:\Program Files\DigiCert\DigiCert One Signing Manager Tools\smctl.exe" healthcheck --all
+  & "C:\Program Files\DigiCert\DigiCert Keylocker Tools\smctl.exe" healthcheck --all
 
   # Sync certificate
   Write-Host "[$whoami] Synchronizing certificate..."
-  & "C:\Program Files\DigiCert\DigiCert One Signing Manager Tools\smctl.exe" windows certsync --keypair-alias="${env:SM_KEYPAIR_ALIAS}"
+  & "C:\Program Files\DigiCert\DigiCert Keylocker Tools\smctl.exe" windows certsync --keypair-alias="${env:SM_KEYPAIR_ALIAS}"
 } catch {
   throw $PSItem
 }
