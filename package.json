@@ -1,6 +1,6 @@
 {
   "name": "kmeet-desktop",
-  "version": "2.0.1",
+  "version": "2.0.1-beta.4",
   "description": "Electron application for Infomaniak Meet",
   "main": "./build/main.js",
   "productName": "kMeet",
@@ -11,7 +11,8 @@
     "clean": "rm -rf node_modules build dist",
     "lint": "eslint . && flow",
     "build": "webpack --config ./webpack.main.js --mode production && webpack --config ./webpack.renderer.js --mode production",
-    "dist": "npm run build && electron-builder -p never",
+    "dist": "npm run build && electron-builder --publish=never",
+    "dist:msi": "npm run build && electron-builder --win msi --x64 --arm64 --publish=never",
     "postinstall": "patch-package",
     "watch": "webpack --config ./webpack.renderer.js --mode development --watch --watch-options-poll=1000",
     "validate": "npm ls"
