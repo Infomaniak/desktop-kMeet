@@ -2,16 +2,18 @@ const path = require('path');
 const { sentryWebpackPlugin } = require('@sentry/webpack-plugin');
 
 module.exports = (env, argv) => {
-    const plugins = argv.mode === 'development' ? [] : [
-        sentryWebpackPlugin({
-            include: '.',
-            ignore: [ 'node_modules', 'webpack.config.js' ],
-            authToken: process.env.SENTRY_AUTH_TOKEN,
-            org: 'sentry',
-            project: 'kmeet-desktop',
-            url: 'https://sentry-kchat.infomaniak.com/'
-        })
-    ];
+    const plugins = [];
+
+    // argv.mode === 'development' ? [] : [
+    //     sentryWebpackPlugin({
+    //         include: '.',
+    //         ignore: [ 'node_modules', 'webpack.config.js' ],
+    //         authToken: process.env.SENTRY_AUTH_TOKEN,
+    //         org: 'sentry',
+    //         project: 'kmeet-desktop',
+    //         url: 'https://sentry-kchat.infomaniak.com/'
+    //     })
+    // ];
 
     return {
         target: 'electron-main',
