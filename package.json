@@ -1,6 +1,6 @@
 {
   "name": "kmeet-desktop",
-  "version": "2.0.1-beta.7",
+  "version": "2.0.1-beta.8",
   "description": "Electron application for Infomaniak Meet",
   "main": "./build/main.js",
   "productName": "kMeet",
@@ -12,7 +12,7 @@
     "lint": "eslint . && flow",
     "build": "webpack --config ./webpack.main.js --mode production && webpack --config ./webpack.renderer.js --mode production",
     "dist": "npm run build && electron-builder --publish=never",
-    "dist:msi": "npm run build && electron-builder --win msi --x64 --arm64 --publish=never",
+    "dist:msi": "cross-env DISABLE_UPDATE=true npm run build && electron-builder --win msi --x64 --arm64 --publish=never",
     "postinstall": "patch-package",
     "watch": "webpack --config ./webpack.renderer.js --mode development --watch --watch-options-poll=1000",
     "validate": "npm ls"
@@ -68,6 +68,7 @@
     "babel-eslint": "10.0.3",
     "babel-loader": "^8.2.3",
     "concurrently": "5.1.0",
+    "cross-env": "^10.1.0",
     "css-loader": "^6.7.1",
     "electron": "25.3.0",
     "electron-builder": "24.4.0",

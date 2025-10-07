@@ -38,6 +38,7 @@ const { default: updateManager } = require('./autoUpdate');
 const { default: i18nManager, localizeMessage } = require('./i18nManager');
 
 const showDevTools = Boolean(process.env.SHOW_DEV_TOOLS) || (process.argv.indexOf('--show-dev-tools') > -1);
+const disableAutoupdate = Boolean(process.env.DISABLE_UPDATE) || false;
 
 const ENABLE_REMOTE_CONTROL = true;
 
@@ -219,7 +220,7 @@ function getAppPath() {
 function createJitsiMeetWindow() {
 
     // Check for Updates.
-    if (!process.mas) {
+    if (!process.mas && !disableAutoupdate) {
         // autoUpdater.checkForUpdatesAndNotify();
 
         setTimeout(() => {
