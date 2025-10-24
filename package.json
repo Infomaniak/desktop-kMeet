@@ -1,6 +1,6 @@
 {
   "name": "kmeet-desktop",
-  "version": "2.0.1-beta.12",
+  "version": "2.0.1-beta.13",
   "description": "Electron application for Infomaniak Meet",
   "main": "./build/main.js",
   "productName": "kMeet",
