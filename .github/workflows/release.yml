@@ -77,9 +77,9 @@ jobs:
         with:
           node-version-file: '.nvmrc'
       - name: Build it
-          run: |
-            npm ci
-            npm run dist
+        run: |
+          npm ci
+          npm run dist
      
     build-windows:
         runs-on: windows-2022
