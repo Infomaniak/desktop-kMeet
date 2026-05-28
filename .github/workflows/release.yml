@@ -81,64 +81,64 @@ jobs:
           npm ci
           npm run dist
      
-    build-windows:
-        runs-on: windows-2022
-        steps:
-            - name: release/checkout-repo
-              uses: actions/checkout@v3
-            - name: release/setup-node
-              uses: actions/setup-node@v3
-              with:
-                  node-version: "16.20.2"
-            - name: release/install-deps
-              env:
-                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-              shell: powershell
-              run: |
-                  ./scripts/Makefile.ps1 install-deps
-                  choco install yq --version 4.15.1 -y
-                  npm i -g node-gyp
-                  node-gyp install
-                  node-gyp install --devdir="C:\Users\runneradmin\.electron-gyp" --target=$(jq -r .devDependencies.electron package.json) --dist-url="https://electronjs.org/headers"
-                  node-gyp install --devdir="C:\Users\runneradmin\.electron-gyp" --target=$(jq -r .devDependencies.electron package.json) --dist-url="https://electronjs.org/headers" --arch arm64
-                  node-gyp install --devdir="C:\Users\runneradmin\.electron-gyp" --target=$(jq -r .devDependencies.electron package.json) --dist-url="https://electronjs.org/headers" --arch ia32
-                  npm ci
-            - name: release/update-version
-              uses: ./.github/actions/version
-            - name: release/build
-              shell: powershell
-              env:
-                  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-                  # AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                  # AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                  SM_API_KEY: ${{ secrets.SM_API_KEY }}
-                  SM_CLIENT_CERT_FILE_B64: ${{ secrets.SM_CLIENT_CERT_FILE_B64 }}
-                  SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
-                  SM_HOST: ${{ secrets.SM_HOST }}
-                  SM_CODE_SIGNING_CERT_SHA1_HASH: ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }}
-                  SM_KEYPAIR_ALIAS: ${{ secrets.SM_KEYPAIR_ALIAS }}
-                  SM_TOOLS_URI: ${{ secrets.SM_TOOLS_URI }}
-                  SM_CLIENT_CERT_FILE: ${{ secrets.SM_CLIENT_CERT_FILE }}
-              run: |
-                  ./scripts/setup-keylocker.ps1
-                  ./scripts/Makefile.ps1 build
-            - name: release/package
-              run: |
-                mkdir -p ./release/win-release
-                bash -x ./scripts/cp_artifacts.sh dist ./release/win-release
-            - name: release/upload-build
-              uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
-              with:
-                name: build-${{ runner.os }}
-                path: ./release
-                compression-level: 0
-                retention-days: 14
+    # build-windows:
+    #     runs-on: windows-2022
+    #     steps:
+    #         - name: release/checkout-repo
+    #           uses: actions/checkout@v3
+    #         - name: release/setup-node
+    #           uses: actions/setup-node@v3
+    #           with:
+    #               node-version: "16.20.2"
+    #         - name: release/install-deps
+    #           env:
+    #               NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    #           shell: powershell
+    #           run: |
+    #               ./scripts/Makefile.ps1 install-deps
+    #               choco install yq --version 4.15.1 -y
+    #               npm i -g node-gyp
+    #               node-gyp install
+    #               node-gyp install --devdir="C:\Users\runneradmin\.electron-gyp" --target=$(jq -r .devDependencies.electron package.json) --dist-url="https://electronjs.org/headers"
+    #               node-gyp install --devdir="C:\Users\runneradmin\.electron-gyp" --target=$(jq -r .devDependencies.electron package.json) --dist-url="https://electronjs.org/headers" --arch arm64
+    #               node-gyp install --devdir="C:\Users\runneradmin\.electron-gyp" --target=$(jq -r .devDependencies.electron package.json) --dist-url="https://electronjs.org/headers" --arch ia32
+    #               npm ci
+    #         - name: release/update-version
+    #           uses: ./.github/actions/version
+    #         - name: release/build
+    #           shell: powershell
+    #           env:
+    #               SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+    #               # AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #               # AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #               SM_API_KEY: ${{ secrets.SM_API_KEY }}
+    #               SM_CLIENT_CERT_FILE_B64: ${{ secrets.SM_CLIENT_CERT_FILE_B64 }}
+    #               SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
+    #               SM_HOST: ${{ secrets.SM_HOST }}
+    #               SM_CODE_SIGNING_CERT_SHA1_HASH: ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }}
+    #               SM_KEYPAIR_ALIAS: ${{ secrets.SM_KEYPAIR_ALIAS }}
+    #               SM_TOOLS_URI: ${{ secrets.SM_TOOLS_URI }}
+    #               SM_CLIENT_CERT_FILE: ${{ secrets.SM_CLIENT_CERT_FILE }}
+    #           run: |
+    #               ./scripts/setup-keylocker.ps1
+    #               ./scripts/Makefile.ps1 build
+    #         - name: release/package
+    #           run: |
+    #             mkdir -p ./release/win-release
+    #             bash -x ./scripts/cp_artifacts.sh dist ./release/win-release
+    #         - name: release/upload-build
+    #           uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+    #           with:
+    #             name: build-${{ runner.os }}
+    #             path: ./release
+    #             compression-level: 0
+    #             retention-days: 14
 
     github-release:
       runs-on: ubuntu-22.04
       needs:
-        - build-windows
-        # - build-linux
+        # - build-windows
+        - build-linux
       steps:
         - name: release/checkout-repo
           uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
