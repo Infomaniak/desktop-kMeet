@@ -99,7 +99,7 @@ class Conference extends Component<IProps, IConferenceState> {
 
     render() {
         return (
-            <Wrapper ref = { this._ref }>
+            <Wrapper innerRef = { this._ref as any }>
                 {this._maybeRenderLoadingIndicator()}
             </Wrapper>
         );
@@ -142,7 +142,6 @@ class Conference extends Component<IProps, IConferenceState> {
 
         const options = {
             configOverwrite,
-            onload: this._onIframeLoad,
             parentNode: this._ref.current,
             roomName,
             sandbox: 'allow-scripts allow-same-origin allow-popups allow-forms'
@@ -153,6 +152,7 @@ class Conference extends Component<IProps, IConferenceState> {
             ...urlParameters
         });
 
+        this._api.on('browserSupport', this._onIframeLoad);
         this._api.on('suspendDetected', this._onVideoConferenceEnded);
         this._api.on('readyToClose', this._onVideoConferenceEnded);
         this._api.on('videoConferenceJoined', () => {

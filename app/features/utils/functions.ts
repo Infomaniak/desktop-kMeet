@@ -37,32 +37,34 @@ export function openExternalLink(link: string): void {
  * @returns {IConference|undefined}
  */
 export function createConferenceObjectFromURL(inputURL: string, defaultServerURL: string): IConference | undefined {
-    const lastIndexOfSlash = inputURL.lastIndexOf('/');
+    const parts = inputURL.split('/');
+
     let room;
     let serverURL;
+    let subject;
 
-    if (lastIndexOfSlash === -1) {
-        // This must be only the room name.
-        room = inputURL;
+    if (parts.length === 1) {
+        // Just a room name.
+        room = parts[0];
         serverURL = normalizeServerURL(defaultServerURL || '');
-    } else {
-        // Take the substring after last slash to be the room name.
-        room = inputURL.substring(lastIndexOfSlash + 1);
-
-        // Take the substring before last slash to be the Server URL.
-        serverURL = inputURL.substring(0, lastIndexOfSlash);
-
-        // Normalize the server URL.
-        serverURL = normalizeServerURL(serverURL);
+    } else if (parts.length === 2) {
+        // host/room
+        room = parts[1];
+        serverURL = normalizeServerURL(parts[0]);
+    } else if (parts.length >= 3) {
+        // host/room/subject
+        room = parts[1];
+        serverURL = normalizeServerURL(parts[0]);
+        subject = parts.slice(2).join('/');
     }
 
-    // Don't navigate if no room was specified.
     if (!room) {
         return;
     }
 
     return {
         room,
-        serverURL
-    };
+        serverURL,
+        subject
+    } as IConference;
 }

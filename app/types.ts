@@ -9,6 +9,7 @@ export interface IConference {
     room: string;
     serverURL: string;
     startTime?: number;
+    subject?: string;
 }
 
 /**

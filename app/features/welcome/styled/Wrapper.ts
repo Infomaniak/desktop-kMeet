@@ -3,6 +3,6 @@ import styled from 'styled-components';
 
 export default styled.div`
     background: black;
-    min-height: 100vh;
-    min-width: 100%;
+    height: 100vh;
+    width: 100vw;
 `;

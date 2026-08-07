@@ -90,7 +90,7 @@ class Welcome extends Component<IProps> {
 
     render() {
         return (
-            <Wrapper ref = { this._ref as any } />
+            <Wrapper innerRef = { this._ref as any } />
         );
     }
 }
