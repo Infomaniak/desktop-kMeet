@@ -1,0 +1,16 @@
+stages:
+  - check
+
+lint:
+  image: node:24
+  stage: check
+  script:
+    - npm ci
+    - npm run lint
+
+type-check:
+  image: node:24
+  stage: check
+  script:
+    - npm ci
+    - npm run type-check
