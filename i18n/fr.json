@@ -20,5 +20,9 @@
   "notification.downloadnotification.title": "Nouvelle version de bureau disponible",
   "notification.downloadnotification.body": "Une nouvelle version est disponible et peut être téléchargée dès maintenant.",
   "notification.upgradenotification.title": "Cliquez pour redémarrer et installer la mise à jour",
-  "notification.upgradenotification.body": "Une nouvelle version de bureau est prête à être installée maintenant."
+  "notification.upgradenotification.body": "Une nouvelle version de bureau est prête à être installée maintenant.",
+  "remoteControl.deny": "Refuser",
+  "remoteControl.allow": "Autoriser",
+  "remoteControl.message": "Autoriser le contrôle à distance de cet ordinateur ?",
+  "remoteControl.detail": "Un participant à la réunion demande le contrôle de votre souris et de votre clavier."
 }
