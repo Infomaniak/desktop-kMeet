@@ -53,10 +53,17 @@ function normalizeHost(rawHost) {
  * @returns {boolean} True if the host is allowed or empty (room-only link).
  */
 function isAllowedHost(host) {
+    // A genuinely absent host means a room-only link on the default server.
+    if (host === undefined || host === null || host === '') {
+        return true;
+    }
+
     const normalized = normalizeHost(host);
 
+    // A host was provided but does not yield a hostname (lone port, bare
+    // userinfo, ...) - fail closed instead of treating it as room-only.
     if (!normalized) {
-        return true;
+        return false;
     }
 
     return ALLOWED_HOSTS.some(allowed =>

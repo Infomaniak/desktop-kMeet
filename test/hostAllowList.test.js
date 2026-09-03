@@ -48,6 +48,11 @@ describe('Host allow-list', () => {
             assert.strictEqual(isAllowedHost(null), true);
         });
 
+        it('fails closed when a host is provided but yields no hostname', () => {
+            assert.strictEqual(isAllowedHost(':8443'), false);
+            assert.strictEqual(isAllowedHost('user@'), false);
+        });
+
         it('allows kmeet.infomaniak.com', () => {
             assert.strictEqual(isAllowedHost('kmeet.infomaniak.com'), true);
         });
