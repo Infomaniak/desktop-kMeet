@@ -8,106 +8,94 @@ on:
             - "[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+"
 
 jobs:
-    # begin-notification:
-    #     runs-on: ubuntu-latest
-    #     steps:
-    #         - name: release/checkout-repo
-    #           uses: actions/checkout@v3
-    #         - name: release/notify-channel
-    #           run: |
-    #               jq --null-input \
-    #               --arg icon_url "https://infomaniak.kchat.infomaniak.com/static/emoji/kchat.png" \
-    #               --arg username "DesktopReleaseBot" \
-    #               --arg text "[$GITHUB_REF_NAME] Release for kmeet desktop app started from GitHub, it should take about 30 minutes to complete." \
-    #               '{"username":$username,"icon_url": $icon_url, "text": $text }' > /tmp/webhook-data.json
-    #               curl -i -H "Content-Type: application/json" -X POST -d @/tmp/webhook-data.json ${{ secrets.RELEASE_WEBHOOK_URL }} || echo "NOFICATION FAILED! check logs as this will succeed intentionally"
+    build-mac:
+        runs-on: macos-14
+        env:
+          MAC_PROFILE: ${{ secrets.MAC_PROVISION_PROFILE }}
+          APPLE_ID: ${{ secrets.APPLEID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
+          APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
+          CSC_FOR_PULL_REQUEST: true
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_RELEASE: ${{ github.ref_name }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        steps:
+            - name: release/checkout-repo
+              uses: actions/checkout@v4
+            - name: release/setup-node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+                  cache-dependency-path: package-lock.json
+                  registry-url: "https://npm.pkg.github.com"
+                  scope: "@infomaniak"
+            - name: release/install-dependencies
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+              run: |
+                  sudo -H pip install setuptools || true
+                  npm ci
+            - name: release/copy-provisioning-profile
+              run: echo $MAC_PROFILE | base64 -D > ./mac.provisionprofile
+            - name: release/update-version
+              uses: ./.github/actions/version
+            - name: release/build-and-publish
+              run: |
+                  npm run build
+                  npx electron-builder --mac --publish=always
+                  mkdir -p ./release/macos-release
+                  bash -x ./scripts/cp_artifacts.sh dist ./release/macos-release
+            - name: release/upload-build
+              uses: actions/upload-artifact@v4
+              with:
+                name: build-macos
+                path: ./release
+                compression-level: 0
+                retention-days: 14
 
-    # build-mac:
-    #     runs-on: macos-12
-    #     env:
-    #       MAC_PROFILE: ${{ secrets.MAC_PROVISION_PROFILE }}
-    #       APPLE_ID: ${{ secrets.APPLEID }}
-    #       APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
-    #       APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
-    #       CSC_FOR_PULL_REQUEST: true
-    #       CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-    #       CSC_LINK: ${{ secrets.CSC_LINK }}
-    #       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-    #       SENTRY_RELEASE: ${{ github.ref_name }}
-    #     steps:
-    #         - name: release/checkout-repo
-    #           uses: actions/checkout@v3
-    #         - name: release/setup-node
-    #           uses: actions/setup-node@v3
-    #           with:
-    #               node-version-file: "package.json"
-    #               cache: "npm"
-    #               cache-dependency-path: package-lock.json
-    #         - name: release/install-dependencies
-    #           env:
-    #               NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-    #           run: |
-    #               brew install yq rename
-    #               sudo -H pip install setuptools
-    #               npm ci
-    #         - name: release/copy-provisioning-profile
-    #           run: echo $MAC_PROFILE | base64 -D > ./mac.provisionprofile
-    #         - name: release/update-version
-    #           uses: ./.github/actions/version
-    #         # - name: release/test
-    #         #   uses: ./.github/actions/test
-    #         - name: release/build
-    #           run: |
-    #               npm run package:mac
-    #               mkdir -p ./artifacts
-    #               find ./dist -type f \( -name "*.dmg" \) -exec cp {} ./artifacts/ \;
-    #         - name: release/upload-build
-    #           uses: actions/upload-artifact@v3
-    #           with:
-    #               name: artifacts
-    #               path: ./artifacts
-    #               retention-days: 1
-
-    # build-linux:
-    #     runs-on: ubuntu-latest
-    #     steps:
-    #         - name: release/checkout-repo
-    #           uses: actions/checkout@v3
-    #         - name: release/setup-node
-    #           uses: actions/setup-node@v3
-    #           with:
-    #               node-version-file: "package.json"
-    #               cache: "npm"
-    #               cache-dependency-path: package-lock.json
-    #         - name: release/install-dependencies
-    #           env:
-    #               NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-    #           run: |
-    #               wget -qO - https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_22.04/Release.key | sudo apt-key add -
-    #               wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.20.1/yq_linux_amd64 && chmod a+x /usr/local/bin/yq
-    #               sudo apt-get update || true && sudo apt-get install -y ca-certificates libxtst-dev libpng++-dev gcc-aarch64-linux-gnu g++-aarch64-linux-gnu jq icnsutils graphicsmagick tzdata
-    #               npm ci
-    #         - name: release/update-version
-    #           uses: ./.github/actions/version
-    #         # - name: release/test
-    #         #   uses: ./.github/actions/test
-    #         - name: release/build
-    #           env:
-    #               SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-    #               SENTRY_RELEASE: ${{ github.ref_name }}
-    #               AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    #               AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    #           run: |
-    #               mkdir -p ./release/linux
-    #               npm run package:linux
-    #               bash -x ./scripts/cp_artifacts.sh dist ./release/linux
-    #         - name: release/upload-build
-    #           uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
-    #           with:
-    #             name: build-${{ runner.os }}
-    #             path: ./release
-    #             compression-level: 0
-    #             retention-days: 14
+    build-linux:
+        runs-on: ubuntu-latest
+        env:
+            SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+            SENTRY_RELEASE: ${{ github.ref_name }}
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        steps:
+            - name: release/checkout-repo
+              uses: actions/checkout@v4
+            - name: release/setup-node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+                  cache-dependency-path: package-lock.json
+                  registry-url: "https://npm.pkg.github.com"
+                  scope: "@infomaniak"
+            - name: release/install-dependencies
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+              run: |
+                  sudo apt-get update || true && sudo apt-get install -y ca-certificates libxtst-dev libpng++-dev gcc-aarch64-linux-gnu g++-aarch64-linux-gnu jq icnsutils graphicsmagick tzdata
+                  npm ci
+            - name: release/update-version
+              uses: ./.github/actions/version
+            - name: release/build-and-publish
+              run: |
+                  mkdir -p ./release/linux
+                  npm run build
+                  npx electron-builder --linux --publish=always
+                  bash -x ./scripts/cp_artifacts.sh dist ./release/linux
+            - name: release/upload-build
+              uses: actions/upload-artifact@v4
+              with:
+                name: build-linux
+                path: ./release
+                compression-level: 0
+                retention-days: 14
 
     build-windows:
         runs-on: windows-2022
@@ -137,8 +125,6 @@ jobs:
               shell: powershell
               env:
                   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-                  # AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                  # AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   SM_API_KEY: ${{ secrets.SM_API_KEY }}
                   SM_CLIENT_CERT_FILE_B64: ${{ secrets.SM_CLIENT_CERT_FILE_B64 }}
                   SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
@@ -155,7 +141,7 @@ jobs:
                 mkdir -p ./release/win-release
                 bash -x ./scripts/cp_artifacts.sh dist ./release/win-release
             - name: release/upload-build
-              uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+              uses: actions/upload-artifact@v4
               with:
                 name: build-${{ runner.os }}
                 path: ./release
@@ -165,8 +151,9 @@ jobs:
     github-release:
       runs-on: ubuntu-22.04
       needs:
+        - build-mac
+        - build-linux
         - build-windows
-        # - build-linux
       steps:
         - name: release/checkout-repo
           uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -179,10 +166,9 @@ jobs:
             merge-multiple: true
 
         - name: release/setup-files-for-github-release
-          # find ./release/{macos-release,win-release,linux} -type f -exec cp --backup=numbered -t ./ghr-dist {} +
           run: |
             mkdir -p ./ghr-dist
-            find ./release/win-release -type f -exec cp --backup=numbered -t ./ghr-dist {} +
+            find ./release -type f -exec cp --backup=numbered -t ./ghr-dist {} +
 
         - name: release/publish-release
           env:
@@ -192,21 +178,3 @@ jobs:
             RELEASE_TITLE="v${VERSION} ($(date -u "+%Y-%m-%d"))"
             [[ $VERSION =~ "-beta" ]] || [[ $VERSION =~ "-alpha" ]] && PRERELEASE="--prerelease"
             gh release create --draft ${PRERELEASE} --verify-tag --target "${GITHUB_SHA}" --title "${RELEASE_TITLE}" "${GITHUB_REF_NAME}" ./ghr-dist/*
-
-    # end-notification:
-    #     runs-on: ubuntu-latest
-    #     needs:
-    #         - github-release
-    #     steps:
-    #         - name: release/checkout-repo
-    #           uses: actions/checkout@v3
-    #           with:
-    #               fetch-depth: 0
-    #         - name: release/notify-channel
-    #           run: |
-    #               jq --null-input \
-    #               --arg icon_url "https://infomaniak.kchat.infomaniak.com/static/emoji/kchat.png" \
-    #               --arg username "DesktopReleaseBot" \
-    #               --arg text "$(bash -x scripts/generate_release_post.sh $GITHUB_REF_NAME)" \
-    #               '{"username":$username,"icon_url": $icon_url, "text": $text }' > /tmp/webhook-data.json
-    #               curl -i -H "Content-Type: application/json" -X POST -d @/tmp/webhook-data.json ${{ secrets.RELEASE_WEBHOOK_URL }} || echo "NOFICATION FAILED! check logs as this will succeed intentionally"

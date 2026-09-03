@@ -20,5 +20,9 @@
   "notification.downloadnotification.title": "New desktop version available",
   "notification.downloadnotification.body": "A new version is available for you to download now.",
   "notification.upgradenotification.title": "Click to restart and install update",
-  "notification.upgradenotification.body": "A new desktop version is ready to install now."
+  "notification.upgradenotification.body": "A new desktop version is ready to install now.",
+  "remoteControl.deny": "Deny",
+  "remoteControl.allow": "Allow",
+  "remoteControl.message": "Allow remote control of this computer?",
+  "remoteControl.detail": "A meeting participant is requesting control of your mouse and keyboard."
 }

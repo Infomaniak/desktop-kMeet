@@ -3,6 +3,7 @@
 const {
     BrowserWindow,
     app,
+    dialog,
     ipcMain,
     Menu,
     Tray,
@@ -28,6 +29,7 @@ const path = require('path');
 const process = require('process');
 const URL = require('url');
 const config = require('./app/features/config');
+const { isAllowedHost } = require('./app/features/utils/hostAllowList');
 const { openExternalLink } = require('./app/features/utils/openExternalLink');
 const pkgJson = require('./package.json');
 const builderJson = require('./electron-builder.json');
@@ -129,6 +131,40 @@ const appProtocolSurplus = `${config.default.appProtocolPrefix}://`;
 let rendererReady = false;
 let protocolDataForFrontApp = null;
 let tray = null;
+
+/**
+ * Asks the user whether a remote control (or remote draw) session may start.
+ *
+ * The request reaches the meeting window as a postMessage from the conference
+ * iframe, so it carries no identity that can be trusted: any page loaded in
+ * that iframe can send it. The prompt is therefore a native, modal dialog
+ * owned by the main process — web content can neither render, click nor
+ * dismiss it — and nothing is executed until the user allows it here.
+ *
+ * @returns {Promise<boolean>} Whether the user allowed the session.
+ */
+async function requestRemoteControlConsent() {
+    if (!mainWindow) {
+        return false;
+    }
+
+    const { response } = await dialog.showMessageBox(mainWindow, {
+        type: 'warning',
+        buttons: [
+            localizeMessage('remoteControl.deny', 'Deny'),
+            localizeMessage('remoteControl.allow', 'Allow')
+        ],
+        defaultId: 0,
+        cancelId: 0,
+        noLink: true,
+        message: localizeMessage('remoteControl.message',
+            'Allow remote control of this computer?'),
+        detail: localizeMessage('remoteControl.detail',
+            'A meeting participant is requesting control of your mouse and keyboard.')
+    });
+
+    return response === 1;
+}
 
 /**
  * Sets the application menu. It is hidden on all platforms except macOS because
@@ -451,10 +487,14 @@ function createJitsiMeetWindow() {
     setupPowerMonitorMain(mainWindow);
     setupScreenSharingMain(mainWindow, config.default.appName, builderJson.appId);
     if (ENABLE_REMOTE_CONTROL) {
-        new RemoteControlMain(mainWindow); // eslint-disable-line no-new
+        new RemoteControlMain(mainWindow, {
+            requestConsent: requestRemoteControlConsent
+        }); // eslint-disable-line no-new
     }
 
-    new RemoteDrawMain(mainWindow); // eslint-disable-line no-new
+    new RemoteDrawMain(mainWindow, {
+        requestConsent: requestRemoteControlConsent
+    }); // eslint-disable-line no-new
 
     mainWindow.on('closed', () => {
         console.log('closed');
@@ -668,6 +708,19 @@ function handleProtocolCall(fullProtocolCall) {
     }
 
     const inputURL = fullProtocolCall.replace(appProtocolSurplus, '');
+
+    // Validate the host before forwarding the protocol payload to the
+    // renderer. Without this check, a link like kmeet://attacker.invalid/room
+    // would load an attacker-controlled HTTPS origin as the meeting iframe,
+    // which could then drive the remote control bridge (robotjs) without user
+    // consent.
+    const hostPart = inputURL.split('/')[0];
+
+    if (!isAllowedHost(hostPart)) {
+        console.warn(`Rejected protocol call with unauthorized host: ${hostPart}`);
+
+        return;
+    }
 
     if (app.isReady() && mainWindow === null) {
         createJitsiMeetWindow();

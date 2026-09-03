@@ -20,5 +20,9 @@
     "notification.downloadnotification.title": "Neue Desktop Version verfügbar",
     "notification.downloadnotification.body": "Eine neue Version ist jetzt für dich zum Download verfügbar.",
     "notification.upgradenotification.title": "Klicken zum Neustart und installieren des Updates",
-    "notification.upgradenotification.body": "Eine neue Desktop Version ist jetzt bereit für die Installation."
+    "notification.upgradenotification.body": "Eine neue Desktop Version ist jetzt bereit für die Installation.",
+    "remoteControl.deny": "Ablehnen",
+    "remoteControl.allow": "Erlauben",
+    "remoteControl.message": "Fernsteuerung dieses Computers erlauben?",
+    "remoteControl.detail": "Ein Meeting-Teilnehmer fordert die Steuerung Ihrer Maus und Tastatur an."
 }

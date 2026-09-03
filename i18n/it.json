@@ -20,5 +20,9 @@
     "notification.downloadnotification.title": "Disponibile la nuova versione desktop",
     "notification.downloadnotification.body": "È possibile scaricare una nuova versione.",
     "notification.upgradenotification.title": "Fare clic per riavviare e installare l'aggiornamento",
-    "notification.upgradenotification.body": "La nuova versione desktop è pronta per essere installata."
+    "notification.upgradenotification.body": "La nuova versione desktop è pronta per essere installata.",
+    "remoteControl.deny": "Nega",
+    "remoteControl.allow": "Consenti",
+    "remoteControl.message": "Consentire il controllo remoto di questo computer?",
+    "remoteControl.detail": "Un partecipante alla riunione richiede il controllo del mouse e della tastiera."
 }

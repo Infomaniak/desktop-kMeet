@@ -20,5 +20,9 @@
   "notification.downloadnotification.title": "Una nueva version de escritorio disponible",
   "notification.downloadnotification.body": "Una nueva versión está disponible para descargar ahora.",
   "notification.upgradenotification.title": "Pulsar para reiniciar e instalar la actualización",
-  "notification.upgradenotification.body": "Hay una nueva versión de escritorio está disponible para instalar."
+  "notification.upgradenotification.body": "Hay una nueva versión de escritorio está disponible para instalar.",
+  "remoteControl.deny": "Denegar",
+  "remoteControl.allow": "Permitir",
+  "remoteControl.message": "¿Permitir el control remoto de este equipo?",
+  "remoteControl.detail": "Un participante de la reunión solicita el control de su ratón y teclado."
 }

@@ -1,5 +1,6 @@
 // @flow
 
+import { isAllowedHost } from './hostAllowList';
 
 /**
  * Normalizes the given server URL so it has the proper scheme.
@@ -33,7 +34,7 @@ export function openExternalLink(link: string) {
  * Get URL, extract room name from it and create a Conference object.
  *
  * @param {string} inputURL - Combined server url with room separated by /.
- * @returns {Object}
+ * @returns {Object|undefined}
  */
 export function createConferenceObjectFromURL(inputURL: string) {
     const slashed = inputURL.split('/');
@@ -47,6 +48,19 @@ export function createConferenceObjectFromURL(inputURL: string) {
 
     // Don't navigate if no room was specified.
     if (!room) {
+        return;
+    }
+
+    // Defense-in-depth: reject unauthorized hosts even if the main process
+    // check was bypassed. This prevents loading an attacker-controlled
+    // origin as the meeting iframe. isAllowedHost normalizes the host
+    // (userinfo, port, case, trailing dot) exactly like the main process.
+    const host = serverURL.replace(/https?:\/\//, '');
+
+    if (!isAllowedHost(host)) {
+        // eslint-disable-next-line no-console
+        console.warn(`Rejected conference with unauthorized server: ${serverURL}`);
+
         return;
     }
 
