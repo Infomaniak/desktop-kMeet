@@ -29,6 +29,7 @@ const path = require('path');
 const process = require('process');
 const URL = require('url');
 const config = require('./app/features/config');
+const { isAllowedHost } = require('./app/features/utils/hostAllowList');
 const { openExternalLink } = require('./app/features/utils/openExternalLink');
 const pkgJson = require('./package.json');
 const builderJson = require('./electron-builder.json');
@@ -132,34 +133,6 @@ let protocolDataForFrontApp = null;
 let tray = null;
 
 /**
- * Hosts that are allowed in kmeet:// protocol links. A link like
- * kmeet://attacker.invalid/room must not load an arbitrary HTTPS origin as the
- * meeting iframe, because the remote control bridge trusts whatever page is
- * loaded. When no host is specified (kmeet://room), the configured
- * defaultServerURL is used and is always trusted.
- */
-const ALLOWED_HOSTS = [
-    'kmeet.infomaniak.com',
-    'kmeet.preprod.dev.infomaniak.ch'
-];
-
-/**
- * Checks whether the host extracted from a kmeet:// link is allowed.
- *
- * @param {string} host - The host part (before the first /), or empty when the
- * link contains only a room name.
- * @returns {boolean} True if the host is allowed or empty (room-only link).
- */
-function isAllowedHost(host) {
-    if (!host) {
-        return true;
-    }
-
-    return ALLOWED_HOSTS.some(allowed =>
-        host === allowed || host.endsWith(`.${allowed}`));
-}
-
-/**
  * Asks the user whether a remote control (or remote draw) session may start.
  *
  * The request reaches the meeting window as a postMessage from the conference
@@ -183,6 +156,7 @@ async function requestRemoteControlConsent() {
         ],
         defaultId: 0,
         cancelId: 0,
+        noLink: true,
         message: localizeMessage('remoteControl.message',
             'Allow remote control of this computer?'),
         detail: localizeMessage('remoteControl.detail',

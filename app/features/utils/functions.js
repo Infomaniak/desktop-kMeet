@@ -1,30 +1,6 @@
 // @flow
 
-
-/**
- * Hosts that are allowed in protocol links. This is a defense-in-depth check
- * in the renderer; the main process already validates the host in
- * handleProtocolCall before forwarding the protocol payload.
- */
-const ALLOWED_HOSTS = [
-    'kmeet.infomaniak.com',
-    'kmeet.preprod.dev.infomaniak.ch'
-];
-
-/**
- * Checks whether a host is in the allow-list.
- *
- * @param {string} host - The host to check (without scheme/port).
- * @returns {boolean}
- */
-function isAllowedHost(host) {
-    if (!host) {
-        return true;
-    }
-
-    return ALLOWED_HOSTS.some(allowed =>
-        host === allowed || host.endsWith(`.${allowed}`));
-}
+import { isAllowedHost } from './hostAllowList';
 
 /**
  * Normalizes the given server URL so it has the proper scheme.
@@ -77,8 +53,9 @@ export function createConferenceObjectFromURL(inputURL: string) {
 
     // Defense-in-depth: reject unauthorized hosts even if the main process
     // check was bypassed. This prevents loading an attacker-controlled
-    // origin as the meeting iframe.
-    const host = serverURL.replace(/https?:\/\//, '').split(':')[0];
+    // origin as the meeting iframe. isAllowedHost normalizes the host
+    // (userinfo, port, case, trailing dot) exactly like the main process.
+    const host = serverURL.replace(/https?:\/\//, '');
 
     if (!isAllowedHost(host)) {
         // eslint-disable-next-line no-console

@@ -1,5 +1,10 @@
 const assert = require('assert');
-const path = require('path');
+
+const {
+    ALLOWED_HOSTS,
+    isAllowedHost,
+    normalizeHost
+} = require('../app/features/utils/hostAllowList');
 
 /**
  * Regression tests for the host allow-list (YWH-PGM7461-3062).
@@ -9,26 +14,15 @@ const path = require('path');
  * in both the main process (handleProtocolCall) and the renderer
  * (createConferenceObjectFromURL, defense in depth).
  *
- * These tests verify the allow-list logic directly. The functions are
- * re-implemented here (rather than imported) because the app uses ES module
- * syntax processed by Babel/webpack and has no test bundler. If the logic
- * changes, update both the source and these tests.
+ * These tests require the shared module used by both layers
+ * (app/features/utils/hostAllowList.js), so a change to the production
+ * logic can no longer silently pass the suite.
  */
 
-const ALLOWED_HOSTS = [
-    'kmeet.infomaniak.com',
-    'kmeet.preprod.dev.infomaniak.ch'
-];
-
-function isAllowedHost(host) {
-    if (!host) {
-        return true;
-    }
-
-    return ALLOWED_HOSTS.some(allowed =>
-        host === allowed || host.endsWith(`.${allowed}`));
-}
-
+/**
+ * Mirrors normalizeServerURL() from app/features/utils/functions.js (an ES
+ * module, not importable here without a Babel setup).
+ */
 function normalizeServerURL(url) {
     url = url.trim();
 
@@ -39,15 +33,19 @@ function normalizeServerURL(url) {
     return url;
 }
 
-function getHostFromServerURL(serverURL) {
-    return serverURL.replace(/https?:\/\//, '').split(':')[0];
-}
-
 describe('Host allow-list', () => {
+    describe('ALLOWED_HOSTS', () => {
+        it('contains the production hosts', () => {
+            assert.ok(ALLOWED_HOSTS.includes('kmeet.infomaniak.com'));
+            assert.ok(ALLOWED_HOSTS.includes('kmeet.preprod.dev.infomaniak.ch'));
+        });
+    });
+
     describe('isAllowedHost', () => {
         it('allows empty host (room-only link uses default server)', () => {
             assert.strictEqual(isAllowedHost(''), true);
             assert.strictEqual(isAllowedHost(undefined), true);
+            assert.strictEqual(isAllowedHost(null), true);
         });
 
         it('allows kmeet.infomaniak.com', () => {
@@ -63,6 +61,26 @@ describe('Host allow-list', () => {
             assert.strictEqual(isAllowedHost('a.b.kmeet.preprod.dev.infomaniak.ch'), true);
         });
 
+        it('is case-insensitive (RFC 3986)', () => {
+            assert.strictEqual(isAllowedHost('KMEET.INFOMANIAK.COM'), true);
+            assert.strictEqual(isAllowedHost('Sub.Kmeet.Infomaniak.Com'), true);
+        });
+
+        it('allows a trailing-dot FQDN', () => {
+            assert.strictEqual(isAllowedHost('kmeet.infomaniak.com.'), true);
+            assert.strictEqual(isAllowedHost('sub.kmeet.infomaniak.com.'), true);
+        });
+
+        it('strips the port before matching (main and renderer agree)', () => {
+            assert.strictEqual(isAllowedHost('kmeet.infomaniak.com:8443'), true);
+            assert.strictEqual(isAllowedHost('sub.kmeet.infomaniak.com:8080'), true);
+        });
+
+        it('strips userinfo before matching', () => {
+            assert.strictEqual(isAllowedHost('user@kmeet.infomaniak.com'), true);
+            assert.strictEqual(isAllowedHost('user@kmeet.infomaniak.com:8443'), true);
+        });
+
         it('rejects attacker.invalid', () => {
             assert.strictEqual(isAllowedHost('attacker.invalid'), false);
         });
@@ -73,13 +91,30 @@ describe('Host allow-list', () => {
 
         it('rejects lookalike hosts', () => {
             assert.strictEqual(isAllowedHost('kmeet.infomaniak.com.evil.com'), false);
+            assert.strictEqual(isAllowedHost('kmeet.infomaniak.com.evil.com.'), false);
             assert.strictEqual(isAllowedHost('notkmeet.infomaniak.com'), false);
             assert.strictEqual(isAllowedHost('kmeet.infomaniak.co'), false);
+        });
+
+        it('rejects userinfo smuggling a foreign host', () => {
+            assert.strictEqual(isAllowedHost('kmeet.infomaniak.com@attacker.invalid'), false);
+            assert.strictEqual(isAllowedHost('kmeet.infomaniak.com:8443@attacker.invalid'), false);
         });
 
         it('rejects hosts that merely contain an allowed host as substring', () => {
             assert.strictEqual(isAllowedHost('xkmeet.infomaniak.com'), false);
             assert.strictEqual(isAllowedHost('kmeet.infomaniak.comx'), false);
+        });
+    });
+
+    describe('normalizeHost', () => {
+        it('lowercases, strips userinfo, port and trailing dot', () => {
+            assert.strictEqual(
+                normalizeHost('User@Kmeet.Infomaniak.com:8443.'),
+                'kmeet.infomaniak.com');
+            assert.strictEqual(normalizeHost('attacker.invalid:8080'), 'attacker.invalid');
+            assert.strictEqual(normalizeHost(''), '');
+            assert.strictEqual(normalizeHost(undefined), '');
         });
     });
 
@@ -111,31 +146,34 @@ describe('Host allow-list', () => {
 
             assert.strictEqual(isAllowedHost(hostPart), false);
         });
+
+        it('allows kmeet://kmeet.infomaniak.com:8443/room (port, like the renderer)', () => {
+            assert.strictEqual(isAllowedHost('kmeet.infomaniak.com:8443'), true);
+        });
+
+        it('rejects kmeet://kmeet.infomaniak.com.evil.com/room', () => {
+            assert.strictEqual(isAllowedHost('kmeet.infomaniak.com.evil.com'), false);
+        });
     });
 
     describe('createConferenceObjectFromURL defense-in-depth', () => {
-        it('extracts host from normalized serverURL and rejects unauthorized', () => {
+        it('rejects unauthorized server', () => {
             const serverURL = normalizeServerURL('attacker.invalid');
-            const host = getHostFromServerURL(serverURL);
 
-            assert.strictEqual(host, 'attacker.invalid');
-            assert.strictEqual(isAllowedHost(host), false);
+            assert.strictEqual(
+                isAllowedHost(serverURL.replace(/https?:\/\//, '')), false);
         });
 
-        it('allows authorized host through defense-in-depth check', () => {
+        it('allows authorized host', () => {
             const serverURL = normalizeServerURL('kmeet.infomaniak.com');
-            const host = getHostFromServerURL(serverURL);
 
-            assert.strictEqual(host, 'kmeet.infomaniak.com');
-            assert.strictEqual(isAllowedHost(host), true);
+            assert.strictEqual(isAllowedHost(serverURL.replace(/https?:\/\//, '')), true);
         });
 
-        it('strips port before checking host', () => {
+        it('allows authorized host with port', () => {
             const serverURL = normalizeServerURL('kmeet.infomaniak.com:8443');
-            const host = getHostFromServerURL(serverURL);
 
-            assert.strictEqual(host, 'kmeet.infomaniak.com');
-            assert.strictEqual(isAllowedHost(host), true);
+            assert.strictEqual(isAllowedHost(serverURL.replace(/https?:\/\//, '')), true);
         });
     });
 });
