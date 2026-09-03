@@ -16,6 +16,9 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
           APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
           CSC_FOR_PULL_REQUEST: true
+          # Skip code signing entirely when no certificate is configured
+          # (unsigned local/CI builds instead of a hard failure).
+          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.CSC_LINK != '' && 'true' || 'false' }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -40,7 +43,10 @@ jobs:
                   sudo -H pip install setuptools || true
                   npm ci
             - name: release/copy-provisioning-profile
-              run: echo $MAC_PROFILE | base64 -D > ./mac.provisionprofile
+              run: |
+                  if [[ -n "$MAC_PROFILE" ]]; then
+                      echo "$MAC_PROFILE" | base64 -D > ./mac.provisionprofile
+                  fi
             - name: release/update-version
               uses: ./.github/actions/version
             - name: release/build-and-publish
@@ -49,12 +55,19 @@ jobs:
               # a -beta version would overwrite latest*.yml on the storage and
               # auto-update every stable client to the prerelease. "beta" tag
               # -> beta channel only; stable tag -> latest (and beta follows).
+              # S3 publishing is skipped (draft release only) when the AWS
+              # secrets are not configured.
               run: |
                   CHANNEL="latest"
                   if [[ "$GITHUB_REF_NAME" =~ -beta ]]; then CHANNEL="beta"; fi
                   if [[ "$GITHUB_REF_NAME" =~ -alpha ]]; then CHANNEL="alpha"; fi
                   npm run build
-                  npx electron-builder --mac --publish=always -c.publish.channel="$CHANNEL"
+                  if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
+                      npx electron-builder --mac --publish=always -c.publish.channel="$CHANNEL"
+                  else
+                      echo "AWS secrets absent: skipping the storage publish (draft release only)"
+                      npx electron-builder --mac --publish=never -c.publish.channel="$CHANNEL"
+                  fi
                   mkdir -p ./release/macos-release
                   bash -x ./scripts/cp_artifacts.sh dist ./release/macos-release
             - name: release/upload-build
@@ -99,7 +112,12 @@ jobs:
                   if [[ "$GITHUB_REF_NAME" =~ -alpha ]]; then CHANNEL="alpha"; fi
                   mkdir -p ./release/linux
                   npm run build
-                  npx electron-builder --linux --publish=always -c.publish.channel="$CHANNEL"
+                  if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
+                      npx electron-builder --linux --publish=always -c.publish.channel="$CHANNEL"
+                  else
+                      echo "AWS secrets absent: skipping the storage publish (draft release only)"
+                      npx electron-builder --linux --publish=never -c.publish.channel="$CHANNEL"
+                  fi
                   bash -x ./scripts/cp_artifacts.sh dist ./release/linux
             - name: release/upload-build
               uses: actions/upload-artifact@v4
@@ -118,9 +136,11 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: "16.20.2"
+                  registry-url: "https://npm.pkg.github.com"
+                  scope: "@infomaniak"
             - name: release/install-deps
               env:
-                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
               shell: powershell
               run: |
                   ./scripts/Makefile.ps1 install-deps
