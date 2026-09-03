@@ -24,10 +24,10 @@ const {
  * module, not importable here without a Babel setup).
  */
 function normalizeServerURL(url) {
-    url = url.trim();
+    const trimmed = url.trim();
 
-    if (url && url.indexOf('://') === -1) {
-        return `https://${url}`;
+    if (trimmed && trimmed.indexOf('://') === -1) {
+        return `https://${trimmed}`;
     }
 
     return url;

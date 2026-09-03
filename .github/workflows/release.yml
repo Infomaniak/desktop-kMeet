@@ -44,9 +44,17 @@ jobs:
             - name: release/update-version
               uses: ./.github/actions/version
             - name: release/build-and-publish
+              # The publish channel MUST come from the tag: with the config
+              # default ("latest") + generateUpdatesFilesForAllChannels, even
+              # a -beta version would overwrite latest*.yml on the storage and
+              # auto-update every stable client to the prerelease. "beta" tag
+              # -> beta channel only; stable tag -> latest (and beta follows).
               run: |
+                  CHANNEL="latest"
+                  if [[ "$GITHUB_REF_NAME" =~ -beta ]]; then CHANNEL="beta"; fi
+                  if [[ "$GITHUB_REF_NAME" =~ -alpha ]]; then CHANNEL="alpha"; fi
                   npm run build
-                  npx electron-builder --mac --publish=always
+                  npx electron-builder --mac --publish=always -c.publish.channel="$CHANNEL"
                   mkdir -p ./release/macos-release
                   bash -x ./scripts/cp_artifacts.sh dist ./release/macos-release
             - name: release/upload-build
@@ -84,10 +92,14 @@ jobs:
             - name: release/update-version
               uses: ./.github/actions/version
             - name: release/build-and-publish
+              # Same channel-derivation rule as the macOS job (see above).
               run: |
+                  CHANNEL="latest"
+                  if [[ "$GITHUB_REF_NAME" =~ -beta ]]; then CHANNEL="beta"; fi
+                  if [[ "$GITHUB_REF_NAME" =~ -alpha ]]; then CHANNEL="alpha"; fi
                   mkdir -p ./release/linux
                   npm run build
-                  npx electron-builder --linux --publish=always
+                  npx electron-builder --linux --publish=always -c.publish.channel="$CHANNEL"
                   bash -x ./scripts/cp_artifacts.sh dist ./release/linux
             - name: release/upload-build
               uses: actions/upload-artifact@v4

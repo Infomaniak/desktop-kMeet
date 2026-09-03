@@ -1,4 +1,4 @@
-'use strict';
+
 
 /**
  * Single source of truth for the hosts that are allowed in kmeet:// protocol
@@ -33,7 +33,10 @@ function normalizeHost(rawHost) {
 
     // Strip userinfo and the port. IPv6 literals never match the
     // allow-list, so passing them through lowercased is fine.
-    let host = String(rawHost).trim().split('@').pop().split(':')[0];
+    let host = String(rawHost).trim()
+.split('@')
+.pop()
+.split(':')[0];
 
     host = host.toLowerCase();
 
