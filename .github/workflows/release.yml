@@ -13,9 +13,7 @@ jobs:
         # permanently in the keychain of the self-hosted runner. Unlock the
         # keychain, then electron-builder auto-discovers the valid identity
         # (no CSC_LINK secret: the private key never leaves the machine).
-        # Pinned to the desktop-kdrive-labeled Mac (M2-3): the org's other
-        # self-hosted Macs use a different keychain password.
-        runs-on: [self-hosted, macOS, desktop-kdrive]
+        runs-on: [self-hosted, macOS]
         env:
             MAC_PROFILE: ${{ secrets.MAC_PROVISION_PROFILE }}
             # Notarization auth via App Store Connect API key (see the
