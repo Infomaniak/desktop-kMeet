@@ -41,6 +41,9 @@ jobs:
             - name: release/install-dependencies
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  # The committed .npmrc expands ${NPM_TOKEN} (not NODE_AUTH_TOKEN):
+                  # without this the GPR download is unauthenticated (401).
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
               run: |
                   sudo -H pip install setuptools || true
                   npm ci
@@ -117,6 +120,8 @@ jobs:
             - name: release/install-dependencies
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  # The committed .npmrc expands ${NPM_TOKEN} (not NODE_AUTH_TOKEN).
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
               run: |
                   sudo apt-get update || true && sudo apt-get install -y ca-certificates libxtst-dev libpng++-dev gcc-aarch64-linux-gnu g++-aarch64-linux-gnu jq icnsutils graphicsmagick tzdata
                   npm ci
@@ -159,6 +164,8 @@ jobs:
             - name: release/install-deps
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  # The committed .npmrc expands ${NPM_TOKEN} (not NODE_AUTH_TOKEN).
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
               shell: powershell
               run: |
                   ./scripts/Makefile.ps1 install-deps

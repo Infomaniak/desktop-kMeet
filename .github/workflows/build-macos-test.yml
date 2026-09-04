@@ -41,6 +41,9 @@ jobs:
             - name: test/install-dependencies
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  # The committed .npmrc expands ${NPM_TOKEN}: without this env
+                  # var the GPR tarball download goes out unauthenticated (401).
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
               run: |
                   echo "token length: ${#NODE_AUTH_TOKEN}, prefix: ${NODE_AUTH_TOKEN:0:4}"
                   CODE=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $NODE_AUTH_TOKEN" \
