@@ -12,7 +12,7 @@
     "lint": "eslint . && flow",
     "build": "webpack --config ./webpack.main.js --mode production && webpack --config ./webpack.renderer.js --mode production",
     "dist": "npm run build && electron-builder --publish=never",
-    "dist:msi": "cross-env DISABLE_UPDATE=true npm run build && electron-builder --win msi --x64 --arm64 --publish=never",
+    "dist:msi": "cross-env DISABLE_UPDATE=true npm run build && electron-builder --win msi --x64 --publish=never",
     "postinstall": "patch-package",
     "watch": "webpack --config ./webpack.renderer.js --mode development --watch --watch-options-poll=1000",
     "validate": "npm ls",

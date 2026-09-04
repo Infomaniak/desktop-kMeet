@@ -44,11 +44,13 @@ jobs:
             # Unsigned on purpose: a generated test config strips the DigiCert
             # KeyLocker sign hook and the certificate subject (billed per
             # signature). Real signatures only run during a release tag.
+            # x64 only: the WiX bundle of electron-builder 24.x cannot build
+            # arm64 MSIs (CNDL0264).
             - name: test/build-unsigned
               run: |
                   npm run build
                   node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync('electron-builder.json','utf8'));delete c.win.sign;delete c.win.certificateSubjectName;fs.writeFileSync('electron-builder.test.json',JSON.stringify(c))"
-                  npx electron-builder --config electron-builder.test.json --win msi --x64 --arm64 --publish=never
+                  npx electron-builder --config electron-builder.test.json --win msi --x64 --publish=never
 
             - name: test/package
               run: |
