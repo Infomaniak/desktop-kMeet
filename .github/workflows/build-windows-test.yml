@@ -1,15 +1,15 @@
 name: build-windows-test
 
 # Manual test build for the Windows pipeline: validates npm ci (node 16),
-# the electron-gyp steps, the DigiCert KeyLocker auth + signing and the
-# packaging. Publishes NOWHERE by construction (Makefile build runs
-# dist:msi -> electron-builder --publish=never; artifacts stay here).
+# the electron-gyp steps and the MSI packaging. Deliberately UNSIGNED:
+# DigiCert KeyLocker signatures are billed, so they only run during a real
+# release tag. Publishes NOWHERE by construction (--publish=never).
 
 on:
     workflow_dispatch:
 
 jobs:
-    build-windows-signed-test:
+    build-windows-unsigned-test:
         runs-on: windows-2022
         steps:
             - name: test/checkout-repo
@@ -41,21 +41,13 @@ jobs:
             - name: test/set-version
               run: npm --no-git-tag-version version 2.0.2-beta.2
 
-            - name: test/build-and-sign
-              shell: powershell
-              env:
-                  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-                  SM_API_KEY: ${{ secrets.SM_API_KEY }}
-                  SM_CLIENT_CERT_FILE_B64: ${{ secrets.SM_CLIENT_CERT_FILE_B64 }}
-                  SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
-                  SM_HOST: ${{ secrets.SM_HOST }}
-                  SM_CODE_SIGNING_CERT_SHA1_HASH: ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }}
-                  SM_KEYPAIR_ALIAS: ${{ secrets.SM_KEYPAIR_ALIAS }}
-                  SM_TOOLS_URI: ${{ secrets.SM_TOOLS_URI }}
-                  SM_CLIENT_CERT_FILE: ${{ secrets.SM_CLIENT_CERT_FILE }}
+            # Unsigned on purpose: -c.win.sign=null bypasses the DigiCert
+            # KeyLocker hook (billed per signature). Real signatures only
+            # run during a release tag.
+            - name: test/build-unsigned
               run: |
-                  ./scripts/setup-keylocker.ps1
-                  ./scripts/Makefile.ps1 build
+                  npm run build
+                  npx electron-builder --win msi --x64 --arm64 --publish=never -c.win.sign=null
 
             - name: test/package
               run: |
@@ -65,7 +57,7 @@ jobs:
             - name: test/upload-artifact
               uses: actions/upload-artifact@v4
               with:
-                name: kmeet-windows-signed-test
+                name: kmeet-windows-unsigned-test
                 path: ./release
                 compression-level: 0
                 retention-days: 7
