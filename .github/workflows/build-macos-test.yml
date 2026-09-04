@@ -41,7 +41,13 @@ jobs:
             - name: test/install-dependencies
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-              run: npm ci
+              run: |
+                  echo "token length: ${#NODE_AUTH_TOKEN}, prefix: ${NODE_AUTH_TOKEN:0:4}"
+                  CODE=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $NODE_AUTH_TOKEN" \
+                      'https://npm.pkg.github.com/download/@infomaniak/jitsi-meet-electron-sdk/6.0.11-security.1/f233b222d9e4202a43e376f85213fc7d9ab3a6ea')
+                  echo "GPR tarball check: HTTP $CODE"
+                  [[ "$CODE" == "302" || "$CODE" == "200" ]] || { echo 'ERROR: token rejected by GitHub Packages'; exit 1; }
+                  npm ci
 
             # The .p8 secret may store real newlines or literal "\n" escapes
             # (kChat fastlane format): normalize both, accept base64 too.
