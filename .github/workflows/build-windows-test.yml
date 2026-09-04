@@ -1,0 +1,71 @@
+name: build-windows-test
+
+# Manual test build for the Windows pipeline: validates npm ci (node 16),
+# the electron-gyp steps, the DigiCert KeyLocker auth + signing and the
+# packaging. Publishes NOWHERE by construction (Makefile build runs
+# dist:msi -> electron-builder --publish=never; artifacts stay here).
+
+on:
+    workflow_dispatch:
+
+jobs:
+    build-windows-signed-test:
+        runs-on: windows-2022
+        steps:
+            - name: test/checkout-repo
+              uses: actions/checkout@v3
+
+            - name: test/setup-node
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "16.20.2"
+                  registry-url: "https://npm.pkg.github.com"
+                  scope: "@infomaniak"
+
+            - name: test/install-deps
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  # The committed .npmrc expands ${NPM_TOKEN} (not NODE_AUTH_TOKEN).
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+              shell: powershell
+              run: |
+                  ./scripts/Makefile.ps1 install-deps
+                  choco install yq --version 4.15.1 -y
+                  npm i -g node-gyp
+                  node-gyp install
+                  node-gyp install --devdir="C:\Users\runneradmin\.electron-gyp" --target=$(jq -r .devDependencies.electron package.json) --dist-url="https://electronjs.org/headers"
+                  node-gyp install --devdir="C:\Users\runneradmin\.electron-gyp" --target=$(jq -r .devDependencies.electron package.json) --dist-url="https://electronjs.org/headers" --arch arm64
+                  node-gyp install --devdir="C:\Users\runneradmin\.electron-gyp" --target=$(jq -r .devDependencies.electron package.json) --dist-url="https://electronjs.org/headers" --arch ia32
+                  npm ci
+
+            - name: test/set-version
+              run: npm --no-git-tag-version version 2.0.2-beta.2
+
+            - name: test/build-and-sign
+              shell: powershell
+              env:
+                  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+                  SM_API_KEY: ${{ secrets.SM_API_KEY }}
+                  SM_CLIENT_CERT_FILE_B64: ${{ secrets.SM_CLIENT_CERT_FILE_B64 }}
+                  SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
+                  SM_HOST: ${{ secrets.SM_HOST }}
+                  SM_CODE_SIGNING_CERT_SHA1_HASH: ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }}
+                  SM_KEYPAIR_ALIAS: ${{ secrets.SM_KEYPAIR_ALIAS }}
+                  SM_TOOLS_URI: ${{ secrets.SM_TOOLS_URI }}
+                  SM_CLIENT_CERT_FILE: ${{ secrets.SM_CLIENT_CERT_FILE }}
+              run: |
+                  ./scripts/setup-keylocker.ps1
+                  ./scripts/Makefile.ps1 build
+
+            - name: test/package
+              run: |
+                mkdir -p ./release/win-release
+                bash -x ./scripts/cp_artifacts.sh dist ./release/win-release
+
+            - name: test/upload-artifact
+              uses: actions/upload-artifact@v4
+              with:
+                name: kmeet-windows-signed-test
+                path: ./release
+                compression-level: 0
+                retention-days: 7
