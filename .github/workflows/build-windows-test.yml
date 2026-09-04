@@ -41,13 +41,14 @@ jobs:
             - name: test/set-version
               run: npm --no-git-tag-version version 2.0.2-beta.2
 
-            # Unsigned on purpose: -c.win.sign=null bypasses the DigiCert
-            # KeyLocker hook (billed per signature). Real signatures only
-            # run during a release tag.
+            # Unsigned on purpose: a generated test config strips the DigiCert
+            # KeyLocker sign hook and the certificate subject (billed per
+            # signature). Real signatures only run during a release tag.
             - name: test/build-unsigned
               run: |
                   npm run build
-                  npx electron-builder --win msi --x64 --arm64 --publish=never -c.win.sign=null
+                  node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync('electron-builder.json','utf8'));delete c.win.sign;delete c.win.certificateSubjectName;fs.writeFileSync('electron-builder.test.json',JSON.stringify(c))"
+                  npx electron-builder --config electron-builder.test.json --win msi --x64 --arm64 --publish=never
 
             - name: test/package
               run: |
