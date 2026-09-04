@@ -10,23 +10,23 @@ on:
 jobs:
     build-mac:
         runs-on: macos-14
-    env:
-      MAC_PROFILE: ${{ secrets.MAC_PROVISION_PROFILE }}
-      # Notarization auth via App Store Connect API key (see the
-      # write-appstore-api-key step below): APPLE_ID/APPLEIDPASS are not
-      # used on purpose - API keys don't expire like app-specific passwords.
-      API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-      API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
-      CSC_FOR_PULL_REQUEST: true
-          # Skip code signing entirely when no certificate is configured
-          # (unsigned local/CI builds instead of a hard failure).
-          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.CSC_LINK != '' && 'true' || 'false' }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_RELEASE: ${{ github.ref_name }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        env:
+            MAC_PROFILE: ${{ secrets.MAC_PROVISION_PROFILE }}
+            # Notarization auth via App Store Connect API key (see the
+            # write-appstore-api-key step below): APPLE_ID/APPLEIDPASS are not
+            # used on purpose - API keys don't expire like app-specific passwords.
+            API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+            API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+            CSC_FOR_PULL_REQUEST: true
+            # Skip code signing entirely when no certificate is configured
+            # (unsigned local/CI builds instead of a hard failure).
+            CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.CSC_LINK != '' && 'true' || 'false' }}
+            CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+            CSC_LINK: ${{ secrets.CSC_LINK }}
+            SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+            SENTRY_RELEASE: ${{ github.ref_name }}
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         steps:
             - name: release/checkout-repo
               uses: actions/checkout@v4
