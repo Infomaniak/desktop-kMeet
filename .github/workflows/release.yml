@@ -7,6 +7,10 @@ on:
             - "[0-9]+.[0-9]+.[0-9]+-alpha.[0-9]+"
             - "[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+"
 
+# The github-release job creates the draft release (GITHUB_TOKEN must write).
+permissions:
+    contents: write
+
 jobs:
     build-mac:
         # kDrive model: the Developer ID certificate + private key live
