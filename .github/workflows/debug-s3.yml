@@ -1,0 +1,87 @@
+name: debug-s3
+
+# Diagnose the Infomaniak object storage write access from CI:
+# 1. a plain curl PUT (curl --aws-sigv4, path-style)
+# 2. the same app-builder publish-s3 that electron-builder uses
+# Both write to throwaway tmp-debug/ keys, then delete them.
+
+on:
+    workflow_dispatch:
+
+jobs:
+    debug-s3:
+        runs-on: ubuntu-latest
+        steps:
+            - name: test/checkout-repo
+              uses: actions/checkout@v4
+
+            - name: test/curl-put-probe
+              env:
+                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              run: |
+                  echo "curl version: $(curl --version | head -1)"
+                  echo "probe" > probe.txt
+                  CODE=$(curl -s -o /dev/null -w '%{http_code}' -X PUT --aws-sigv4 "aws:amz:us-east-1:s3" \
+                    --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY" \
+                    --data "probe" \
+                    "https://download.storage.infomaniak.com/meet/tmp-debug/curl-put.txt")
+                  echo "curl PUT → HTTP $CODE"
+
+            - name: debug/curl-get-probe
+              if: always()
+              run: |
+                  CODE=$(curl -s -o /dev/null -w '%{http_code}' \
+                    "https://download.storage.infomaniak.com/meet/tmp-probe-ab/test.txt")
+                  echo "GET public tmp-probe-ab/test.txt → HTTP $CODE"
+
+            - name: debug/app-builder-publish
+              if: always()
+              env:
+                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              run: |
+                  echo "probe2" > probe2.txt
+                  node_modules/app-builder-bin/linux/x64/app-builder publish-s3 \
+                    --file=probe2.txt \
+                    --bucket=meet \
+                    --key=tmp-debug/app-builder-put.txt \
+                    --endpoint=https://download.storage.infomaniak.com \
+                    --accessKey="$AWS_ACCESS_KEY_ID" \
+                    --secretKey="$AWS_SECRET_ACCESS_KEY" 2>&1 | tail -5
+                  echo "app-builder exit: $?"
+
+            - name: debug/app-builder-with-env
+              if: always()
+              env:
+                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+              run: |
+                  node_modules/app-builder-bin/linux/x64/app-builder publish-s3 \
+                    --file=probe2.txt \
+                    --bucket=meet \
+                    --key=tmp-debug/app-builder-put2.txt \
+                    --endpoint=https://download.storage.infomaniak.com \
+                    --accessKey="$AWS_ACCESS_KEY_ID" \
+                    --secretKey="$AWS_SECRET_ACCESS_KEY" 2>&1 | tail -5
+                  echo "app-builder (when_required) exit: $?"
+
+            - name: debug/verify-and-cleanup
+              if: always()
+              env:
+                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              run: |
+                  for k in tmp-probe-ab/test.txt tmp-debug/app-builder-put.txt tmp-debug/app-builder-put2.txt; do
+                    CODE=$(curl -s -o /dev/null -w '%{http_code}' --aws-sigv4 "aws:amz:us-east-1:s3" \
+                      --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY" \
+                      "https://download.storage.infomaniak.com/meet/$k")
+                    echo "GET $k → HTTP $CODE"
+                  done
+                  for k in tmp-debug/app-builder-put.txt tmp-debug/app-builder-put2.txt; do
+                    CODE=$(curl -s -o /dev/null -w '%{http_code}' -X DELETE --aws-sigv4 "aws:amz:us-east-1:s3" \
+                      --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY" \
+                      "https://download.storage.infomaniak.com/meet/$k")
+                    echo "DELETE $k → HTTP $CODE"
+                  done
