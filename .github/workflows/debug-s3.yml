@@ -10,7 +10,9 @@ on:
 
 jobs:
     debug-s3:
-        runs-on: ubuntu-latest
+        # On the self-hosted runner: the Infomaniak edge WAF rejects S3 PUTs
+        # from the GitHub-hosted runner IP ranges (403 HTML), while reads pass.
+        runs-on: [self-hosted, Linux, X64, desktop-kdrive]
         steps:
             - name: test/checkout-repo
               uses: actions/checkout@v4
