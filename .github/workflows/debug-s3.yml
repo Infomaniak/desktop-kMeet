@@ -1,89 +1,65 @@
 name: debug-s3
 
-# Diagnose the Infomaniak object storage write access from CI:
-# 1. a plain curl PUT (curl --aws-sigv4, path-style)
-# 2. the same app-builder publish-s3 that electron-builder uses
-# Both write to throwaway tmp-debug/ keys, then delete them.
+# Diagnose the Infomaniak object storage write access:
+# the edge WAF rejects S3 PUTs from some IP ranges (403 HTML page).
+# Matrix: 2 hosted runners x 2 storage hosts, plus the self-hosted runner.
+# Throwaway keys, cleaned up afterwards.
 
 on:
     workflow_dispatch:
 
 jobs:
-    debug-s3:
-        # On the self-hosted runner: the Infomaniak edge WAF rejects S3 PUTs
-        # from the GitHub-hosted runner IP ranges (403 HTML), while reads pass.
-        runs-on: [self-hosted, Linux, X64, desktop-kdrive]
+    probe-hosted:
+        strategy:
+            matrix:
+                runner: [ubuntu-latest, windows-2022]
+                host: [download.storage.infomaniak.com, download.storage5.infomaniak.com]
+        name: PUT hosted ${{ matrix.runner }} → ${{ matrix.host }}
+        runs-on: ${{ matrix.runner }}
         steps:
-            - name: test/checkout-repo
-              uses: actions/checkout@v4
-
             - name: test/curl-put-probe
+              shell: bash
               env:
                   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
                   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
               run: |
-                  echo "curl version: $(curl --version | head -1)"
-                  echo "probe" > probe.txt
-                  CODE=$(curl -s -o /dev/null -w '%{http_code}' -X PUT --aws-sigv4 "aws:amz:us-east-1:s3" \
+                  echo "curl: $(curl --version | head -1)"
+                  CODE=$(curl -s -o /tmp/put-resp.txt -w '%{http_code}' -X PUT --aws-sigv4 "aws:amz:us-east-1:s3" \
                     --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY" \
-                    --data "probe" \
-                    "https://download.storage.infomaniak.com/meet/tmp-debug/curl-put.txt")
-                  echo "curl PUT → HTTP $CODE"
+                    --data "probe-hosted-$(date +%s)" \
+                    "https://${{ matrix.host }}/meet/tmp-debug/${{ matrix.runner }}.txt")
+                  echo "PUT https://${{ matrix.host }} → HTTP $CODE"
+                  [ "$CODE" != "200" ] && head -c 120 /tmp/put-resp.txt && echo
 
-            - name: debug/curl-get-probe
-              if: always()
+    probe-self-hosted:
+        name: PUT self-hosted (Windows11-1) → les 2 hôtes
+        runs-on: [self-hosted, X64, desktop-kdrive]
+        env:
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        steps:
+            - name: test/curl-put-probe
+              shell: powershell
               run: |
-                  CODE=$(curl -s -o /dev/null -w '%{http_code}' \
-                    "https://download.storage.infomaniak.com/meet/tmp-probe-ab/test.txt")
-                  echo "GET public tmp-probe-ab/test.txt → HTTP $CODE"
+                  foreach ($h in @("download.storage.infomaniak.com", "download.storage5.infomaniak.com")) {
+                    $key = "tmp-debug/self-hosted-$($h.Split('.')[0]).txt"
+                    $code = & curl.exe -s -o NUL -w "%{http_code}" -X PUT --aws-sigv4 "aws:amz:us-east-1:s3" `
+                      --user "${env:AWS_ACCESS_KEY_ID}:${env:AWS_SECRET_ACCESS_KEY}" `
+                      --data "probe-self" `
+                      "https://$h/meet/$key"
+                    Write-Host "PUT https://$h → HTTP $code"
+                  }
 
-            - name: debug/app-builder-publish
+            - name: test/cleanup
               if: always()
+              shell: powershell
               env:
                   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
                   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
               run: |
-                  echo "probe2" > probe2.txt
-                  node_modules/app-builder-bin/linux/x64/app-builder publish-s3 \
-                    --file=probe2.txt \
-                    --bucket=meet \
-                    --key=tmp-debug/app-builder-put.txt \
-                    --endpoint=https://download.storage.infomaniak.com \
-                    --accessKey="$AWS_ACCESS_KEY_ID" \
-                    --secretKey="$AWS_SECRET_ACCESS_KEY" 2>&1 | tail -5
-                  echo "app-builder exit: $?"
-
-            - name: debug/app-builder-with-env
-              if: always()
-              env:
-                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                  AWS_REQUEST_CHECKSUM_CALCULATION: when_required
-              run: |
-                  node_modules/app-builder-bin/linux/x64/app-builder publish-s3 \
-                    --file=probe2.txt \
-                    --bucket=meet \
-                    --key=tmp-debug/app-builder-put2.txt \
-                    --endpoint=https://download.storage.infomaniak.com \
-                    --accessKey="$AWS_ACCESS_KEY_ID" \
-                    --secretKey="$AWS_SECRET_ACCESS_KEY" 2>&1 | tail -5
-                  echo "app-builder (when_required) exit: $?"
-
-            - name: debug/verify-and-cleanup
-              if: always()
-              env:
-                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              run: |
-                  for k in tmp-probe-ab/test.txt tmp-debug/app-builder-put.txt tmp-debug/app-builder-put2.txt; do
-                    CODE=$(curl -s -o /dev/null -w '%{http_code}' --aws-sigv4 "aws:amz:us-east-1:s3" \
-                      --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY" \
-                      "https://download.storage.infomaniak.com/meet/$k")
-                    echo "GET $k → HTTP $CODE"
-                  done
-                  for k in tmp-debug/app-builder-put.txt tmp-debug/app-builder-put2.txt; do
-                    CODE=$(curl -s -o /dev/null -w '%{http_code}' -X DELETE --aws-sigv4 "aws:amz:us-east-1:s3" \
-                      --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY" \
-                      "https://download.storage.infomaniak.com/meet/$k")
-                    echo "DELETE $k → HTTP $CODE"
-                  done
+                  foreach ($key in @("tmp-debug/ubuntu-latest.txt", "tmp-debug/windows-2022.txt", "tmp-debug/self-hosted-download.txt", "tmp-debug/self-hosted-download5.txt")) {
+                    $code = & curl.exe -s -o NUL -w "%{http_code}" -X DELETE --aws-sigv4 "aws:amz:us-east-1:s3" `
+                      --user "${env:AWS_ACCESS_KEY_ID}:${env:AWS_SECRET_ACCESS_KEY}" `
+                      "https://download.storage.infomaniak.com/meet/$key"
+                    Write-Host "DELETE $key → HTTP $code"
+                  }
