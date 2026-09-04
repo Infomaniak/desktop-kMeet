@@ -9,7 +9,7 @@ on:
 
 jobs:
     build-mac:
-        runs-on: macos-14
+        runs-on: macos-15
         env:
             MAC_PROFILE: ${{ secrets.MAC_PROVISION_PROFILE }}
             # Notarization auth via App Store Connect API key (see the
