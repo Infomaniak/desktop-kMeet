@@ -21,7 +21,9 @@ jobs:
         # permanently in the keychain of this Infomaniak-internal Mac.
         # No CSC_LINK secret: electron-builder auto-discovers the valid
         # identity after the keychain is unlocked below.
-        runs-on: [self-hosted, macOS]
+        # Pinned to the desktop-kdrive-labeled Mac (M2-3): the org's other
+        # self-hosted Macs use a different keychain password.
+        runs-on: [self-hosted, macOS, desktop-kdrive]
         env:
             API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
             API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
