@@ -1,0 +1,83 @@
+name: build-macos-test
+
+# Manual test build: signed + notarized macOS app, published NOWHERE.
+# Produces a downloadable dmg/zip artifact to validate the Developer ID
+# certificate, the notarization and Gatekeeper acceptance before tagging
+# a real release. Arm64-only on purpose (fast); real releases build universal.
+
+on:
+    workflow_dispatch:
+
+jobs:
+    build-macos-signed-test:
+        runs-on: macos-14
+        env:
+            CSC_LINK: ${{ secrets.CSC_LINK }}
+            CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+            API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+            API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+            SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+            SENTRY_RELEASE: build-test
+        steps:
+            - name: test/checkout-repo
+              uses: actions/checkout@v4
+
+            - name: test/setup-node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+                  cache-dependency-path: package-lock.json
+                  registry-url: "https://npm.pkg.github.com"
+                  scope: "@infomaniak"
+
+            - name: test/install-dependencies
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+              run: npm ci
+
+            # The .p8 secret may store real newlines or literal "\n" escapes
+            # (kChat fastlane format): normalize both, accept base64 too.
+            - name: test/write-appstore-api-key
+              env:
+                  APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY }}
+              run: |
+                  KEY_FILE="$RUNNER_TEMP/api_key.p8"
+                  KEY_CONTENT="${APPLE_API_KEY_CONTENT//\\n/$'\n'}"
+                  printf '%s' "$KEY_CONTENT" > "$KEY_FILE"
+                  if ! grep -q 'BEGIN PRIVATE KEY' "$KEY_FILE"; then
+                      printf '%s' "$APPLE_API_KEY_CONTENT" | base64 -d > "$KEY_FILE" 2>/dev/null || true
+                  fi
+                  if ! grep -q 'BEGIN PRIVATE KEY' "$KEY_FILE"; then
+                      echo "ERROR: APPLE_API_KEY secret is not a valid .p8 key (no PEM header)"
+                      exit 1
+                  fi
+                  if [[ -n "$(tail -c 1 "$KEY_FILE")" ]]; then printf '\n' >> "$KEY_FILE"; fi
+                  echo "API_KEY_FILE=$KEY_FILE" >> "$GITHUB_ENV"
+
+            - name: test/set-version
+              run: npm --no-git-tag-version version 2.0.2-beta.2
+
+            - name: test/build-and-sign
+              run: |
+                  npm run build
+                  npx electron-builder --mac --arm64 --publish=never
+
+            - name: test/verify-signature
+              run: |
+                  APP=$(find dist -maxdepth 4 -name "*.app" | head -1)
+                  echo "App: $APP"
+                  codesign -dv --verbose=2 "$APP" 2>&1 | grep -E 'Authority|TeamIdentifier'
+                  codesign --verify --deep --strict "$APP" && echo 'codesign: OK'
+                  spctl -a -t execute -vv "$APP"
+                  xcrun stapler validate "$APP" && echo 'staple: OK'
+
+            - name: test/upload-artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: kmeet-macos-signed-test
+                  path: |
+                      dist/*.dmg
+                      dist/*.zip
+                  compression-level: 0
+                  retention-days: 7

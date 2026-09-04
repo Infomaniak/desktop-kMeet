@@ -10,12 +10,14 @@ on:
 jobs:
     build-mac:
         runs-on: macos-14
-        env:
-          MAC_PROFILE: ${{ secrets.MAC_PROVISION_PROFILE }}
-          APPLE_ID: ${{ secrets.APPLEID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
-          APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
-          CSC_FOR_PULL_REQUEST: true
+    env:
+      MAC_PROFILE: ${{ secrets.MAC_PROVISION_PROFILE }}
+      # Notarization auth via App Store Connect API key (see the
+      # write-appstore-api-key step below): APPLE_ID/APPLEIDPASS are not
+      # used on purpose - API keys don't expire like app-specific passwords.
+      API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+      API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+      CSC_FOR_PULL_REQUEST: true
           # Skip code signing entirely when no certificate is configured
           # (unsigned local/CI builds instead of a hard failure).
           CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.CSC_LINK != '' && 'true' || 'false' }}
@@ -47,6 +49,22 @@ jobs:
                   if [[ -n "$MAC_PROFILE" ]]; then
                       echo "$MAC_PROFILE" | base64 -D > ./mac.provisionprofile
                   fi
+            - name: release/write-appstore-api-key
+              env:
+                  APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY }}
+              run: |
+                  KEY_FILE="$RUNNER_TEMP/api_key.p8"
+                  KEY_CONTENT="${APPLE_API_KEY_CONTENT//\\n/$'\n'}"
+                  printf '%s' "$KEY_CONTENT" > "$KEY_FILE"
+                  if ! grep -q 'BEGIN PRIVATE KEY' "$KEY_FILE"; then
+                      printf '%s' "$APPLE_API_KEY_CONTENT" | base64 -d > "$KEY_FILE" 2>/dev/null || true
+                  fi
+                  if ! grep -q 'BEGIN PRIVATE KEY' "$KEY_FILE"; then
+                      echo "ERROR: APPLE_API_KEY secret is not a valid .p8 key (no PEM header)"
+                      exit 1
+                  fi
+                  if [[ -n "$(tail -c 1 "$KEY_FILE")" ]]; then printf '\n' >> "$KEY_FILE"; fi
+                  echo "API_KEY_FILE=$KEY_FILE" >> "$GITHUB_ENV"
             - name: release/update-version
               uses: ./.github/actions/version
             - name: release/build-and-publish
