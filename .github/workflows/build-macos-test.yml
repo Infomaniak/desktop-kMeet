@@ -7,20 +7,22 @@ name: build-macos-test
 
 on:
     workflow_dispatch:
-    # workflow_dispatch cannot resolve a workflow that is not on the default
-    # branch yet: this push trigger lets the test run from this dev branch.
+    # Every push that touches this workflow re-runs the test (iteration on
+    # the self-hosted runner setup).
     push:
         branches:
-            - fix/ci-release-channel-from-tag
+            - release/infomaniak-master-v4
         paths:
             - .github/workflows/build-macos-test.yml
 
 jobs:
     build-macos-signed-test:
-        runs-on: macos-15
+        # kDrive model: the Developer ID certificate + private key live
+        # permanently in the keychain of this Infomaniak-internal Mac.
+        # No CSC_LINK secret: electron-builder auto-discovers the valid
+        # identity after the keychain is unlocked below.
+        runs-on: [self-hosted, macOS]
         env:
-            CSC_LINK: ${{ secrets.CSC_LINK }}
-            CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
             API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
             API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
             SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -28,6 +30,14 @@ jobs:
         steps:
             - name: test/checkout-repo
               uses: actions/checkout@v4
+
+            - name: test/unlock-keychain
+              env:
+                  KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+              run: security unlock-keychain -p "$KEYCHAIN_PASSWORD" login.keychain
+
+            - name: test/check-signing-identity
+              run: security find-identity -v -p codesigning
 
             - name: test/setup-node
               uses: actions/setup-node@v4
