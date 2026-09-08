@@ -3,7 +3,7 @@
     "provider": "s3",
     "channel": "latest",
     "bucket": "meet",
-    "endpoint": "https://download.storage.infomaniak.com",
+    "endpoint": "https://download.storage5.infomaniak.com",
     "path": "/"
   },
   "generateUpdatesFilesForAllChannels": true,
