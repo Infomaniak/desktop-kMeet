@@ -15,6 +15,11 @@ if [[ ! -d "${SRC}" ]]; then
 fi
 
 rm -rf "${SRC}/"*-unpacked
+# The raw unpacked .app bundle trees (mac/, mac-arm64/) are build
+# intermediates: their hundreds of internal files (paks, asar, ...) would
+# flood the artifacts and the release page. Only the packaged installers
+# and feed files are shipped.
+rm -rf "${SRC}/mac" "${SRC}/mac-arm64" "${SRC}/linux" "${SRC}/win"
 cp -rv "${SRC}"/* "${DEST}/${VERSION}/"
 # cp -v "${SRC}"/*.yml "${DEST}/"
 

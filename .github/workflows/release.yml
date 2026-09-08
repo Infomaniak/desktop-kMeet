@@ -230,7 +230,12 @@ jobs:
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        STORAGE_URL: https://download.storage.infomaniak.com/meet
+        # storage5: the only front whose WAF accepts S3 PUTs from CI runners
+        # (both GitHub-hosted AND the self-hosted VM fleet are blocked on the
+        # classic storage host - only office/VPN networks pass it). Same S3
+        # bucket behind both fronts, so apps keep reading via the classic
+        # download.storage.infomaniak.com links baked in their app-update.yml.
+        STORAGE_URL: https://download.storage5.infomaniak.com/meet
       steps:
         - name: storage/download-builds
           uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # v4.1.4
@@ -254,7 +259,16 @@ jobs:
             FAIL=0
             while IFS= read -r f; do
                 name="$(basename "$f")"
-                [ "$name" = "builder-debug.yml" ] && continue
+                if [ "$name" = "builder-debug.yml" ]; then continue; fi
+                # Only publish real release artifacts: the unpacked app trees
+                # (chrome_*.pak, app.asar, *.node, ...) must never reach the
+                # storage or the users' download page.
+                case "$name" in
+                    kmeet-desktop-*.zip|kmeet-desktop-*.dmg|kmeet-desktop-*.msi|\
+                    kmeet-desktop-*.AppImage|kmeet-desktop_*.deb|\
+                    *.blockmap|beta*.yml|alpha*.yml) ;;
+                    *) echo "skip $name (not a release artifact)"; continue ;;
+                esac
                 if [ "$CHANNEL" != "latest" ] && [[ "$name" == latest*.yml ]]; then
                     echo "skip $name (prerelease tag: prod feed stays untouched)"
                     continue
@@ -321,9 +335,15 @@ jobs:
             merge-multiple: true
 
         - name: release/setup-files-for-github-release
+          # Only real deliverables: the unpacked app trees and internal debug
+          # files must not clutter the release page.
           run: |
             mkdir -p ./ghr-dist
-            find ./release -type f -exec cp --backup=numbered -t ./ghr-dist {} +
+            find ./release -type f \( \
+              -name 'kmeet-desktop-*.zip'      -o -name 'kmeet-desktop-*.dmg'   -o \
+              -name 'kmeet-desktop-*.msi'      -o -name 'kmeet-desktop-*.AppImage' -o \
+              -name 'kmeet-desktop_*.deb'      -o -name '*.blockmap'            -o \
+              -name 'beta*.yml' \) -exec cp -t ./ghr-dist {} +
 
         - name: release/publish-release
           env:
