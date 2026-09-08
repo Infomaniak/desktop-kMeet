@@ -1,7 +1,6 @@
 {
   "publish": {
     "provider": "s3",
-    "channel": "latest",
     "bucket": "meet",
     "endpoint": "https://download.storage5.infomaniak.com",
     "path": "/"
@@ -115,6 +114,7 @@
   "nsis": {
     "artifactName": "${name}-setup-${version}-win.${ext}",
     "oneClick": true,
+    "packElevateHelper": false,
     "allowToChangeInstallationDirectory": false,
     "runAfterFinish": true,
     "createDesktopShortcut": false,

@@ -485,11 +485,13 @@ function Run-BuildElectron {
 
 function Run-BuildElectronNsis {
     Print-Info "Packaging nodejs/electron for Windows NSIS"
-    # kChat pattern: no publish flag in the npm script; the publish flags are
+    # kChat pattern: no publish flag in the npm script; the publish flag is
     # appended here (last flag wins for electron-builder's yargs parser).
-    # KMEET_PUBLISH_CHANNEL comes from the workflow: beta tags must only ever
-    # publish beta*.yml feeds, never latest.yml (generateUpdatesFilesForAllChannels).
-    npm run dist:nsis -- --publish always "-c.publish.channel=$env:KMEET_PUBLISH_CHANNEL"
+    # The publish channel is derived by electron-builder from the app
+    # version's prerelease segment (s3Publisher.checkAndResolveOptions):
+    # a 2.0.2-beta.N version publishes beta*.yml feeds only, a stable
+    # version publishes latest.yml - no explicit channel flag needed.
+    npm run dist:nsis -- --publish always
 }
 
 function Get-Cert {

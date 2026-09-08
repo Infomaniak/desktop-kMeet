@@ -81,25 +81,20 @@ jobs:
             - name: release/update-version
               uses: ./.github/actions/version
             - name: release/build-and-publish
-              # The publish channel MUST come from the tag: with the config
-              # default ("latest") + generateUpdatesFilesForAllChannels, even
-              # a -beta version would overwrite latest*.yml on the storage and
-              # auto-update every stable client to the prerelease. "beta" tag
-              # -> beta channel only; stable tag -> latest (and beta follows).
               # Native electron-builder publish (--publish=always) targets the
               # S3 endpoint from electron-builder.json (storage5: the only
               # front whose WAF accepts S3 PUTs from CI networks - same bucket
               # as the classic storage host, whose download links stay baked
-              # in the apps). The windows NSIS build publishes its channel
-              # feed the same way (beta.yml on prerelease tags); the windows
-              # MSI never publishes (dist:msi is hard-coded --publish=never,
-              # same as kChat's MSI).
+              # in the apps). The publish channel is derived by
+              # electron-builder itself from the app version's prerelease
+              # segment (s3Publisher.checkAndResolveOptions): a 2.0.2-beta.N
+              # version publishes beta*.yml feeds only, never latest.yml; a
+              # stable version publishes latest.yml. The windows NSIS build
+              # works the same way; the windows MSI never publishes
+              # (dist:msi is hard-coded --publish=never, same as kChat's MSI).
               run: |
-                  CHANNEL="latest"
-                  if [[ "$GITHUB_REF_NAME" =~ -beta ]]; then CHANNEL="beta"; fi
-                  if [[ "$GITHUB_REF_NAME" =~ -alpha ]]; then CHANNEL="alpha"; fi
                   npm run build
-                  npx electron-builder --mac --publish=always -c.publish.channel="$CHANNEL"
+                  npx electron-builder --mac --publish=always
                   mkdir -p ./release/macos-release
                   bash -x ./scripts/cp_artifacts.sh dist ./release/macos-release
             - name: release/upload-build
@@ -139,15 +134,12 @@ jobs:
             - name: release/update-version
               uses: ./.github/actions/version
             - name: release/build-and-publish
-              # Same channel-derivation rule as the macOS job (see above).
-              # Native publish via storage5 (see the macOS job comment).
+              # Same auto-derived channel rule as the macOS job (see above).
+              # Native publish via storage5.
               run: |
-                  CHANNEL="latest"
-                  if [[ "$GITHUB_REF_NAME" =~ -beta ]]; then CHANNEL="beta"; fi
-                  if [[ "$GITHUB_REF_NAME" =~ -alpha ]]; then CHANNEL="alpha"; fi
                   mkdir -p ./release/linux
                   npm run build
-                  npx electron-builder --linux --publish=always -c.publish.channel="$CHANNEL"
+                  npx electron-builder --linux --publish=always
                   bash -x ./scripts/cp_artifacts.sh dist ./release/linux
             - name: release/upload-build
               uses: actions/upload-artifact@v4
@@ -192,10 +184,6 @@ jobs:
                   SENTRY_RELEASE: ${{ github.ref_name }}
                   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
                   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                  # beta tag -> beta channel only: the NSIS build publishes
-                  # beta.yml (the windows beta feed) via storage5; latest.yml
-                  # is never generated for a prerelease channel.
-                  KMEET_PUBLISH_CHANNEL: ${{ contains(github.ref_name, '-beta') && 'beta' || (contains(github.ref_name, '-alpha') && 'alpha' || 'latest') }}
                   SM_API_KEY: ${{ secrets.SM_API_KEY }}
                   SM_CLIENT_CERT_FILE_B64: ${{ secrets.SM_CLIENT_CERT_FILE_B64 }}
                   SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
@@ -217,6 +205,10 @@ jobs:
               shell: powershell
               run: Remove-Item dist\* -Recurse -Force -ErrorAction SilentlyContinue
             - name: release/build
+              # MSI build. SM Tools are installed and the certificate synced
+              # once in the build-nsis step; this step only needs the SM_*
+              # environment for winsign.js. Running setup-keylocker twice in
+              # the same job is not supported (kChat runs it once too).
               shell: powershell
               env:
                   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -229,7 +221,6 @@ jobs:
                   SM_TOOLS_URI: ${{ secrets.SM_TOOLS_URI }}
                   SM_CLIENT_CERT_FILE: ${{ secrets.SM_CLIENT_CERT_FILE }}
               run: |
-                  ./scripts/setup-keylocker.ps1
                   ./scripts/Makefile.ps1 build
             - name: release/package
               run: |
