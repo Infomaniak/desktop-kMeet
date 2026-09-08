@@ -106,6 +106,7 @@
   },
   "win": {
     "sign": "./scripts/winsign.js",
+    "forceCodeSigning": true,
     "artifactName": "${name}-${version}-${os}.${ext}",
     "certificateSubjectName": "INFOMANIAK NETWORK SA",
     "target": ["nsis", "msi"],
