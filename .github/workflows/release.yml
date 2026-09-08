@@ -86,19 +86,18 @@ jobs:
               # a -beta version would overwrite latest*.yml on the storage and
               # auto-update every stable client to the prerelease. "beta" tag
               # -> beta channel only; stable tag -> latest (and beta follows).
-              # S3 publishing is skipped (draft release only) when the AWS
-              # secrets are not configured.
+              # S3 uploads are NEVER done from CI: the Infomaniak edge WAF
+              # rejects PUTs from GitHub-hosted runner IP ranges (403 HTML,
+              # confirmed by devops - see debug-s3.yml). --publish=never still
+              # generates the channel feed files (beta-*.yml) locally; the
+              # publish-storage job re-uploads them from the self-hosted
+              # runner, whose network is allowed.
               run: |
                   CHANNEL="latest"
                   if [[ "$GITHUB_REF_NAME" =~ -beta ]]; then CHANNEL="beta"; fi
                   if [[ "$GITHUB_REF_NAME" =~ -alpha ]]; then CHANNEL="alpha"; fi
                   npm run build
-                  if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
-                      npx electron-builder --mac --publish=always -c.publish.channel="$CHANNEL"
-                  else
-                      echo "AWS secrets absent: skipping the storage publish (draft release only)"
-                      npx electron-builder --mac --publish=never -c.publish.channel="$CHANNEL"
-                  fi
+                  npx electron-builder --mac --publish=never -c.publish.channel="$CHANNEL"
                   mkdir -p ./release/macos-release
                   bash -x ./scripts/cp_artifacts.sh dist ./release/macos-release
             - name: release/upload-build
@@ -139,18 +138,16 @@ jobs:
               uses: ./.github/actions/version
             - name: release/build-and-publish
               # Same channel-derivation rule as the macOS job (see above).
+              # No S3 upload from CI (WAF rejects GitHub runner IPs): the
+              # publish-storage job uploads the artifacts from the
+              # self-hosted runner.
               run: |
                   CHANNEL="latest"
                   if [[ "$GITHUB_REF_NAME" =~ -beta ]]; then CHANNEL="beta"; fi
                   if [[ "$GITHUB_REF_NAME" =~ -alpha ]]; then CHANNEL="alpha"; fi
                   mkdir -p ./release/linux
                   npm run build
-                  if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
-                      npx electron-builder --linux --publish=always -c.publish.channel="$CHANNEL"
-                  else
-                      echo "AWS secrets absent: skipping the storage publish (draft release only)"
-                      npx electron-builder --linux --publish=never -c.publish.channel="$CHANNEL"
-                  fi
+                  npx electron-builder --linux --publish=never -c.publish.channel="$CHANNEL"
                   bash -x ./scripts/cp_artifacts.sh dist ./release/linux
             - name: release/upload-build
               uses: actions/upload-artifact@v4
@@ -214,6 +211,97 @@ jobs:
                 path: ./release
                 compression-level: 0
                 retention-days: 14
+
+    # S3 uploads cannot happen from GitHub-hosted runners: the Infomaniak
+    # edge WAF rejects PUTs from their IP ranges with a 403 HTML page
+    # (reads pass; confirmed with devops - see debug-s3.yml).
+    # This relay job downloads the build artifacts and re-uploads them to
+    # the object storage from the self-hosted runner, replicating exactly
+    # what electron-builder would do: every dist file becomes
+    # meet/<basename>, including the channel feed files (beta-*.yml).
+    # latest-*.yml are only produced for stable tags (computeChannelNames:
+    # beta -> [beta, alpha]), so prereleases never touch the prod feed.
+    publish-storage:
+      runs-on: [self-hosted, macOS, desktop-kdrive]
+      needs:
+        - build-mac
+        - build-linux
+        - build-windows
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        STORAGE_URL: https://download.storage.infomaniak.com/meet
+      steps:
+        - name: storage/download-builds
+          uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # v4.1.4
+          with:
+            path: artifacts
+            pattern: build-*
+            merge-multiple: true
+
+        - name: storage/upload-everything
+          run: |
+            set -uo pipefail
+            # Same channel derivation as the build jobs. latest-*.yml are
+            # forbidden on prerelease tags: the Windows build (dist:msi has
+            # no channel flag) still emits latest.yml locally thanks to
+            # generateUpdatesFilesForAllChannels - uploading it would
+            # auto-update every stable client to the prerelease.
+            CHANNEL="latest"
+            if [[ "$GITHUB_REF_NAME" =~ -beta ]]; then CHANNEL="beta"; fi
+            if [[ "$GITHUB_REF_NAME" =~ -alpha ]]; then CHANNEL="alpha"; fi
+            echo "channel: $CHANNEL"
+            FAIL=0
+            while IFS= read -r f; do
+                name="$(basename "$f")"
+                [ "$name" = "builder-debug.yml" ] && continue
+                if [ "$CHANNEL" != "latest" ] && [[ "$name" == latest*.yml ]]; then
+                    echo "skip $name (prerelease tag: prod feed stays untouched)"
+                    continue
+                fi
+                code=$(curl -s -o /dev/null -w '%{http_code}' -X PUT \
+                    --aws-sigv4 "aws:amz:us-east-1:s3" \
+                    --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY" \
+                    -T "$f" "$STORAGE_URL/$name")
+                size=$(du -h "$f" | cut -f1 | tr -d ' ')
+                echo "$name ($size) -> HTTP $code"
+                if [ "$code" != "200" ]; then
+                    echo "::error::upload failed: $name (HTTP $code)"
+                    FAIL=1
+                fi
+            done < <(find artifacts -type f)
+            exit $FAIL
+
+        - name: storage/verify
+          env:
+              VERSION: ${{ github.ref_name }}
+          run: |
+              set -uo pipefail
+              FAIL=0
+              echo "--- beta feeds ---"
+              for f in beta-mac.yml beta.yml beta-linux.yml beta-linux-arm64.yml; do
+                  code=$(curl -s -o /tmp/feed.yml -w '%{http_code}' "$STORAGE_URL/$f")
+                  version=$(grep -m1 '^version:' /tmp/feed.yml 2>/dev/null | awk '{print $2}')
+                  echo "$f -> HTTP $code ($version)"
+                  if [ "$code" != "200" ] || [ "$version" != "$VERSION" ]; then
+                      echo "::error::$f verification failed (expected $VERSION)"
+                      FAIL=1
+                  fi
+              done
+              echo "--- prod feed untouched check ---"
+              CHANNEL="latest"
+              if [[ "$GITHUB_REF_NAME" =~ -beta ]]; then CHANNEL="beta"; fi
+              if [[ "$GITHUB_REF_NAME" =~ -alpha ]]; then CHANNEL="alpha"; fi
+              if [ "$CHANNEL" != "latest" ]; then
+                  code=$(curl -s -o /tmp/latest.yml -w '%{http_code}' "$STORAGE_URL/latest-mac.yml")
+                  version=$(grep -m1 '^version:' /tmp/latest.yml 2>/dev/null | awk '{print $2}')
+                  echo "latest-mac.yml -> HTTP $code ($version)"
+                  if [ "$version" = "$VERSION" ]; then
+                      echo "::error::PROD FEED CLOBBERED: latest-mac.yml now points at $VERSION on a prerelease tag!"
+                      FAIL=1
+                  fi
+              fi
+              exit $FAIL
 
     github-release:
       runs-on: ubuntu-22.04
