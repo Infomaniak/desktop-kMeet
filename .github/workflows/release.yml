@@ -90,9 +90,10 @@ jobs:
               # S3 endpoint from electron-builder.json (storage5: the only
               # front whose WAF accepts S3 PUTs from CI networks - same bucket
               # as the classic storage host, whose download links stay baked
-              # in the apps). Windows never publishes: dist:msi is hard-coded
-              # --publish=never (same as kChat's MSI), so latest*.yml can
-              # never be uploaded from there either.
+              # in the apps). The windows NSIS build publishes its channel
+              # feed the same way (beta.yml on prerelease tags); the windows
+              # MSI never publishes (dist:msi is hard-coded --publish=never,
+              # same as kChat's MSI).
               run: |
                   CHANNEL="latest"
                   if [[ "$GITHUB_REF_NAME" =~ -beta ]]; then CHANNEL="beta"; fi
@@ -184,6 +185,37 @@ jobs:
                   npm ci
             - name: release/update-version
               uses: ./.github/actions/version
+            - name: release/build-nsis
+              shell: powershell
+              env:
+                  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+                  SENTRY_RELEASE: ${{ github.ref_name }}
+                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  # beta tag -> beta channel only: the NSIS build publishes
+                  # beta.yml (the windows beta feed) via storage5; latest.yml
+                  # is never generated for a prerelease channel.
+                  KMEET_PUBLISH_CHANNEL: ${{ contains(github.ref_name, '-beta') && 'beta' || (contains(github.ref_name, '-alpha') && 'alpha' || 'latest') }}
+                  SM_API_KEY: ${{ secrets.SM_API_KEY }}
+                  SM_CLIENT_CERT_FILE_B64: ${{ secrets.SM_CLIENT_CERT_FILE_B64 }}
+                  SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
+                  SM_HOST: ${{ secrets.SM_HOST }}
+                  SM_CODE_SIGNING_CERT_SHA1_HASH: ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }}
+                  SM_KEYPAIR_ALIAS: ${{ secrets.SM_KEYPAIR_ALIAS }}
+                  SM_TOOLS_URI: ${{ secrets.SM_TOOLS_URI }}
+                  SM_CLIENT_CERT_FILE: ${{ secrets.SM_CLIENT_CERT_FILE }}
+              run: |
+                  ./scripts/setup-keylocker.ps1
+                  ./scripts/Makefile.ps1 build-nsis
+            - name: release/package-nsis
+              run: |
+                mkdir -p ./release/win-nsis
+                bash -x ./scripts/cp_artifacts.sh dist ./release/win-nsis
+            - name: release/clean-dist
+              # kChat pattern: wipe the dist between the two windows builds so
+              # the NSIS artifacts and feeds cannot leak into the MSI package.
+              shell: powershell
+              run: Remove-Item dist\* -Recurse -Force -ErrorAction SilentlyContinue
             - name: release/build
               shell: powershell
               env:
@@ -235,7 +267,8 @@ jobs:
             mkdir -p ./ghr-dist
             find ./release -type f \( \
               -name 'kmeet-desktop-*.zip'      -o -name 'kmeet-desktop-*.dmg'   -o \
-              -name 'kmeet-desktop-*.msi'      -o -name 'kmeet-desktop-*.AppImage' -o \
+              -name 'kmeet-desktop-*.msi'      -o -name 'kmeet-desktop-*.exe'   -o \
+              -name 'kmeet-desktop-*.AppImage' -o \
               -name 'kmeet-desktop_*.deb'      -o -name '*.blockmap'            -o \
               -name 'beta*.yml' \) -exec cp -t ./ghr-dist {} +
 

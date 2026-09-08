@@ -483,6 +483,15 @@ function Run-BuildElectron {
     npm run dist:msi
 }
 
+function Run-BuildElectronNsis {
+    Print-Info "Packaging nodejs/electron for Windows NSIS"
+    # kChat pattern: no publish flag in the npm script; the publish flags are
+    # appended here (last flag wins for electron-builder's yargs parser).
+    # KMEET_PUBLISH_CHANNEL comes from the workflow: beta tags must only ever
+    # publish beta*.yml feeds, never latest.yml (generateUpdatesFilesForAllChannels).
+    npm run dist:nsis -- --publish always "-c.publish.channel=$env:KMEET_PUBLISH_CHANNEL"
+}
+
 function Get-Cert {
     if (Test-Path 'env:PFXOLD') {
         Print-Info "Getting windows certificate"
@@ -509,6 +518,14 @@ function Run-Build {
     # Get-Cert
     Run-BuildId
     Run-BuildElectron
+    Remove-Cert
+}
+
+function Run-BuildNsis {
+    Check-Deps -Verbose -Throwable
+    Prepare-Path
+    Run-BuildId
+    Run-BuildElectronNsis
     Remove-Cert
 }
 
@@ -566,6 +583,10 @@ function Main {
             "build" {
                 Install-Deps
                 Run-Build
+            }
+            "build-nsis" {
+                Install-Deps
+                Run-BuildNsis
             }
             "install-deps" {
                 Install-Deps
