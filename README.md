@@ -1,46 +1,55 @@
-# kmeet-electron
+# kMeet Desktop
 
-## Dev
+Infomaniak's fork of [jitsi/jitsi-meet-electron](https://github.com/jitsi/jitsi-meet-electron) — the codebase behind the [kMeet](https://kmeet.infomaniak.com) desktop applications.
+
+## Fork status
+
+- **Last upstream commit synced:** [`4029211`](https://github.com/jitsi/jitsi-meet-electron/commit/402921113078351e428962310978c5c6a309b0ac) — *integrate screen sharing tracker window (#197), 2020-04-03*
+- **Upstream changes since the fork** (everything we have not synced): [`4029211...master` compare on GitHub](https://github.com/jitsi/jitsi-meet-electron/compare/402921113078351e428962310978c5c6a309b0ac...master)
+- **kMeet SDK:** the kMeet-specific SDK lives in its own repository: [`Infomaniak/desktop-kMeet-sdk`](https://github.com/Infomaniak/desktop-kMeet-sdk)
+- **Source of truth:** the internal GitLab repository. This GitHub repository mirrors `main` only (commits, not tags).
+
+## Development
+
+Requires Node 16 (pinned in `.nvmrc`).
 
 ```bash
-nvm use 12
+nvm use
 npm i
 npm start
 ```
 
-## Build
-
-### OSX
+Other useful scripts:
 
 ```bash
-npm run dist
+npm run lint    # eslint + flow
+npm test        # mocha unit tests
+npm run build   # production webpack build (main + renderer)
 ```
 
+## Local builds
+
+Local builds are **unsigned** and published nowhere (`--publish=never`). Code signing, notarization and update-feed publishing only happen in CI — see [Releases](#releases).
+
+| Platform | Command | Output |
+|---|---|---|
+| macOS | `npm run dist` | `.app` / `.dmg` (unsigned) |
+| Windows | `npm run dist:nsis` | NSIS installer `.exe` |
+| Windows | `npm run dist:msi` | `.msi` (no auto-update feed) |
+
+Linux builds additionally require the usual Electron native dependencies (`libxtst-dev`, `libpng++-dev`), then run `npm run dist`.
+
+## Releases
+
+Releases are **triggered by pushing a semver tag to GitHub** (`1.2.3`, `1.2.3-beta.0`, …), which runs the [`release-kmeet`](.github/workflows/release.yml) workflow:
+
+- signed + notarized macOS build, signed Windows NSIS/MSI builds (DigiCert SM), Linux build
+- auto-update feeds (`latest.yml` for stable, `beta*.yml` for pre-releases)
+- a **draft GitHub release** on the tag (marked pre-release for `alpha`/`beta` builds)
+
+Since tags are not synced by the mirror, publish a release manually:
+
 ```bash
-APPLEID=**** APPLEIDPASS=*** AWS_ACCESS_KEY_ID=**** AWS_SECRET_ACCESS_KEY=**** npm run publish
-```
-
-### Windows
-
-```bash
-$Env:WIN_CSC_LINK="C:\Users\leopold\Documents\codesigning.cer"
-npm run publish
-```
-
-### Linux
-
-```bash
-docker run --rm -ti \
- --env ELECTRON_CACHE="/root/.cache/electron" \
- --env ELECTRON_BUILDER_CACHE="/root/.cache/electron-builder" \
- -v ${PWD}:/project \
- -v ${PWD##*/}-node-modules:/project/node_modules \
- -v ~/.cache/electron:/root/.cache/electron \
- -v ~/.cache/electron-builder:/root/.cache/electron-builder \
- electronuserland/builder:12
-
- apt-get update \
-    && apt-get install -y libxtst-dev libpng++-dev \
-    && npm i && npm i electron-builder@20.44.4 \
-    && npm run dist
+git tag 1.2.3 && git push origin 1.2.3   # keep the tag on GitLab (source of truth)
+git push Github 1.2.3                    # triggers the release workflow on GitHub
 ```
