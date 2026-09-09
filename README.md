@@ -29,7 +29,7 @@ npm run build   # production webpack build (main + renderer)
 
 ## Local builds
 
-Local builds are **unsigned** and published nowhere (`--publish=never`). Code signing, notarization and update-feed publishing only happen in CI — see [Releases](#releases).
+Local builds are **unsigned** and published nowhere (electron-builder defaults to `--publish=never` outside CI). Code signing, notarization and update-feed publishing only happen in CI — see [Releases](#releases).
 
 | Platform | Command | Output |
 |---|---|---|
@@ -44,7 +44,7 @@ Linux builds additionally require the usual Electron native dependencies (`libxt
 Releases are **triggered by pushing a semver tag to GitHub** (`1.2.3`, `1.2.3-beta.0`, …), which runs the [`release-kmeet`](.github/workflows/release.yml) workflow:
 
 - signed + notarized macOS build, signed Windows NSIS/MSI builds (DigiCert SM), Linux build
-- auto-update feeds (`latest.yml` for stable, `beta*.yml` for pre-releases)
+- auto-update feeds (`latest.yml` for stable, `beta.yml`/`alpha.yml` for pre-releases)
 - a **draft GitHub release** on the tag (marked pre-release for `alpha`/`beta` builds)
 
 Since tags are not synced by the mirror, publish a release manually:
