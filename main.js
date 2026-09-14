@@ -30,6 +30,7 @@ const process = require('process');
 const URL = require('url');
 const config = require('./app/features/config');
 const { isAllowedHost } = require('./app/features/utils/hostAllowList');
+const { findProtocolArgument } = require('./app/features/utils/protocolArgument');
 const { openExternalLink } = require('./app/features/utils/openExternalLink');
 const pkgJson = require('./package.json');
 const builderJson = require('./electron-builder.json');
@@ -535,7 +536,7 @@ function createJitsiMeetWindow() {
      *  while app is closed
      * it will trigger this event below
      */
-    handleProtocolCall(process.argv.pop());
+    handleProtocolCall(findProtocolArgument(process.argv, appProtocolSurplus));
 }
 
 /**
@@ -791,14 +792,21 @@ app.on('second-instance', (event, commandLine) => {
     if (mainWindow) {
         mainWindow.isMinimized() && mainWindow.restore();
         mainWindow.focus();
-
-        /**
-         * This is for windows [win32]
-         * so when someone tries to enter something like jitsi-meet://test
-         * while app is opened it will trigger protocol handler.
-         */
-        handleProtocolCall(commandLine.pop());
     }
+
+    /**
+     * This is for windows [win32]
+     * so when someone tries to enter something like jitsi-meet://test
+     * while app is opened it will trigger protocol handler.
+     *
+     * This runs outside of the mainWindow check on purpose. The app keeps
+     * running without a main window once its window is closed, and it is
+     * started that way at login, so requiring a window here dropped the
+     * protocol call silently: the meeting never opened and the web page, which
+     * infers the outcome from the window focus, told the user the app was not
+     * installed. handleProtocolCall creates the window when it is missing.
+     */
+    handleProtocolCall(findProtocolArgument(commandLine, appProtocolSurplus));
 });
 
 app.on('window-all-closed', () => {
