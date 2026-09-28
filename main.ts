@@ -30,6 +30,7 @@ import AutoLaunch from 'auto-launch';
 import _ from 'lodash';
 
 import config from './app/features/config';
+import { isAllowedHost } from './app/features/utils/hostAllowList';
 import { openExternalLink } from './app/features/utils/openExternalLink';
 import updateManager from './autoUpdate';
 import i18nManager, { localizeMessage } from './i18nManager';
@@ -560,6 +561,18 @@ function handleProtocolCall(fullProtocolCall?: string) {
     }
 
     const inputURL = fullProtocolCall.replace(appProtocolSurplus, '');
+
+    // Validate the host before forwarding the protocol payload to the
+    // renderer. Without this check, a link like kmeet://attacker.invalid/room
+    // would load an attacker-controlled HTTPS origin as the meeting iframe,
+    // which could then drive the remote control bridge without user consent.
+    const hostPart = inputURL.split('/')[0];
+
+    if (!isAllowedHost(hostPart)) {
+        console.warn(`Rejected protocol call with unauthorized host: ${hostPart}`);
+
+        return;
+    }
 
     if (app.isReady() && mainWindow === null) {
         createJitsiMeetWindow();

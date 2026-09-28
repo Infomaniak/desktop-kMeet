@@ -1,0 +1,68 @@
+/**
+ * Single source of truth for the hosts that are allowed in kmeet:// protocol
+ * links. A link like kmeet://attacker.invalid/room must not load an arbitrary
+ * HTTPS origin as the meeting iframe, because the remote control bridge
+ * trusts whatever page is loaded. When no host is specified (kmeet://room),
+ * the configured defaultServerURL is used and is always trusted.
+ */
+const ALLOWED_HOSTS: string[] = [
+    'kmeet.infomaniak.com',
+    'kmeet.preprod.dev.infomaniak.ch'
+];
+
+/**
+ * Normalizes a host for allow-list comparison: strips userinfo and port,
+ * lowercases (hostnames are case-insensitive per RFC 3986) and drops a
+ * trailing dot (same FQDN).
+ *
+ * @param {string} rawHost - Host as it appears in a link (may include
+ * userinfo, a port or a trailing dot).
+ * @returns {string} The bare, lowercase hostname, or '' when empty.
+ */
+export function normalizeHost(rawHost: string | null | undefined): string {
+    if (!rawHost) {
+        return '';
+    }
+
+    // Strip userinfo and the port. IPv6 literals never match the
+    // allow-list, so passing them through lowercased is fine.
+    let host = String(rawHost).trim().split('@').pop()?.split(':')[0] ?? '';
+
+    host = host.toLowerCase();
+
+    // A trailing dot denotes the DNS root: same FQDN.
+    if (host.endsWith('.')) {
+        host = host.slice(0, -1);
+    }
+
+    return host;
+}
+
+/**
+ * Checks whether a host extracted from a kmeet:// link is allowed.
+ *
+ * @param {string} host - The host as it appears in the link, or empty when
+ * the link contains only a room name.
+ * @returns {boolean} True if the host is allowed or empty (room-only link).
+ */
+export function isAllowedHost(host: string | null | undefined): boolean {
+    // A genuinely absent host means a room-only link on the default server.
+    if (host === undefined || host === null || host === '') {
+        return true;
+    }
+
+    const normalized = normalizeHost(host);
+
+    // A host was provided but does not yield a hostname (lone port, bare
+    // userinfo, ...) - fail closed instead of treating it as room-only.
+    if (!normalized) {
+        return false;
+    }
+
+    return ALLOWED_HOSTS.some(allowed =>
+        normalized === allowed || normalized.endsWith(`.${allowed}`));
+}
+
+export {
+    ALLOWED_HOSTS
+};

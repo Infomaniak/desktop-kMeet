@@ -19,7 +19,7 @@
     "postinstall": "patch-package",
     "watch": "node ./esbuild.js renderer --dev --watch",
     "validate": "npm ls",
-    "test": "mocha test/**/*.test.js"
+    "test": "esbuild test/*.test.ts --bundle --platform=node --outdir=build/test --log-level=warning && mocha \"build/test/*.test.js\""
   },
   "engines": {
     "node": ">=24.0.0"
@@ -53,6 +53,7 @@
     "@sentry/webpack-plugin": "^2.7.1",
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
+    "@types/mocha": "10.0.10",
     "@types/mousetrap": "^1.6.15",
     "@types/react": "^17.0.92",
     "@types/react-dom": "^17.0.26",
@@ -79,9 +80,9 @@
     "eslint-plugin-react": "^7.37.0",
     "history": "^4.10.1",
     "i18next": "^19.9.2",
+    "mocha": "^10.0.0",
     "moment": "^2.29.2",
     "mousetrap": "^1.6.5",
-    "mocha": "^10.0.0",
     "patch-package": "8.0.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",

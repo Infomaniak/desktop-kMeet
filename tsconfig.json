@@ -5,7 +5,7 @@
         "jsx": "react",
         "module": "ESNext",
         "moduleResolution": "bundler",
-        "types": [ "node" ],
+        "types": [ "node", "mocha" ],
 
         "allowJs": true,
         "checkJs": false,
@@ -26,6 +26,7 @@
         "i18nManager.js",
         "i18n/i18n.js",
         "app/**/*",
+        "test/**/*.ts",
         "types/**/*.d.ts"
     ],
     "exclude": [

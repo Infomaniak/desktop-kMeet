@@ -1,6 +1,7 @@
+/* eslint-env node */
 const { execSync } = require('child_process');
 
-exports.default = async config => {
+exports.default = config => {
     // Common
     const filePath = `${config.path}`;
 
