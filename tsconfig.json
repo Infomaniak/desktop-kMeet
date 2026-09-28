@@ -1,0 +1,37 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "lib": [ "ES2022", "DOM", "DOM.Iterable" ],
+        "jsx": "react",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "types": [ "node" ],
+
+        "allowJs": true,
+        "checkJs": false,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "forceConsistentCasingInFileNames": true,
+
+        "strict": false,
+        "skipLibCheck": true,
+        "noEmit": true
+    },
+    "include": [
+        "main.ts",
+        "autoUpdate.js",
+        "notifications.js",
+        "i18nManager.js",
+        "i18n/i18n.js",
+        "app/**/*",
+        "types/**/*.d.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "build",
+        "dist",
+        "app/features/conference/external_api.js"
+    ]
+}
