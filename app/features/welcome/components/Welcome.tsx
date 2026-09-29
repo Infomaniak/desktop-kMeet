@@ -1,10 +1,9 @@
 import React, { Component, createRef } from 'react';
-import { compose } from 'redux';
 import { connect } from 'react-redux';
-import { Dispatch } from 'redux';
+import { Dispatch, compose } from 'redux';
 
-import config from '../../config';
 import JitsiMeetExternalAPI from '../../conference/external_api';
+import config from '../../config';
 import { Wrapper } from '../styled';
 
 interface IProps {

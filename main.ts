@@ -7,6 +7,8 @@ import {
     setupRemoteDrawMain,
     setupScreenSharingMain
 } from '@infomaniak/jitsi-meet-electron-sdk/main';
+import { init as sentryInit } from '@sentry/electron';
+import AutoLaunch from 'auto-launch';
 import {
     BrowserWindow,
     Menu,
@@ -22,21 +24,20 @@ import debug from 'electron-debug';
 import isDev from 'electron-is-dev';
 import log from 'electron-log';
 import electronReload from 'electron-reload';
+import Store from 'electron-store';
 import { autoUpdater } from 'electron-updater';
 import windowStateKeeper from 'electron-window-state';
+import _ from 'lodash';
 import * as path from 'path';
 import * as URL from 'url';
-import Store from 'electron-store';
-import AutoLaunch from 'auto-launch';
-import _ from 'lodash';
 
 import config from './app/features/config';
 import { isAllowedHost } from './app/features/utils/hostAllowList';
 import { openExternalLink } from './app/features/utils/openExternalLink';
 import updateManager from './autoUpdate';
+import builderJson from './electron-builder.json';
 import i18nManager, { localizeMessage } from './i18nManager';
 import pkgJson from './package.json';
-import builderJson from './electron-builder.json';
 
 const rootDir = path.resolve(__dirname, '..');
 
@@ -49,9 +50,7 @@ const autoLauncher = new AutoLaunch({
 });
 
 if (!isDev) {
-    const { init } = require('@sentry/electron');
-
-    init({
+    sentryInit({
         dsn: 'https://9ea9e1754d9b40be10f2f7c28ff07185@sentry-kchat.infomaniak.com/9'
     });
 }
@@ -284,7 +283,7 @@ function createJitsiMeetWindow() {
         frame.once('dom-ready', () => {
             frame.executeJavaScript(
                 `Object.defineProperty(navigator, 'userAgent', { value: navigator.userAgent + '${infomaniakUA}', configurable: true });`
-            ).catch(() => {});
+            ).catch(() => undefined);
         });
     });
 
@@ -386,7 +385,7 @@ function createJitsiMeetWindow() {
         }
     });
 
-    mainWindow.webContents.session.setPermissionRequestHandler((_, permission, callback, details) => {
+    mainWindow.webContents.session.setPermissionRequestHandler((_contents, permission, callback, details) => {
         if (permission === 'openExternal') {
             console.warn(`Disallowing opening ${(details as { externalURL?: string; }).externalURL}`);
             callback(false);

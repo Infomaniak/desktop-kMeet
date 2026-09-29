@@ -1,8 +1,7 @@
 import { Component } from 'react';
-import { compose } from 'redux';
 import { connect } from 'react-redux';
 import { push } from 'react-router-redux';
-import { Dispatch } from 'redux';
+import { Dispatch, compose } from 'redux';
 
 interface IProps {
     dispatch: Dispatch;

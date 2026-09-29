@@ -1,6 +1,7 @@
-import { app, Notification } from 'electron';
+import { Notification, app } from 'electron';
 import path from 'path';
 import process from 'process';
+
 import { localizeMessage } from './i18nManager';
 
 const assetsDir = path.resolve(app.getAppPath(), 'assets');

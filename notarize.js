@@ -1,5 +1,6 @@
 const { notarize } = require('electron-notarize');
 const process = require('process');
+
 const builderJson = require('./electron-builder.json');
 
 exports.default = async function notarizing(context) {
@@ -36,7 +37,4 @@ exports.default = async function notarizing(context) {
         });
     }
     console.log('Skipping notarization');
-
-    return;
-
 };
