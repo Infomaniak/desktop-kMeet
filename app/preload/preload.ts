@@ -33,7 +33,9 @@ contextBridge.exposeInMainWorld('jitsiNodeAPI', {
     ipc: {
         on: (channel: string, listener: (...args: any[]) => void) => {
             if (!whitelistedIpcChannels.includes(channel)) {
-                return;
+                // Match the declared contract (types/global.d.ts): on() must
+                // always return a callable unsubscribe.
+                return () => undefined;
             }
 
             const cb = (_event: IpcRendererEvent, ...args: any[]) => {

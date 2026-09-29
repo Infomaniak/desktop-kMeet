@@ -282,7 +282,9 @@ function createJitsiMeetWindow() {
         }
         frame.once('dom-ready', () => {
             frame.executeJavaScript(
-                `Object.defineProperty(navigator, 'userAgent', { value: navigator.userAgent + '${infomaniakUA}', configurable: true });`
+                // The ready handler already appends the suffix to the session
+                // UA, which frames inherit — guard so it is never doubled.
+                `navigator.userAgent.includes('${infomaniakUA}') || Object.defineProperty(navigator, 'userAgent', { value: navigator.userAgent + '${infomaniakUA}', configurable: true });`
             ).catch(() => undefined);
         });
     });
