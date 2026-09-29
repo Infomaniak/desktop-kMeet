@@ -1,7 +1,15 @@
 stages:
   - check
 
+# @jitsi/robotjs (transitive dependency of @infomaniak/jitsi-meet-electron-sdk)
+# compiles against X11 at install time; the bare node image lacks the headers.
+.native-deps:
+  before_script:
+    - apt-get update
+    - apt-get install -y --no-install-recommends build-essential libx11-dev libxtst-dev libxext-dev libxinerama-dev libxrandr-dev
+
 lint:
+  extends: .native-deps
   image: node:24
   stage: check
   script:
@@ -9,6 +17,7 @@ lint:
     - npm run lint
 
 type-check:
+  extends: .native-deps
   image: node:24
   stage: check
   script:
