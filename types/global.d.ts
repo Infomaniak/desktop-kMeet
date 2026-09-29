@@ -2,11 +2,9 @@ export {};
 
 interface IJitsiNodeAPI {
     openExternalLink(url: string): void;
-    setupRenderer(api: any, options?: { enableRemoteControl?: boolean; enableAlwaysOnTopWindow?: boolean }): void;
     ipc: {
-        on(channel: string, listener: (...args: any[]) => void): void;
+        on(channel: string, listener: (...args: any[]) => void): () => void;
         send(channel: string, ...args: any[]): void;
-        removeListener(channel: string, listener: (...args: any[]) => void): void;
     };
 }
 

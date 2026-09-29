@@ -1,3 +1,11 @@
+import {
+    initPopupsConfigurationRender,
+    setupPictureInPictureRender,
+    setupPowerMonitorRender,
+    setupRemoteControlRender,
+    setupRemoteDrawRender,
+    setupScreenSharingRender
+} from '@infomaniak/jitsi-meet-electron-sdk/renderer';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { push } from 'react-router-redux';
@@ -25,8 +33,8 @@ interface IProps {
     location: {
         state: {
             room: string;
-            subject?: string;
             serverURL?: string;
+            subject?: string;
         };
     };
 }
@@ -38,7 +46,7 @@ interface IConferenceState {
 class Conference extends Component<IProps, IConferenceState> {
     _ref = React.createRef<any>();
     _api?: JitsiMeetExternalAPI;
-    _conference!: { room: string; serverURL: string; subject?: string };
+    _conference!: { room: string; serverURL: string; subject?: string; };
     _iframeLoaded?: boolean;
     _loadTimer?: ReturnType<typeof setTimeout>;
 
@@ -159,10 +167,19 @@ class Conference extends Component<IProps, IConferenceState> {
             this.props.dispatch(conferenceJoined(this._conference));
         });
 
-        window.jitsiNodeAPI.setupRenderer(this._api, {
-            enableRemoteControl: ENABLE_REMOTE_CONTROL,
-            enableAlwaysOnTopWindow: this.props._alwaysOnTopWindowEnabled
-        });
+        // Setup the SDK renderer helpers. These run in the page ("main world")
+        // next to the iframe API and reach the main process only through the
+        // window.jitsiElectronSDK bridge installed by the SDK preload.
+        initPopupsConfigurationRender(this._api);
+        setupScreenSharingRender(this._api);
+        setupPictureInPictureRender(this._api);
+        setupPowerMonitorRender(this._api);
+
+        if (ENABLE_REMOTE_CONTROL) {
+            setupRemoteControlRender(this._api);
+        }
+
+        setupRemoteDrawRender(this._api);
     }
 
     _maybeRenderLoadingIndicator() {
@@ -175,7 +192,7 @@ class Conference extends Component<IProps, IConferenceState> {
         }
     }
 
-    _navigateToHome(event: { type?: string }, room?: string, serverURL?: string) {
+    _navigateToHome(event: { type?: string; }, room?: string, serverURL?: string) {
         this.props.dispatch(push('/', {
             error: event.type === 'error',
             room,

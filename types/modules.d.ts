@@ -32,6 +32,9 @@ declare module '@infomaniak/jitsi-meet-electron-sdk/main' {
     export function setupRemoteControlMain(window: any, options?: {
         requestConsent?: false | ((details: { sourceId: string; }) => Promise<boolean> | boolean);
     }): void;
+    export function setupRemoteDrawMain(window: any, options?: {
+        requestConsent?: false | ((details: { sourceId: string; }) => Promise<boolean> | boolean);
+    }): void;
     export function setupPowerMonitorMain(window: any): void;
     export function setupScreenSharingMain(window: any, appName: string, appId: string): void;
 }
@@ -41,20 +44,12 @@ declare module '@infomaniak/jitsi-meet-electron-sdk/renderer' {
     export function setupScreenSharingRender(api: any): void;
     export function setupPictureInPictureRender(api: any): void;
     export function setupRemoteControlRender(api: any): void;
+    export function setupRemoteDrawRender(api: any): void;
     export function setupPowerMonitorRender(api: any): void;
 }
 
 declare module '@infomaniak/jitsi-meet-electron-sdk/preload' {
     export function install(): void;
-}
-
-declare module '@infomaniak/jitsi-meet-electron-sdk/remotedraw' {
-    export class RemoteDrawMain {
-        constructor(window: any);
-    }
-    export class RemoteDraw {
-        constructor(api: any);
-    }
 }
 
 declare module '@jitsi/js-utils/random' {

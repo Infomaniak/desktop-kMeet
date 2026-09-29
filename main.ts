@@ -4,9 +4,9 @@ import {
     setupPictureInPictureMain,
     setupPowerMonitorMain,
     setupRemoteControlMain,
+    setupRemoteDrawMain,
     setupScreenSharingMain
 } from '@infomaniak/jitsi-meet-electron-sdk/main';
-import { RemoteDrawMain } from '@infomaniak/jitsi-meet-electron-sdk/remotedraw';
 import {
     BrowserWindow,
     Menu,
@@ -14,6 +14,7 @@ import {
     app,
     dialog,
     ipcMain,
+    session,
     shell
 } from 'electron';
 import contextMenu from 'electron-context-menu';
@@ -221,7 +222,7 @@ function createJitsiMeetWindow() {
         show: false,
         webPreferences: {
             enableBlinkFeatures: 'WebAssemblyCSP',
-            contextIsolation: false,
+            contextIsolation: true,
             nodeIntegration: false,
             preload: path.resolve(basePath, './build/preload.js'),
             sandbox: false
@@ -272,7 +273,20 @@ function createJitsiMeetWindow() {
         callback({ cancel: false });
     });
 
-    mainWindow.webContents.userAgent += ` Infomaniak/${pkgJson.version}`;
+    const infomaniakUA = ` Infomaniak/${pkgJson.version}`;
+
+    // In Electron 43, iframe navigator.userAgent inherits from the session, not
+    // from webContents — override it per frame (restores the sign-in flow).
+    mainWindow.webContents.on('frame-created', (_event, { frame }) => {
+        if (!frame) {
+            return;
+        }
+        frame.once('dom-ready', () => {
+            frame.executeJavaScript(
+                `Object.defineProperty(navigator, 'userAgent', { value: navigator.userAgent + '${infomaniakUA}', configurable: true });`
+            ).catch(() => {});
+        });
+    });
 
     mainWindow.webContents.session.webRequest.onHeadersReceived({ urls: [ '*://*/*' ] },
         (d, c) => {
@@ -389,7 +403,7 @@ function createJitsiMeetWindow() {
     setupScreenSharingMain(mainWindow, config.appName, builderJson.appId);
     setupRemoteControlMain(mainWindow, { requestConsent: requestRemoteControlConsent });
 
-    new RemoteDrawMain(mainWindow);
+    setupRemoteDrawMain(mainWindow);
 
     mainWindow.on('closed', () => {
         mainWindow = null;
@@ -615,6 +629,10 @@ app.on('certificate-error',
 );
 
 app.on('ready', async () => {
+    session.defaultSession.setUserAgent(
+        session.defaultSession.getUserAgent() + ` Infomaniak/${pkgJson.version}`
+    );
+
     createJitsiMeetWindow();
     await createTrayMenu();
 });

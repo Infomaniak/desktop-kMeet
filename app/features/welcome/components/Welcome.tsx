@@ -19,6 +19,7 @@ interface IProps {
 class Welcome extends Component<IProps> {
     _api: any;
     _ref: React.RefObject<any>;
+    _unsubscribeProtocol: Array<() => void> = [];
 
     constructor(props: IProps) {
         super(props);
@@ -39,9 +40,11 @@ class Welcome extends Component<IProps> {
             parentNode: this._ref.current
         });
 
-        window.jitsiNodeAPI.ipc.on('protocol-data-create-meeting', this._listenOnProtocolCreateMeeting);
-        window.jitsiNodeAPI.ipc.on('protocol-data-join-meeting', this._listenOnProtocolJoinMeeting);
-        window.jitsiNodeAPI.ipc.on('protocol-data-plan-meeting', this._listenOnProtocolPlanMeeting);
+        this._unsubscribeProtocol = [
+            window.jitsiNodeAPI.ipc.on('protocol-data-create-meeting', this._listenOnProtocolCreateMeeting),
+            window.jitsiNodeAPI.ipc.on('protocol-data-join-meeting', this._listenOnProtocolJoinMeeting),
+            window.jitsiNodeAPI.ipc.on('protocol-data-plan-meeting', this._listenOnProtocolPlanMeeting)
+        ];
 
         if (this.props.location?.state?.event) {
             switch (this.props.location.state.event) {
@@ -62,18 +65,8 @@ class Welcome extends Component<IProps> {
         if (this._api) {
             this._api.dispose();
         }
-        window.jitsiNodeAPI.ipc.removeListener(
-            'protocol-data-create-meeting',
-            this._listenOnProtocolCreateMeeting
-        );
-        window.jitsiNodeAPI.ipc.removeListener(
-            'protocol-data-join-meeting',
-            this._listenOnProtocolJoinMeeting
-        );
-        window.jitsiNodeAPI.ipc.removeListener(
-            'protocol-data-plan-meeting',
-            this._listenOnProtocolPlanMeeting
-        );
+        this._unsubscribeProtocol.forEach(unsubscribe => unsubscribe());
+        this._unsubscribeProtocol = [];
     }
 
     _listenOnProtocolCreateMeeting() {
