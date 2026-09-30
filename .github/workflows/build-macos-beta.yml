@@ -1,0 +1,131 @@
+name: build-macos-beta
+
+# Manual beta distribution for macOS only: builds the universal DMG + zip
+# (Developer ID signed from the runner keychain + notarized) and publishes
+# the beta update feed to S3, so installed beta-channel apps auto-update.
+# Windows and Linux are deliberately NOT built: this exists to ship a mac
+# beta without paying for the Windows DigiCert signing chain. It creates
+# no GitHub release - artifacts live on the workflow run, the feed carries
+# the updates. Same guard as build-nsis-test.
+
+on:
+    workflow_dispatch:
+        inputs:
+            version:
+                description: 'Beta version (X.Y.Z-beta.N or X.Y.Z-alpha.N, e.g. 2.0.2-beta.0)'
+                required: true
+                type: string
+
+jobs:
+    build-macos-beta:
+        # kDrive model: the Developer ID certificate + private key live
+        # permanently in the keychain of the self-hosted runner. Unlock the
+        # keychain, then electron-builder auto-discovers the valid identity
+        # (no CSC_LINK secret: the private key never leaves the machine).
+        # Pinned to the desktop-kdrive-labeled Mac (M2-3): the org's other
+        # self-hosted Macs use a different keychain password.
+        runs-on: [self-hosted, macOS, desktop-kdrive]
+        env:
+            API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+            API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+        steps:
+            - name: beta/check-version-input
+              env:
+                  VERSION: ${{ inputs.version }}
+              run: |
+                  if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-(beta|alpha)\.[0-9]+$ ]]; then
+                      echo "ERROR: version must be a prerelease (X.Y.Z-beta.N or X.Y.Z-alpha.N)."
+                      echo "A stable-looking version would make electron-builder derive the"
+                      echo "'latest' channel and overwrite the PRODUCTION feed (latest.yml)."
+                      exit 1
+                  fi
+
+            - name: beta/checkout-repo
+              uses: actions/checkout@v4
+
+            - name: beta/unlock-keychain
+              env:
+                  KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+              run: security unlock-keychain -p "$KEYCHAIN_PASSWORD" login.keychain
+
+            - name: beta/check-signing-identity
+              run: security find-identity -v -p codesigning
+
+            - name: beta/setup-node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+                  cache-dependency-path: package-lock.json
+                  registry-url: "https://npm.pkg.github.com"
+                  scope: "@infomaniak"
+
+            - name: beta/install-dependencies
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  # The committed .npmrc expands ${NPM_TOKEN} (not NODE_AUTH_TOKEN):
+                  # without this the GPR download is unauthenticated (401).
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+              run: npm ci
+
+            - name: beta/copy-provisioning-profile
+              env:
+                  MAC_PROFILE: ${{ secrets.MAC_PROFILE }}
+              run: |
+                  if [[ -n "$MAC_PROFILE" ]]; then
+                      echo "$MAC_PROFILE" | base64 -D > ./mac.provisionprofile
+                  fi
+
+            - name: beta/write-appstore-api-key
+              env:
+                  APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY }}
+              run: |
+                  KEY_FILE="$RUNNER_TEMP/api_key.p8"
+                  KEY_CONTENT="${APPLE_API_KEY_CONTENT//\\n/$'\n'}"
+                  printf '%s' "$KEY_CONTENT" > "$KEY_FILE"
+                  if ! grep -q 'BEGIN PRIVATE KEY' "$KEY_FILE"; then
+                      printf '%s' "$APPLE_API_KEY_CONTENT" | base64 -d > "$KEY_FILE" 2>/dev/null || true
+                  fi
+                  if ! grep -q 'BEGIN PRIVATE KEY' "$KEY_FILE"; then
+                      echo "ERROR: APPLE_API_KEY secret is not a valid .p8 key (no PEM header)"
+                      exit 1
+                  fi
+                  if [[ -n "$(tail -c 1 "$KEY_FILE")" ]]; then printf '\n' >> "$KEY_FILE"; fi
+                  echo "API_KEY_FILE=$KEY_FILE" >> "$GITHUB_ENV"
+
+            - name: beta/set-version
+              env:
+                  VERSION: ${{ inputs.version }}
+              run: npm --no-git-tag-version version "$VERSION"
+
+            - name: beta/build-and-publish
+              # --publish=always pushes to the S3 endpoint from
+              # electron-builder.json (storage5). The beta/alpha version
+              # segment makes electron-builder write beta.yml/alpha.yml feeds
+              # only, never latest.yml (same channel derivation as the real
+              # release; see the release.yml build-and-publish comment).
+              run: |
+                  npm run build
+                  npx electron-builder --mac --publish=always
+
+            - name: beta/verify-signature
+              run: |
+                  APP=$(find dist -maxdepth 4 -name "*.app" | head -1)
+                  echo "App: $APP"
+                  codesign -dv --verbose=2 "$APP" 2>&1 | grep -E 'Authority|TeamIdentifier'
+                  codesign --verify --deep --strict "$APP" && echo 'codesign: OK'
+                  spctl -a -t execute -vv "$APP"
+                  xcrun stapler validate "$APP" && echo 'staple: OK'
+
+            - name: beta/collect-artifacts
+              run: |
+                  mkdir -p ./release/macos-beta
+                  bash -x ./scripts/cp_artifacts.sh dist ./release/macos-beta
+
+            - name: beta/upload-artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: kmeet-macos-beta
+                  path: ./release
+                  compression-level: 0
+                  retention-days: 14
