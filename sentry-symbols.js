@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+/* eslint-env node */
+
 let SentryCli;
 let download;
 
@@ -12,6 +14,7 @@ try {
     process.exit(1);
 }
 
+// eslint-disable-next-line max-len
 const VERSION = /\bv?(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[\da-z-]+(?:\.[\da-z-]+)*)?(?:\+[\da-z-]+(?:\.[\da-z-]+)*)?\b/i;
 const SYMBOL_CACHE_FOLDER = '.electron-symbols';
 const packageJson = require('./package.json');
@@ -103,7 +106,7 @@ function getElectronVersion() {
  *
  * @returns {Promise<string>}
  */
-async function downloadSymbols(options) {
+function downloadSymbols(options) {
     return new Promise((resolve, reject) => {
         download(
       {

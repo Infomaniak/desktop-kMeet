@@ -45,5 +45,11 @@
 		"openKmeet": "Abrir kMeet.infomaniak.com",
 		"aboutKmeet": "Acerca de kMeet",
 		"quit": "Dejar kMeet"
+	},
+	"remoteControl": {
+		"message": "¿Permitir el control remoto de este equipo?",
+		"detail": "Un participante de la reunión solicita el control del ratón y del teclado.",
+		"allow": "Permitir",
+		"deny": "Denegar"
 	}
 }

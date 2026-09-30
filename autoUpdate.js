@@ -1,5 +1,6 @@
-import { ipcMain, app, BrowserWindow } from 'electron';
-import { autoUpdater, CancellationToken } from 'electron-updater';
+import { BrowserWindow, app, ipcMain } from 'electron';
+import { CancellationToken, autoUpdater } from 'electron-updater';
+
 import { displayRestartToUpgrade, displayUpgrade } from './notifications';
 
 // Public constants
@@ -30,13 +31,12 @@ const NEXT_CHECK = 3600000; // 1 hour
  * start the app from directory B
 **/
 export class UpdateManager {
-    lastNotification
-    lastCheck
-    cancellationToken
-    versionDownloaded
-    downloadedInfo
-    versionAvailable
-    versionDownloaded
+    lastNotification;
+    lastCheck;
+    cancellationToken;
+    versionDownloaded;
+    downloadedInfo;
+    versionAvailable;
 
     /**
      * Initializes a new {@code UpdateManager} instance.

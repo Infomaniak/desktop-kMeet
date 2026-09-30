@@ -48,5 +48,11 @@
 		"openKmeet": "kMeet.infomaniak.com öffnen",
 		"aboutKmeet": "Über kMeet",
 		"quit": "Beenden kMeet"
+	},
+	"remoteControl": {
+		"message": "Fernsteuerung dieses Computers erlauben?",
+		"detail": "Ein Meeting-Teilnehmer fordert die Steuerung von Maus und Tastatur an.",
+		"allow": "Erlauben",
+		"deny": "Verweigern"
 	}
 }
