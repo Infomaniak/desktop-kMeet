@@ -36,13 +36,6 @@
   "linux": {
     "category": "VideoConference;AudioVideo;Audio;Video;Network",
     "description": "Infomaniak Meet Desktop App",
-    "desktop": {
-      "Comment[de]": "Infomaniak Meet Desktop App",
-      "Comment[es]": "Infomaniak Meet Desktop App",
-      "Comment[fr]": "Infomaniak Meet Desktop App",
-      "Comment[it]": "Infomaniak Meet Desktop App",
-      "MimeType": "x-scheme-handler/kmeet"
-    },
     "mimeTypes": [
       "x-scheme-handler/kmeet"
     ],
@@ -104,12 +97,14 @@
     "sign": true
   },
   "win": {
-    "sign": "./scripts/winsign.js",
     "forceCodeSigning": true,
     "artifactName": "${name}-${version}-${os}.${ext}",
-    "certificateSubjectName": "INFOMANIAK NETWORK SA",
     "target": ["nsis", "msi"],
-    "publisherName": "CN=\"INFOMANIAK NETWORK SA\", O=\"INFOMANIAK NETWORK SA\", L=Les Acacias, S=Genève, C=CH"
+    "signtoolOptions": {
+      "sign": "./scripts/winsign.js",
+      "certificateSubjectName": "INFOMANIAK NETWORK SA",
+      "publisherName": "CN=\"INFOMANIAK NETWORK SA\", O=\"INFOMANIAK NETWORK SA\", L=Les Acacias, S=Genève, C=CH"
+    }
   },
   "nsis": {
     "artifactName": "${name}-setup-${version}-win.${ext}",
