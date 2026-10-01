@@ -27,7 +27,6 @@ import electronReload from 'electron-reload';
 import Store from 'electron-store';
 import { autoUpdater } from 'electron-updater';
 import windowStateKeeper from 'electron-window-state';
-import _ from 'lodash';
 import * as path from 'path';
 import * as URL from 'url';
 
@@ -316,11 +315,11 @@ function createJitsiMeetWindow() {
                 const searchParams = JSON.parse(joinUrl.searchParams.get('cvar'));
 
                 if (rendererReady && mainWindow) {
-                    let joinHost = _.findLast(
-                        searchParams, (o: [string, string]) => o[0] === 'room_hostname'
+                    let joinHost = searchParams.findLast(
+                        (o: [string, string]) => o[0] === 'room_hostname'
                     )[1].replace(/https?:\/\//, '');
-                    const joinRoom = _.findLast(searchParams, (o: [string, string]) => o[0] === 'conference_name')[1];
-                    const joinSubject = _.findLast(searchParams, (o: [string, string]) => o[0] === 'room_subject')[1];
+                    const joinRoom = searchParams.findLast((o: [string, string]) => o[0] === 'conference_name')[1];
+                    const joinSubject = searchParams.findLast((o: [string, string]) => o[0] === 'room_subject')[1];
 
                     try {
                         const roomUrl = new URL.URL(`${config.defaultServerURL}/${joinSubject}`);
