@@ -327,7 +327,7 @@ function createJitsiMeetWindow() {
                         const findCvar = (name: string) => {
                             for (let i = cvar.length - 1; i >= 0; i--) {
                                 if (cvar[i][0] === name) {
-                                    return cvar[i][1];
+                                    return cvar[i][1] ?? '';
                                 }
                             }
 
