@@ -311,28 +311,47 @@ function createJitsiMeetWindow() {
             }
 
             if (d.url.indexOf('welcomePage.joinButton.clicked') > 0) {
-                const joinUrl = new URL.URL(d.url);
-                const searchParams = JSON.parse(joinUrl.searchParams.get('cvar'));
-
-                if (rendererReady && mainWindow) {
-                    let joinHost = searchParams.findLast(
-                        (o: [string, string]) => o[0] === 'room_hostname'
-                    )[1].replace(/https?:\/\//, '');
-                    const joinRoom = searchParams.findLast((o: [string, string]) => o[0] === 'conference_name')[1];
-                    const joinSubject = searchParams.findLast((o: [string, string]) => o[0] === 'room_subject')[1];
-
-                    try {
-                        const roomUrl = new URL.URL(`${config.defaultServerURL}/${joinSubject}`);
-
-                        joinHost = roomUrl.origin.replace(/https?:\/\//, '');
-                    } catch (error) {
-                        console.log(error);
-                    }
-
-                    mainWindow.webContents.send(
-                        'protocol-data-msg',
-                        `${joinHost}/${joinRoom}/${joinSubject}`
+                // The web app sends the matomo cvar param as an object
+                // {"1":["name","value"],...}, not as an array of pairs —
+                // Object.values() normalizes both shapes into pairs.
+                try {
+                    const joinUrl = new URL.URL(d.url);
+                    const cvar = Object.values(
+                        JSON.parse(joinUrl.searchParams.get('cvar') ?? '{}') as Record<string, [ string, string ]>
                     );
+
+                    if (rendererReady && mainWindow) {
+                        // Scans backwards like lodash's findLast did; written
+                        // as a plain loop because Array.prototype.findLast is
+                        // ES2023 and tsconfig lib is ES2022.
+                        const findCvar = (name: string) => {
+                            for (let i = cvar.length - 1; i >= 0; i--) {
+                                if (cvar[i][0] === name) {
+                                    return cvar[i][1] ?? '';
+                                }
+                            }
+
+                            return '';
+                        };
+                        let joinHost = findCvar('room_hostname').replace(/https?:\/\//, '');
+                        const joinRoom = findCvar('conference_name');
+                        const joinSubject = findCvar('room_subject');
+
+                        try {
+                            const roomUrl = new URL.URL(`${config.defaultServerURL}/${joinSubject}`);
+
+                            joinHost = roomUrl.origin.replace(/https?:\/\//, '');
+                        } catch (error) {
+                            console.log(error);
+                        }
+
+                        mainWindow.webContents.send(
+                            'protocol-data-msg',
+                            `${joinHost}/${joinRoom}/${joinSubject}`
+                        );
+                    }
+                } catch (error) {
+                    log.error('Failed to parse joinButton cvar payload', error);
                 }
             }
 
