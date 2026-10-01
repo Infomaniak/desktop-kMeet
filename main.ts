@@ -321,7 +321,18 @@ function createJitsiMeetWindow() {
                     );
 
                     if (rendererReady && mainWindow) {
-                        const findCvar = (name: string) => cvar.findLast(entry => entry[0] === name)?.[1] ?? '';
+                        // Scans backwards like lodash's findLast did; written
+                        // as a plain loop because Array.prototype.findLast is
+                        // ES2023 and tsconfig lib is ES2022.
+                        const findCvar = (name: string) => {
+                            for (let i = cvar.length - 1; i >= 0; i--) {
+                                if (cvar[i][0] === name) {
+                                    return cvar[i][1];
+                                }
+                            }
+
+                            return '';
+                        };
                         let joinHost = findCvar('room_hostname').replace(/https?:\/\//, '');
                         const joinRoom = findCvar('conference_name');
                         const joinSubject = findCvar('room_subject');
