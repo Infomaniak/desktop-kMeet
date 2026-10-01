@@ -194,8 +194,7 @@ const configs = {
             'electron-store',
             'auto-launch',
             'electron-updater',
-            'electron-log',
-            'lodash'
+            'electron-log'
         ]
     },
     preload: {

@@ -130,11 +130,6 @@ declare module 'electron-log' {
     export default log;
 }
 
-declare module 'lodash' {
-    const _: any;
-    export default _;
-}
-
 declare module './autoUpdate' {
     const updateManager: any;
     export default updateManager;
