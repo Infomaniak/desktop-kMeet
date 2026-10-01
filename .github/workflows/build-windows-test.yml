@@ -49,7 +49,7 @@ jobs:
             - name: test/build-unsigned
               run: |
                   npm run build
-                  node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync('electron-builder.json','utf8'));delete c.win.sign;delete c.win.certificateSubjectName;fs.writeFileSync('electron-builder.test.json',JSON.stringify(c))"
+                  node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync('electron-builder.json','utf8'));delete c.win.signtoolOptions.sign;delete c.win.signtoolOptions.certificateSubjectName;fs.writeFileSync('electron-builder.test.json',JSON.stringify(c))"
                   npx electron-builder --config electron-builder.test.json --win msi --x64 --publish=never
 
             - name: test/package
