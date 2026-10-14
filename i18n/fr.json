@@ -24,5 +24,9 @@
   "remoteControl.deny": "Refuser",
   "remoteControl.allow": "Autoriser",
   "remoteControl.message": "Autoriser le contrôle à distance de cet ordinateur ?",
-  "remoteControl.detail": "Un participant à la réunion demande le contrôle de votre souris et de votre clavier."
+  "remoteControl.detail": "Un participant à la réunion demande le contrôle de votre souris et de votre clavier.",
+  "serverChange.cancel": "Annuler",
+  "serverChange.continue": "Continuer",
+  "serverChange.message": "Se connecter à un autre serveur ?",
+  "serverChange.detail": "Vous êtes sur le point de vous connecter à {serverURL}, qui n'est pas votre serveur kMeet habituel."
 }

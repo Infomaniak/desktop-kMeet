@@ -24,5 +24,9 @@
     "remoteControl.deny": "Ablehnen",
     "remoteControl.allow": "Erlauben",
     "remoteControl.message": "Fernsteuerung dieses Computers erlauben?",
-    "remoteControl.detail": "Ein Meeting-Teilnehmer fordert die Steuerung Ihrer Maus und Tastatur an."
+    "remoteControl.detail": "Ein Meeting-Teilnehmer fordert die Steuerung Ihrer Maus und Tastatur an.",
+    "serverChange.cancel": "Abbrechen",
+    "serverChange.continue": "Fortfahren",
+    "serverChange.message": "Verbindung mit einem anderen Server herstellen?",
+    "serverChange.detail": "Sie sind dabei, eine Verbindung mit {serverURL} herzustellen, das nicht Ihr üblicher kMeet-Server ist."
 }

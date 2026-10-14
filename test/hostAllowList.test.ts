@@ -1,36 +1,29 @@
 import assert from 'node:assert';
 
+import { createConferenceObjectFromURL } from '../app/features/utils/functions';
 import {
     ALLOWED_HOSTS,
     isAllowedHost,
-    normalizeHost
+    parseAuthority
 } from '../app/features/utils/hostAllowList';
 
 /**
- * Regression tests for the host allow-list (YWH-PGM7461-3062).
+ * Regression tests for the host allow-list (YWH-PGM7461-3062 and the 2.0.2
+ * allowlist bypass report).
  *
  * The allow-list prevents a crafted kmeet:// link from loading an
- * attacker-controlled HTTPS origin as the meeting iframe. It is enforced
- * in both the main process (handleProtocolCall) and the renderer
- * (createConferenceObjectFromURL, defense in depth).
+ * attacker-controlled HTTPS origin as the meeting iframe. It is enforced in
+ * both the main process (handleProtocolCall) and the renderer
+ * (createConferenceObjectFromURL, defense in depth), and once more at load
+ * time in Conference._loadConference.
  *
- * These tests require the shared module used by both layers
- * (app/features/utils/hostAllowList.ts), so a change to the production
- * logic can no longer silently pass the suite.
+ * Parsing must agree with the WHATWG URL parser the iframe load uses:
+ * string surgery on '@', ':' or '/' disagrees with the browser about where
+ * the authority ends, which is the reported bypass class
+ * (kmeet://127.0.0.1:8899#@kmeet.infomaniak.com/room).
  */
 
-/**
- * Mirrors normalizeServerURL() from app/features/utils/functions.ts.
- */
-function normalizeServerURL(url: string): string {
-    const trimmed = url.trim();
-
-    if (trimmed && trimmed.indexOf('://') === -1) {
-        return `https://${trimmed}`;
-    }
-
-    return url;
-}
+const DEFAULT_SERVER_URL = 'https://kmeet.infomaniak.com';
 
 describe('Host allow-list', () => {
     describe('ALLOWED_HOSTS', () => {
@@ -50,6 +43,7 @@ describe('Host allow-list', () => {
         it('fails closed when a host is provided but yields no hostname', () => {
             assert.strictEqual(isAllowedHost(':8443'), false);
             assert.strictEqual(isAllowedHost('user@'), false);
+            assert.strictEqual(isAllowedHost('https:'), false);
         });
 
         it('allows kmeet.infomaniak.com', () => {
@@ -80,11 +74,6 @@ describe('Host allow-list', () => {
             assert.strictEqual(isAllowedHost('sub.kmeet.infomaniak.com:8080'), true);
         });
 
-        it('strips userinfo before matching', () => {
-            assert.strictEqual(isAllowedHost('user@kmeet.infomaniak.com'), true);
-            assert.strictEqual(isAllowedHost('user@kmeet.infomaniak.com:8443'), true);
-        });
-
         it('rejects attacker.invalid', () => {
             assert.strictEqual(isAllowedHost('attacker.invalid'), false);
         });
@@ -105,24 +94,114 @@ describe('Host allow-list', () => {
             assert.strictEqual(isAllowedHost('kmeet.infomaniak.com:8443@attacker.invalid'), false);
         });
 
+        it('rejects userinfo even when it names an allowed host', () => {
+            // A kMeet link never carries userinfo; fail closed instead of
+            // trusting every consumer to read hostname, not href.
+            assert.strictEqual(isAllowedHost('user@kmeet.infomaniak.com'), false);
+            assert.strictEqual(isAllowedHost('user@kmeet.infomaniak.com:8443'), false);
+        });
+
         it('rejects hosts that merely contain an allowed host as substring', () => {
             assert.strictEqual(isAllowedHost('xkmeet.infomaniak.com'), false);
             assert.strictEqual(isAllowedHost('kmeet.infomaniak.comx'), false);
         });
-    });
 
-    describe('normalizeHost', () => {
-        it('lowercases, strips userinfo, port and trailing dot', () => {
-            assert.strictEqual(
-                normalizeHost('User@Kmeet.Infomaniak.com:8443.'),
-                'kmeet.infomaniak.com');
-            assert.strictEqual(normalizeHost('attacker.invalid:8080'), 'attacker.invalid');
-            assert.strictEqual(normalizeHost(''), '');
-            assert.strictEqual(normalizeHost(undefined), '');
+        describe('YWH-PGM7461-3062 bypass payloads (URL-parser confusion)', () => {
+            it('rejects the reported @/# payload: 127.0.0.1:8899#@kmeet.infomaniak.com', () => {
+                // normalizeHost used to take the substring after the last
+                // '@' and see kmeet.infomaniak.com while the browser ends
+                // the authority at '#' and connects to 127.0.0.1:8899.
+                assert.strictEqual(isAllowedHost('127.0.0.1:8899#@kmeet.infomaniak.com'), false);
+            });
+
+            it('rejects the ? and \\ variants of the reported payload', () => {
+                assert.strictEqual(isAllowedHost('127.0.0.1:8899?@kmeet.infomaniak.com'), false);
+                assert.strictEqual(isAllowedHost('127.0.0.1:8899\\#@kmeet.infomaniak.com'), false);
+            });
+
+            it('rejects an attacker host that names kmeet after @', () => {
+                // The browser loads evil.com (WHATWG reads '\' as a path
+                // separator, so the authority ends before the backslash).
+                assert.strictEqual(isAllowedHost('evil.com\\@kmeet.infomaniak.com'), false);
+            });
+
+            it('still allows a fragment pointing at kmeet from a kmeet host', () => {
+                // The browser loads kmeet.infomaniak.com here; the fragment
+                // is inert and the renderer legitimately passes config.*
+                // fragments to the conference.
+                assert.strictEqual(isAllowedHost('kmeet.infomaniak.com#@attacker.invalid'), true);
+            });
         });
     });
 
-    describe('Protocol link parsing (handleProtocolCall simulation)', () => {
+    describe('parseAuthority', () => {
+        it('parses a bare authority', () => {
+            assert.deepStrictEqual(parseAuthority('kmeet.infomaniak.com'), {
+                hostname: 'kmeet.infomaniak.com',
+                origin: 'https://kmeet.infomaniak.com',
+                port: ''
+            });
+        });
+
+        it('keeps a non-default port in the canonical origin', () => {
+            const parsed = parseAuthority('kmeet.infomaniak.com:8443');
+
+            assert.strictEqual(parsed?.hostname, 'kmeet.infomaniak.com');
+            assert.strictEqual(parsed?.port, '8443');
+            assert.strictEqual(parsed?.origin, 'https://kmeet.infomaniak.com:8443');
+        });
+
+        it('drops the default port', () => {
+            const parsed = parseAuthority('kmeet.infomaniak.com:443');
+
+            assert.strictEqual(parsed?.origin, 'https://kmeet.infomaniak.com');
+        });
+
+        it('lowercases and drops a trailing dot', () => {
+            const parsed = parseAuthority('Kmeet.Infomaniak.Com.');
+
+            assert.strictEqual(parsed?.hostname, 'kmeet.infomaniak.com');
+            assert.strictEqual(parsed?.origin, 'https://kmeet.infomaniak.com');
+        });
+
+        it('accepts full URLs and keeps only the origin', () => {
+            const parsed = parseAuthority('https://kmeet.infomaniak.com/room#config.x=y');
+
+            assert.strictEqual(parsed?.origin, 'https://kmeet.infomaniak.com');
+        });
+
+        it('accepts a kmeet:// payload', () => {
+            const parsed = parseAuthority('kmeet://kmeet.infomaniak.com/room');
+
+            assert.strictEqual(parsed?.origin, 'https://kmeet.infomaniak.com');
+        });
+
+        it('fails closed on empty and unparsable input', () => {
+            assert.strictEqual(parseAuthority(''), null);
+            assert.strictEqual(parseAuthority('   '), null);
+            assert.strictEqual(parseAuthority(undefined), null);
+            assert.strictEqual(parseAuthority(null), null);
+            assert.strictEqual(parseAuthority('https://'), null);
+            assert.strictEqual(parseAuthority(':8443'), null);
+        });
+
+        it('parses scheme-like input as a hostname and lets the allow-list reject it', () => {
+            // 'https:' is not a scheme+// value, so it becomes the host of
+            // 'https://https'. The URL parser is right; the allow-list
+            // comparison rejects the host.
+            const parsed = parseAuthority('https:');
+
+            assert.strictEqual(parsed?.hostname, 'https');
+            assert.strictEqual(isAllowedHost('https:'), false);
+        });
+
+        it('fails closed on userinfo', () => {
+            assert.strictEqual(parseAuthority('user@kmeet.infomaniak.com'), null);
+            assert.strictEqual(parseAuthority('user:pass@kmeet.infomaniak.com'), null);
+        });
+    });
+
+    describe('Protocol link parsing (handleProtocolCall)', () => {
         it('rejects kmeet://attacker.invalid/room', () => {
             const inputURL = 'attacker.invalid/room';
             const hostPart = inputURL.split('/')[0];
@@ -158,26 +237,84 @@ describe('Host allow-list', () => {
         it('rejects kmeet://kmeet.infomaniak.com.evil.com/room', () => {
             assert.strictEqual(isAllowedHost('kmeet.infomaniak.com.evil.com'), false);
         });
+
+        it('rejects the reported bypass kmeet://127.0.0.1:8899#@kmeet.infomaniak.com/room', () => {
+            const inputURL = '127.0.0.1:8899#@kmeet.infomaniak.com/room';
+            const hostPart = inputURL.split('/')[0];
+
+            assert.strictEqual(isAllowedHost(hostPart), false);
+            // The parser sees what the browser sees: host 127.0.0.1 — the
+            // kmeet.infomaniak.com part is only a fragment.
+            assert.strictEqual(parseAuthority(hostPart)?.hostname, '127.0.0.1');
+        });
     });
 
-    describe('createConferenceObjectFromURL defense-in-depth', () => {
-        it('rejects unauthorized server', () => {
-            const serverURL = normalizeServerURL('attacker.invalid');
-
+    describe('createConferenceObjectFromURL (renderer entry)', () => {
+        it('rejects an unauthorized server', () => {
             assert.strictEqual(
-                isAllowedHost(serverURL.replace(/https?:\/\//, '')), false);
+                createConferenceObjectFromURL('attacker.invalid/room', DEFAULT_SERVER_URL),
+                undefined);
         });
 
-        it('allows authorized host', () => {
-            const serverURL = normalizeServerURL('kmeet.infomaniak.com');
+        it('allows an authorized host/room and canonicalizes the origin', () => {
+            const conference = createConferenceObjectFromURL(
+                'kmeet.infomaniak.com/room', DEFAULT_SERVER_URL);
 
-            assert.strictEqual(isAllowedHost(serverURL.replace(/https?:\/\//, '')), true);
+            assert.deepStrictEqual(conference, {
+                room: 'room',
+                serverURL: 'https://kmeet.infomaniak.com',
+                subject: undefined
+            });
         });
 
-        it('allows authorized host with port', () => {
-            const serverURL = normalizeServerURL('kmeet.infomaniak.com:8443');
+        it('uses the default server for a room-only link', () => {
+            const conference = createConferenceObjectFromURL('room', DEFAULT_SERVER_URL);
 
-            assert.strictEqual(isAllowedHost(serverURL.replace(/https?:\/\//, '')), true);
+            assert.deepStrictEqual(conference, {
+                room: 'room',
+                serverURL: 'https://kmeet.infomaniak.com',
+                subject: undefined
+            });
+        });
+
+        it('rejects the reported bypass payload end-to-end', () => {
+            const conference = createConferenceObjectFromURL(
+                '127.0.0.1:8899#@kmeet.infomaniak.com/room', DEFAULT_SERVER_URL);
+
+            assert.strictEqual(conference, undefined);
+        });
+
+        it('rejects the ? and \\ bypass variants end-to-end', () => {
+            assert.strictEqual(
+                createConferenceObjectFromURL('127.0.0.1:8899?@kmeet.infomaniak.com/room', DEFAULT_SERVER_URL),
+                undefined);
+            assert.strictEqual(
+                createConferenceObjectFromURL('127.0.0.1:8899\\#@kmeet.infomaniak.com/room', DEFAULT_SERVER_URL),
+                undefined);
+        });
+
+        it('keeps an inert fragment on an allowed host and canonicalizes the origin', () => {
+            // The fragment (@attacker.invalid) is inert: the browser loads
+            // the parsed origin, which is kmeet.infomaniak.com.
+            const conference = createConferenceObjectFromURL(
+                'kmeet.infomaniak.com#@attacker.invalid/room', DEFAULT_SERVER_URL);
+
+            assert.strictEqual(conference?.serverURL, 'https://kmeet.infomaniak.com');
+            assert.strictEqual(conference?.room, 'room');
+        });
+
+        it('keeps a non-default port of an allowed host', () => {
+            const conference = createConferenceObjectFromURL(
+                'kmeet.infomaniak.com:8443/room', DEFAULT_SERVER_URL);
+
+            assert.strictEqual(conference?.serverURL, 'https://kmeet.infomaniak.com:8443');
+        });
+
+        it('carries the subject through', () => {
+            const conference = createConferenceObjectFromURL(
+                'kmeet.infomaniak.com/room/subject', DEFAULT_SERVER_URL);
+
+            assert.strictEqual(conference?.subject, 'subject');
         });
     });
 });

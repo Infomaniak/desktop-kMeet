@@ -1,6 +1,6 @@
 import type { IConference } from '../../types';
 
-import { isAllowedHost } from './hostAllowList';
+import { isAllowedHost, parseAuthority } from './hostAllowList';
 
 
 /**
@@ -66,11 +66,13 @@ export function createConferenceObjectFromURL(inputURL: string, defaultServerURL
 
     // Defense-in-depth: reject unauthorized hosts even if the main process
     // check was bypassed. This prevents loading an attacker-controlled
-    // origin as the meeting iframe. isAllowedHost normalizes the host
-    // (userinfo, port, case, trailing dot) exactly like the main process.
-    const host = serverURL.replace(/^https?:\/\//, '');
+    // origin as the meeting iframe. The value is parsed with the WHATWG URL
+    // parser (the same one the iframe load uses): string surgery would
+    // disagree with the browser about where the authority ends, which is
+    // the YWH-PGM7461 "@"/"#" confusion class.
+    const parsed = parseAuthority(serverURL);
 
-    if (!isAllowedHost(host)) {
+    if (!parsed || !isAllowedHost(parsed.hostname)) {
         // eslint-disable-next-line no-console
         console.warn(`Rejected conference with unauthorized server: ${serverURL}`);
 
@@ -79,7 +81,9 @@ export function createConferenceObjectFromURL(inputURL: string, defaultServerURL
 
     return {
         room,
-        serverURL,
+        // Canonical origin: the value that was checked and the value that
+        // is loaded cannot differ.
+        serverURL: parsed.origin,
         subject
     } as IConference;
 }
