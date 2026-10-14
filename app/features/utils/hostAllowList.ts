@@ -16,7 +16,6 @@
  */
 const ALLOWED_HOSTS: string[] = [
     'kmeet.infomaniak.com',
-    'kmeet.infomaniakgroup.com',
     'kmeet.preprod.dev.infomaniak.ch'
 ];
 

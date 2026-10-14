@@ -30,8 +30,11 @@ describe('Host allow-list', () => {
     describe('ALLOWED_HOSTS', () => {
         it('contains the production hosts', () => {
             assert.ok(ALLOWED_HOSTS.includes('kmeet.infomaniak.com'));
-            assert.ok(ALLOWED_HOSTS.includes('kmeet.infomaniakgroup.com'));
             assert.ok(ALLOWED_HOSTS.includes('kmeet.preprod.dev.infomaniak.ch'));
+            // Brand domains (kmeet.infomaniakgroup.com, ...) are dynamic:
+            // they are served by the "kmeet." naming convention, never
+            // enumerated in the static list.
+            assert.ok(!ALLOWED_HOSTS.some(h => h !== 'kmeet.infomaniak.com' && h !== 'kmeet.preprod.dev.infomaniak.ch'));
         });
     });
 
@@ -137,10 +140,10 @@ describe('Host allow-list', () => {
             it('rejects customer brand hosts (deep links never reach brands)', () => {
                 // OS deep links come from untrusted sources; customer brands
                 // are only reachable through the embedded web app's join
-                // button. Infomaniak-operated brand domains (e.g.
-                // kmeet.infomaniakgroup.com) stay in the static list.
+                // button or the settings field.
                 assert.strictEqual(isAllowedHost('kmeet.customer.com'), false);
                 assert.strictEqual(isAllowedHost('kmeet.someone.co.uk'), false);
+                assert.strictEqual(isAllowedHost('kmeet.infomaniakgroup.com'), false);
             });
         });
 
@@ -166,6 +169,7 @@ describe('Host allow-list', () => {
                 // flows are only reached from Infomaniak's own web app or
                 // the user's own settings input, never from crafted links.
                 assert.strictEqual(isAllowedBrandHost('kmeet.customer.com.evil.com'), true);
+                assert.strictEqual(isAllowedBrandHost('kmeet.infomaniakgroup.com.evil.com'), true);
             });
 
             it('rejects hosts without the kmeet. prefix', () => {
@@ -177,7 +181,7 @@ describe('Host allow-list', () => {
             it('rejects lookalikes embedding an allowed host', () => {
                 // kmeet.infomaniak.com smuggled inside a longer domain.
                 assert.strictEqual(isAllowedBrandHost('kmeet.infomaniak.com.evil.com'), false);
-                assert.strictEqual(isAllowedBrandHost('kmeet.infomaniakgroup.com.evil.com'), false);
+                assert.strictEqual(isAllowedBrandHost('kmeet.preprod.dev.infomaniak.ch.evil.com'), false);
             });
 
             it('rejects the YWH bypass payloads', () => {
@@ -376,15 +380,11 @@ describe('Host allow-list', () => {
                 undefined);
         });
 
-        it('accepts Infomaniak brand domains even in strict mode', () => {
-            const conference = createConferenceObjectFromURL(
-                'kmeet.infomaniakgroup.com/room/subject', DEFAULT_SERVER_URL);
-
-            assert.deepStrictEqual(conference, {
-                room: 'room',
-                serverURL: 'https://kmeet.infomaniakgroup.com',
-                subject: 'subject'
-            });
+        it('rejects brand domains in strict mode (deep links never reach brands)', () => {
+            assert.strictEqual(
+                createConferenceObjectFromURL(
+                    'kmeet.infomaniakgroup.com/room/subject', DEFAULT_SERVER_URL),
+                undefined);
         });
 
         it('accepts brand hosts when the join comes from the web app', () => {
