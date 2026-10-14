@@ -24,5 +24,9 @@
   "remoteControl.deny": "Deny",
   "remoteControl.allow": "Allow",
   "remoteControl.message": "Allow remote control of this computer?",
-  "remoteControl.detail": "A meeting participant is requesting control of your mouse and keyboard."
+  "remoteControl.detail": "A meeting participant is requesting control of your mouse and keyboard.",
+  "serverChange.cancel": "Cancel",
+  "serverChange.continue": "Continue",
+  "serverChange.message": "Connect to a different server?",
+  "serverChange.detail": "You are about to connect to {serverURL}, which is not your usual kMeet server."
 }

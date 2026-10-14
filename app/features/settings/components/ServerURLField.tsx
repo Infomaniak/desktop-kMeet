@@ -8,6 +8,7 @@ import type { IState } from '../../../types';
 import config from '../../config';
 import FieldText from '../../shared/components/FieldText';
 import { normalizeServerURL } from '../../utils';
+import { isAllowedHost, parseAuthority } from '../../utils/hostAllowList';
 import { setServerURL } from '../actions';
 import { Form } from '../styled';
 
@@ -85,14 +86,37 @@ class ServerURLField extends Component<IProps, IServerURLFieldState> {
     /**
      * Updates Server URL in (redux) store when it is updated.
      *
+     * A server other than the default kMeet one (e.g. preprod) is confirmed
+     * through a native dialog in the main process before it is stored.
+     *
      * @param {Event} event - Event by which this function is called.
      * @returns {void}
      */
     _onServerURLSubmit(event: React.FormEvent) {
         event.preventDefault();
-        if (this.state.isValid) {
-            this.props.dispatch(setServerURL(this.state.serverURL ?? ''));
+
+        if (!this.state.isValid) {
+            return;
         }
+
+        const serverURL = this.state.serverURL ?? '';
+        const parsed = parseAuthority(serverURL);
+        const defaultHost = parseAuthority(config.defaultServerURL)?.hostname ?? '';
+
+        if (!serverURL.trim() || !parsed || parsed.hostname === defaultHost) {
+            this.props.dispatch(setServerURL(serverURL));
+
+            return;
+        }
+
+        window.jitsiNodeAPI.confirmExternalServer(parsed.origin).then(confirmed => {
+            if (confirmed) {
+                this.props.dispatch(setServerURL(parsed.origin));
+            }
+        }).catch(() => {
+            // Dialog could not be shown (e.g. window closed mid-dialog):
+            // keep the previously stored server URL.
+        });
     }
 
     /**
@@ -116,6 +140,14 @@ class ServerURLField extends Component<IProps, IServerURLFieldState> {
 
             if (!tmp.protocol.startsWith('http')) {
                 throw new Error('Invalid protocol');
+            }
+
+            // The conference iframe may only ever load an allowed host, so
+            // anything else is invalid input, not merely unconfirmed.
+            const parsed = parseAuthority(url);
+
+            if (!parsed || !isAllowedHost(parsed.hostname)) {
+                throw new Error('Server not allowed');
             }
 
             isValid = true;

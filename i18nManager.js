@@ -22,18 +22,30 @@ export class I18nManager {
     }
 
     /**
-     * Sets locale to use for i18n.
+     * Sets locale to use for i18n. Falls back to the primary language
+     * subtag when the full locale is not available ('fr-FR' → 'fr') and
+     * matches case-insensitively ('FR' → 'fr').
      *
+     * @param {string} locale - Locale to use.
      * @returns {boolean} - Whether set was successful.
      */
     setLocale(locale) {
         log.debug('i18nManager.setLocale', locale);
 
-        if (this.isLanguageAvailable(locale)) {
-            this.currentLanguage = this.getLanguages()[locale];
-            log.info('Set new language', locale);
+        let normalizedLocale = String(locale ?? '').trim();
 
-            return true;
+        normalizedLocale = normalizedLocale.toLowerCase();
+
+        for (const candidate of [
+            normalizedLocale,
+            normalizedLocale.split('-')[0]
+        ]) {
+            if (this.isLanguageAvailable(candidate)) {
+                this.currentLanguage = this.getLanguages()[candidate];
+                log.info('Set new language', candidate);
+
+                return true;
+            }
         }
 
         log.warn('Failed to set new language', locale);

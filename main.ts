@@ -31,7 +31,7 @@ import * as path from 'path';
 import * as URL from 'url';
 
 import config from './app/features/config';
-import { isAllowedHost } from './app/features/utils/hostAllowList';
+import { isAllowedHost, parseAuthority } from './app/features/utils/hostAllowList';
 import { openExternalLink } from './app/features/utils/openExternalLink';
 import updateManager from './autoUpdate';
 import builderJson from './electron-builder.json';
@@ -110,9 +110,38 @@ let mainWindow: BrowserWindow | null = null;
 let webrtcInternalsWindow: BrowserWindow | null = null;
 
 const appProtocolSurplus = `${config.appProtocolPrefix}://`;
+const defaultServerHost = parseAuthority(config.defaultServerURL)?.hostname ?? '';
 let rendererReady = false;
 let protocolDataForFrontApp: string | null = null;
 let tray: Tray | null = null;
+
+/**
+ * Asks the user, through a native dialog web content can neither render nor
+ * dismiss, whether connecting to a server other than the default kMeet one
+ * (e.g. preprod) is intended.
+ *
+ * @param {string} serverOrigin - The canonical origin of the target server.
+ * @returns {Promise<boolean>} Whether the user confirmed.
+ */
+async function confirmNonDefaultServer(serverOrigin: string): Promise<boolean> {
+    const options: Electron.MessageBoxOptions = {
+        type: 'warning',
+        buttons: [
+            localizeMessage('serverChange.cancel', 'Cancel'),
+            localizeMessage('serverChange.continue', 'Continue')
+        ],
+        defaultId: 0,
+        cancelId: 0,
+        message: localizeMessage('serverChange.message', 'Connect to a different server?'),
+        detail: localizeMessage('serverChange.detail', 'You are about to connect to {serverURL}, which is not your usual kMeet server.', { serverURL: serverOrigin })
+    };
+
+    const { response } = mainWindow
+        ? await dialog.showMessageBox(mainWindow, options)
+        : await dialog.showMessageBox(options);
+
+    return response === 1;
+}
 
 function setApplicationMenu() {
     if (process.platform === 'darwin') {
@@ -434,7 +463,7 @@ function createJitsiMeetWindow() {
         }
     });
 
-    handleProtocolCall(process.argv.pop());
+    void handleProtocolCall(process.argv.pop());
 }
 
 async function requestRemoteControlConsent(): Promise<boolean> {
@@ -584,7 +613,7 @@ function createWebRTCInternalsWindow() {
     webrtcInternalsWindow.loadURL('chrome://webrtc-internals');
 }
 
-function handleProtocolCall(fullProtocolCall?: string) {
+async function handleProtocolCall(fullProtocolCall?: string) {
     if (
         !fullProtocolCall
         || fullProtocolCall.trim() === ''
@@ -594,17 +623,37 @@ function handleProtocolCall(fullProtocolCall?: string) {
     }
 
     const inputURL = fullProtocolCall.replace(appProtocolSurplus, '');
+    const parts = inputURL.split('/');
+    const hostPart = parts[0];
 
-    // Validate the host before forwarding the protocol payload to the
-    // renderer. Without this check, a link like kmeet://attacker.invalid/room
-    // would load an attacker-controlled HTTPS origin as the meeting iframe,
-    // which could then drive the remote control bridge without user consent.
-    const hostPart = inputURL.split('/')[0];
+    // Room-only link (kmeet://room): no host, the renderer uses the
+    // configured default server, which is always trusted.
+    if (parts.length > 1) {
+        // Validate the host with the WHATWG URL parser before forwarding
+        // the protocol payload to the renderer. String surgery disagrees
+        // with the browser about where the authority ends ('@' vs '#',
+        // '?', '\'), which let a link like
+        // kmeet://127.0.0.1:8899#@kmeet.infomaniak.com/room load an
+        // attacker-controlled HTTPS origin as the meeting iframe.
+        const parsed = parseAuthority(hostPart);
 
-    if (!isAllowedHost(hostPart)) {
-        console.warn(`Rejected protocol call with unauthorized host: ${hostPart}`);
+        if (!parsed || !isAllowedHost(hostPart)) {
+            console.warn(`Rejected protocol call with unauthorized host: ${hostPart}`);
 
-        return;
+            return;
+        }
+
+        // The link targets an allowed but non-default server (e.g.
+        // preprod): confirm with a native dialog web content cannot fake.
+        if (parsed.hostname !== defaultServerHost) {
+            const confirmed = await confirmNonDefaultServer(parsed.origin);
+
+            if (!confirmed) {
+                console.warn(`Protocol call to ${parsed.origin} declined by the user`);
+
+                return;
+            }
+        }
     }
 
     if (app.isReady() && mainWindow === null) {
@@ -664,7 +713,7 @@ app.on('second-instance', (event, commandLine) => {
     if (mainWindow) {
         mainWindow.isMinimized() && mainWindow.restore();
         mainWindow.focus();
-        handleProtocolCall(commandLine.pop());
+        void handleProtocolCall(commandLine.pop());
     }
 });
 
@@ -688,7 +737,7 @@ if (isDev && process.platform === 'win32') {
 
 app.on('open-url', (event, data) => {
     event.preventDefault();
-    handleProtocolCall(data);
+    void handleProtocolCall(data);
 });
 
 ipcMain.on('renderer-ready', () => {
@@ -696,6 +745,23 @@ ipcMain.on('renderer-ready', () => {
     if (protocolDataForFrontApp && mainWindow) {
         mainWindow.webContents.send('protocol-data-msg', protocolDataForFrontApp);
     }
+});
+
+ipcMain.handle('confirm-external-server', async (_event, serverURL: string) => {
+    // The renderer asks for confirmation when the user points the settings
+    // field at a non-default server. Re-validate here: the dialog only ever
+    // names an allowed, parsable origin.
+    const parsed = parseAuthority(String(serverURL ?? ''));
+
+    if (!parsed || !isAllowedHost(parsed.hostname)) {
+        return false;
+    }
+
+    if (parsed.hostname === defaultServerHost) {
+        return true;
+    }
+
+    return confirmNonDefaultServer(parsed.origin);
 });
 
 ipcMain.on('jitsi-open-url', (event, someUrl) => {

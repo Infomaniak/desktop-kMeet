@@ -16,6 +16,7 @@ import type { IConference, IState } from '../../../types';
 import config from '../../config';
 import { getSetting } from '../../settings';
 import Spinner from '../../shared/components/Spinner';
+import { isAllowedHost, parseAuthority } from '../../utils/hostAllowList';
 import { parseURLParams } from '../../utils/parseURLParams';
 import { conferenceEnded, conferenceJoined } from '../actions';
 import JitsiMeetExternalAPI from '../external_api';
@@ -119,6 +120,24 @@ class Conference extends Component<IProps, IConferenceState> {
         if (this._conference.serverURL.startsWith(appProtocolSurplus)) {
             this._conference.serverURL = this._conference.serverURL.replace(appProtocolSurplus, 'https://');
         }
+
+        // Final gate before load, fail-closed: re-parse the server URL with
+        // the same parser the iframe load will use and continue only with
+        // its canonical origin. Whatever reached this component, the
+        // checked value and the loaded value cannot differ (YWH-PGM7461).
+        const parsed = parseAuthority(this._conference.serverURL);
+
+        if (!parsed || !isAllowedHost(parsed.hostname)) {
+            // eslint-disable-next-line no-console
+            console.warn(`Refusing to load conference from unauthorized server: ${this._conference.serverURL}`);
+
+            this._navigateToHome({ type: 'error' }, this._conference.room, this._conference.serverURL);
+
+            return;
+        }
+
+        this._conference.serverURL = parsed.origin;
+
         const url = new URL(this._conference.room, this._conference.serverURL);
         const roomName = url.pathname.split('/').pop();
         const host = this._conference.serverURL.replace(/https?:\/\//, '');
