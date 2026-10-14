@@ -142,6 +142,8 @@ class Conference extends Component<IProps, IConferenceState> {
             // eslint-disable-next-line no-console
             console.warn(`Refusing to load conference from unauthorized server: ${this._conference.serverURL}`);
 
+            this._navigateToHome({ type: 'error' }, this._conference.room, this._conference.serverURL);
+
             return;
         }
 
