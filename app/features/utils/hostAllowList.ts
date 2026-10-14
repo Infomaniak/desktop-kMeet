@@ -111,7 +111,11 @@ export function parseAuthority(raw: string | null | undefined): IParsedAuthority
 }
 
 /**
- * Checks whether a server value is allowed as the conference iframe origin.
+ * Checks whether a server value is allowed as the conference iframe origin
+ * for an OS deep link (kmeet:// delivered by mail, chat or a web page — an
+ * untrusted source). Only the Infomaniak-operated hosts pass; custom brands
+ * must not be reachable through crafted links, which is the YWH-PGM7461
+ * delivery vector.
  *
  * @param {string|null|undefined} host - The host as it appears in a link
  * (bare authority or full URL), or empty when the link contains only a room
@@ -136,6 +140,40 @@ export function isAllowedHost(host: string | null | undefined): boolean {
 
     return ALLOWED_HOSTS.some(allowed =>
         parsed.hostname === allowed || parsed.hostname.endsWith(`.${allowed}`));
+}
+
+/**
+ * Checks whether a server value is allowed for a join initiated by the
+ * embedded kMeet web app (the joinButton pixel) or typed by the user in the
+ * settings — trusted sources. Custom kMeet brands are deployed on the
+ * customer's own domain, always prefixed "kmeet."
+ * (kmeet.infomaniakgroup.com, kmeet.<customer>.com, ...), and cannot be
+ * enumerated. The prefix is a naming convention, not a proof of ownership,
+ * but these flows originate from Infomaniak's own web app or from the
+ * user's explicit input, and a brand is never the default server. A
+ * hostname that merely embeds an allowed host (kmeet.infomaniak.com inside
+ * kmeet.infomaniak.com.evil.com) is a lookalike, not a brand.
+ *
+ * @param {string|null|undefined} host - The host as it appears in the join
+ * payload or the settings field.
+ * @returns {boolean} True when the value is empty, an Infomaniak host, or a
+ * "kmeet."-prefixed brand host.
+ */
+export function isAllowedBrandHost(host: string | null | undefined): boolean {
+    if (isAllowedHost(host)) {
+        return true;
+    }
+
+    const parsed = parseAuthority(host);
+
+    if (!parsed) {
+        return false;
+    }
+
+    const { hostname } = parsed;
+
+    return hostname.startsWith('kmeet.')
+        && !ALLOWED_HOSTS.some(allowed => `.${hostname}.`.includes(`.${allowed}.`));
 }
 
 export {

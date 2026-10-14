@@ -1,6 +1,18 @@
 import type { IConference } from '../../types';
 
-import { isAllowedHost, parseAuthority } from './hostAllowList';
+import { isAllowedBrandHost, isAllowedHost, parseAuthority } from './hostAllowList';
+
+/**
+ * Trust level of the source that produced a join payload.
+ */
+interface ICreateConferenceOptions {
+    /**
+     * True when the payload comes from a trusted source (the embedded kMeet
+     * web app's join button): custom brand hosts (kmeet.<customer>.com) are
+     * accepted. OS deep links stay strict.
+     */
+    allowBrands?: boolean;
+}
 
 
 /**
@@ -38,7 +50,11 @@ export function openExternalLink(link: string): void {
  * @param {string} defaultServerURL - Server URL to use for room-only input.
  * @returns {IConference|undefined}
  */
-export function createConferenceObjectFromURL(inputURL: string, defaultServerURL: string): IConference | undefined {
+export function createConferenceObjectFromURL(
+        inputURL: string,
+        defaultServerURL: string,
+        options: ICreateConferenceOptions = {}
+): IConference | undefined {
     const parts = inputURL.split('/');
 
     let room;
@@ -64,15 +80,19 @@ export function createConferenceObjectFromURL(inputURL: string, defaultServerURL
         return;
     }
 
-    // Defense-in-depth: reject unauthorized hosts even if the main process
-    // check was bypassed. This prevents loading an attacker-controlled
-    // origin as the meeting iframe. The value is parsed with the WHATWG URL
-    // parser (the same one the iframe load uses): string surgery would
-    // disagree with the browser about where the authority ends, which is
-    // the YWH-PGM7461 "@"/"#" confusion class.
+    // Defense-in-depth: enforce the trust policy of the source even if the
+    // main process check was bypassed. OS deep links only reach
+    // Infomaniak-operated hosts; brand hosts (kmeet.<customer>.com) are only
+    // accepted for joins initiated by the embedded web app. The value is
+    // parsed with the WHATWG URL parser (the same one the iframe load
+    // uses): string surgery would disagree with the browser about where the
+    // authority ends, which is the YWH-PGM7461 "@"/"#" confusion class.
     const parsed = parseAuthority(serverURL);
+    const allowed = options.allowBrands
+        ? isAllowedBrandHost(parsed?.hostname)
+        : isAllowedHost(parsed?.hostname);
 
-    if (!parsed || !isAllowedHost(parsed.hostname)) {
+    if (!parsed || !allowed) {
         // eslint-disable-next-line no-console
         console.warn(`Rejected conference with unauthorized server: ${serverURL}`);
 

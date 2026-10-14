@@ -31,7 +31,12 @@ import * as path from 'path';
 import * as URL from 'url';
 
 import config from './app/features/config';
-import { isAllowedHost, parseAuthority } from './app/features/utils/hostAllowList';
+import {
+    isAllowedBrandHost,
+    isAllowedHost,
+    parseAuthority
+} from './app/features/utils/hostAllowList';
+import { buildJoinButtonProtocolPayload } from './app/features/utils/joinButton';
 import { openExternalLink } from './app/features/utils/openExternalLink';
 import updateManager from './autoUpdate';
 import builderJson from './electron-builder.json';
@@ -112,7 +117,7 @@ let webrtcInternalsWindow: BrowserWindow | null = null;
 const appProtocolSurplus = `${config.appProtocolPrefix}://`;
 const defaultServerHost = parseAuthority(config.defaultServerURL)?.hostname ?? '';
 let rendererReady = false;
-let protocolDataForFrontApp: string | null = null;
+let pendingProtocolData: { allowBrands: boolean; inputURL: string; } | null = null;
 let tray: Tray | null = null;
 
 /**
@@ -340,47 +345,19 @@ function createJitsiMeetWindow() {
             }
 
             if (d.url.indexOf('welcomePage.joinButton.clicked') > 0) {
-                // The web app sends the matomo cvar param as an object
-                // {"1":["name","value"],...}, not as an array of pairs —
-                // Object.values() normalizes both shapes into pairs.
-                try {
-                    const joinUrl = new URL.URL(d.url);
-                    const cvar = Object.values(
-                        JSON.parse(joinUrl.searchParams.get('cvar') ?? '{}') as Record<string, [ string, string ]>
-                    );
+                // The join target comes from Infomaniak's own web app, so
+                // custom brand hosts (kmeet.<customer>.com) are accepted —
+                // but it still goes through the protocol gate (parsed
+                // authority, brand allow-list) instead of reaching the
+                // renderer directly. handleProtocolCall also buffers the
+                // payload until the renderer is ready, which the previous
+                // inline send dropped silently.
+                const joinPayload = buildJoinButtonProtocolPayload(d.url, defaultServerHost);
 
-                    if (rendererReady && mainWindow) {
-                        // Scans backwards like lodash's findLast did; written
-                        // as a plain loop because Array.prototype.findLast is
-                        // ES2023 and tsconfig lib is ES2022.
-                        const findCvar = (name: string) => {
-                            for (let i = cvar.length - 1; i >= 0; i--) {
-                                if (cvar[i][0] === name) {
-                                    return cvar[i][1] ?? '';
-                                }
-                            }
-
-                            return '';
-                        };
-                        let joinHost = findCvar('room_hostname').replace(/https?:\/\//, '');
-                        const joinRoom = findCvar('conference_name');
-                        const joinSubject = findCvar('room_subject');
-
-                        try {
-                            const roomUrl = new URL.URL(`${config.defaultServerURL}/${joinSubject}`);
-
-                            joinHost = roomUrl.origin.replace(/https?:\/\//, '');
-                        } catch (error) {
-                            console.log(error);
-                        }
-
-                        mainWindow.webContents.send(
-                            'protocol-data-msg',
-                            `${joinHost}/${joinRoom}/${joinSubject}`
-                        );
-                    }
-                } catch (error) {
-                    log.error('Failed to parse joinButton cvar payload', error);
+                if (joinPayload) {
+                    void handleProtocolCall(joinPayload, { allowBrands: true });
+                } else {
+                    log.error('Failed to parse joinButton cvar payload');
                 }
             }
 
@@ -613,7 +590,7 @@ function createWebRTCInternalsWindow() {
     webrtcInternalsWindow.loadURL('chrome://webrtc-internals');
 }
 
-async function handleProtocolCall(fullProtocolCall?: string) {
+async function handleProtocolCall(fullProtocolCall?: string, options: { allowBrands?: boolean; } = {}) {
     if (
         !fullProtocolCall
         || fullProtocolCall.trim() === ''
@@ -625,6 +602,7 @@ async function handleProtocolCall(fullProtocolCall?: string) {
     const inputURL = fullProtocolCall.replace(appProtocolSurplus, '');
     const parts = inputURL.split('/');
     const hostPart = parts[0];
+    const { allowBrands = false } = options;
 
     // Room-only link (kmeet://room): no host, the renderer uses the
     // configured default server, which is always trusted.
@@ -635,17 +613,27 @@ async function handleProtocolCall(fullProtocolCall?: string) {
         // '?', '\'), which let a link like
         // kmeet://127.0.0.1:8899#@kmeet.infomaniak.com/room load an
         // attacker-controlled HTTPS origin as the meeting iframe.
+        //
+        // OS deep links come from an untrusted source (mail, chat, web
+        // pages) and only reach Infomaniak-operated hosts; brand hosts
+        // (kmeet.<customer>.com) are only accepted for joins initiated by
+        // the embedded kMeet web app (allowBrands).
         const parsed = parseAuthority(hostPart);
+        const allowed = allowBrands
+            ? isAllowedBrandHost(hostPart)
+            : isAllowedHost(hostPart);
 
-        if (!parsed || !isAllowedHost(hostPart)) {
+        if (!parsed || !allowed) {
             console.warn(`Rejected protocol call with unauthorized host: ${hostPart}`);
 
             return;
         }
 
-        // The link targets an allowed but non-default server (e.g.
-        // preprod): confirm with a native dialog web content cannot fake.
-        if (parsed.hostname !== defaultServerHost) {
+        // A strict deep link that targets an allowed but non-default server
+        // (e.g. preprod): confirm with a native dialog web content cannot
+        // fake. Brand joins initiated from the web app skip this — the user
+        // clicked the join button there, and brands would prompt every time.
+        if (!allowBrands && parsed.hostname !== defaultServerHost) {
             const confirmed = await confirmNonDefaultServer(parsed.origin);
 
             if (!confirmed) {
@@ -665,11 +653,31 @@ async function handleProtocolCall(fullProtocolCall?: string) {
         mainWindow.show();
     }
 
-    protocolDataForFrontApp = inputURL;
+    pendingProtocolData = { inputURL, allowBrands };
 
     if (rendererReady && mainWindow) {
-        mainWindow.webContents.send('protocol-data-msg', inputURL);
+        sendPendingProtocolData();
     }
+}
+
+/**
+ * Forwards the pending protocol payload to the renderer on the channel that
+ * matches its trust level: the strict deep-link channel or the brand
+ * channel (joins initiated by the embedded web app).
+ *
+ * @returns {void}
+ */
+function sendPendingProtocolData() {
+    if (!pendingProtocolData || !mainWindow) {
+        return;
+    }
+
+    const { inputURL, allowBrands } = pendingProtocolData;
+
+    pendingProtocolData = null;
+    mainWindow.webContents.send(
+        allowBrands ? 'protocol-data-brand-msg' : 'protocol-data-msg',
+        inputURL);
 }
 
 const gotInstanceLock = process.platform === 'darwin' ? true : app.requestSingleInstanceLock();
@@ -742,26 +750,7 @@ app.on('open-url', (event, data) => {
 
 ipcMain.on('renderer-ready', () => {
     rendererReady = true;
-    if (protocolDataForFrontApp && mainWindow) {
-        mainWindow.webContents.send('protocol-data-msg', protocolDataForFrontApp);
-    }
-});
-
-ipcMain.handle('confirm-external-server', async (_event, serverURL: string) => {
-    // The renderer asks for confirmation when the user points the settings
-    // field at a non-default server. Re-validate here: the dialog only ever
-    // names an allowed, parsable origin.
-    const parsed = parseAuthority(String(serverURL ?? ''));
-
-    if (!parsed || !isAllowedHost(parsed.hostname)) {
-        return false;
-    }
-
-    if (parsed.hostname === defaultServerHost) {
-        return true;
-    }
-
-    return confirmNonDefaultServer(parsed.origin);
+    sendPendingProtocolData();
 });
 
 ipcMain.on('jitsi-open-url', (event, someUrl) => {
