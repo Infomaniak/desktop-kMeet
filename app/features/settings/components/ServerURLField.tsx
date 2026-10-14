@@ -113,6 +113,9 @@ class ServerURLField extends Component<IProps, IServerURLFieldState> {
             if (confirmed) {
                 this.props.dispatch(setServerURL(parsed.origin));
             }
+        }).catch(() => {
+            // Dialog could not be shown (e.g. window closed mid-dialog):
+            // keep the previously stored server URL.
         });
     }
 
