@@ -51,9 +51,13 @@ Note: the working tree often carries an **uncommitted local override** of `defau
 
 ## Security model (fork additions — do not regress)
 
-- **`kmeet://` host allow-list** — `app/features/utils/hostAllowList.ts` (+ `test/hostAllowList.test.ts`). A link like `kmeet://attacker.invalid/room` must not load an arbitrary HTTPS origin as the meeting iframe (the remote-control bridge trusts whatever page is loaded). Hosts are validated in `main.ts` before the payload reaches the renderer; when adding a new kMeet deployment host, update `ALLOWED_HOSTS`.
+- **Join origin policy, by trust level** — `app/features/utils/hostAllowList.ts` (+ `test/hostAllowList.test.ts`). All values are parsed with the WHATWG URL parser (`parseAuthority`) and the loaded origin is always the canonical parsed origin — the checked value and the loaded value cannot differ (YWH-PGM7461-3062: the old string-surgery allow-list was bypassable with `kmeet://host:port#@kmeet.infomaniak.com/room`).
+    - **OS deep links** (`kmeet://` from mail/chat/web — untrusted source): strict static allow-list, `ALLOWED_HOSTS` (Infomaniak-operated domains only). A deep link also confirms through a native dialog when it targets a non-default server (e.g. preprod).
+    - **Web-app joins** (joinButton pixel) and **settings field** (trusted sources): static allow-list plus the `kmeet.<customer>.com` brand pattern (`isAllowedBrandHost`). Known limitation: the prefix is a naming convention, so `kmeet.customer.com.evil.com` is indistinguishable from a brand without domain-ownership verification — these flows are never reached from crafted links.
+    - When adding a new Infomaniak-operated deployment host, update `ALLOWED_HOSTS`.
 - **Sandbox** — `contextIsolation: true`, `nodeIntegration: false` (`main.ts`). The Infomaniak SDK preload bridge uses `contextBridge` (resolved by `71d1aac`); do not revert to `nodeIntegration`.
 - **Remote-control consent** — native `dialog.showMessageBox` gate before any remote-control session (from upstream, ported in the SDK).
+- **Screen capture** — gated by the SDK (>= 6.1.2): the legacy `obtainDesktopStreams` API is gone and `desktopCapturer.getSources()` is only served while a user-initiated `getDisplayMedia` request is pending. Keep `@infomaniak/jitsi-meet-electron-sdk` >= 6.1.2.
 
 ## Build, packaging, CI
 

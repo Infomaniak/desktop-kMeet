@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 
-import { isAllowedHost } from '../app/features/utils/hostAllowList';
+import { isAllowedBrandHost } from '../app/features/utils/hostAllowList';
 import { buildJoinButtonProtocolPayload } from '../app/features/utils/joinButton';
 
 /**
@@ -79,26 +79,37 @@ describe('joinButton payload', () => {
         assert.strictEqual(buildJoinButtonProtocolPayload(url, DEFAULT_SERVER_HOST), null);
     });
 
-    it('produces payloads the protocol gate accepts for allowed hosts', () => {
+    it('produces payloads the brand gate accepts for brand hosts', () => {
+        // The join comes from Infomaniak's own web app, so
+        // kmeet.<customer>.com brands pass the brand policy.
         const payload = buildJoinButtonProtocolPayload(pixelUrl({
-            '1': [ 'room_hostname', 'https://client.kmeet.infomaniak.com' ],
+            '1': [ 'room_hostname', 'https://kmeet.infomaniakgroup.com' ],
             '2': [ 'conference_name', 'myroom' ]
         }), DEFAULT_SERVER_HOST);
 
-        assert.strictEqual(isAllowedHost(payload?.split('kmeet://')[1].split('/')[0]), true);
+        assert.strictEqual(isAllowedBrandHost(payload?.split('kmeet://')[1].split('/')[0]), true);
     });
 
-    it('produces payloads the protocol gate rejects for attacker hosts', () => {
+    it('produces payloads the gate accepts for a plain customer brand', () => {
+        const payload = buildJoinButtonProtocolPayload(pixelUrl({
+            '1': [ 'room_hostname', 'kmeet.customer.com' ],
+            '2': [ 'conference_name', 'myroom' ]
+        }), DEFAULT_SERVER_HOST);
+
+        assert.strictEqual(isAllowedBrandHost(payload?.split('kmeet://')[1].split('/')[0]), true);
+    });
+
+    it('produces payloads the gate rejects for attacker hosts', () => {
         const payload = buildJoinButtonProtocolPayload(pixelUrl({
             '1': [ 'room_hostname', 'evil.example.com' ],
             '2': [ 'conference_name', 'myroom' ]
         }), DEFAULT_SERVER_HOST);
 
         assert.strictEqual(payload, 'kmeet://evil.example.com/myroom/');
-        assert.strictEqual(isAllowedHost(payload?.split('kmeet://')[1].split('/')[0]), false);
+        assert.strictEqual(isAllowedBrandHost(payload?.split('kmeet://')[1].split('/')[0]), false);
     });
 
-    it('produces payloads the protocol gate rejects for bypass shapes', () => {
+    it('produces payloads the gate rejects for bypass shapes', () => {
         // A web-compromised cvar trying the YWH confusion shape.
         const payload = buildJoinButtonProtocolPayload(pixelUrl({
             '1': [ 'room_hostname', '127.0.0.1:8899#@kmeet.infomaniak.com' ],
@@ -106,6 +117,6 @@ describe('joinButton payload', () => {
         }), DEFAULT_SERVER_HOST);
 
         assert.strictEqual(payload, 'kmeet://127.0.0.1:8899#@kmeet.infomaniak.com/myroom/');
-        assert.strictEqual(isAllowedHost(payload?.split('kmeet://')[1].split('/')[0]), false);
+        assert.strictEqual(isAllowedBrandHost(payload?.split('kmeet://')[1].split('/')[0]), false);
     });
 });

@@ -8,7 +8,7 @@ import type { IState } from '../../../types';
 import config from '../../config';
 import FieldText from '../../shared/components/FieldText';
 import { normalizeServerURL } from '../../utils';
-import { isAllowedHost, parseAuthority } from '../../utils/hostAllowList';
+import { isAllowedBrandHost, parseAuthority } from '../../utils/hostAllowList';
 import { setServerURL } from '../actions';
 import { Form } from '../styled';
 
@@ -84,10 +84,9 @@ class ServerURLField extends Component<IProps, IServerURLFieldState> {
 
 
     /**
-     * Updates Server URL in (redux) store when it is updated.
-     *
-     * A server other than the default kMeet one (e.g. preprod) is confirmed
-     * through a native dialog in the main process before it is stored.
+     * Updates Server URL in (redux) store when it is updated. The field is
+     * user-typed input, so custom brand hosts (kmeet.<customer>.com) are
+     * accepted alongside the Infomaniak ones.
      *
      * @param {Event} event - Event by which this function is called.
      * @returns {void}
@@ -95,25 +94,9 @@ class ServerURLField extends Component<IProps, IServerURLFieldState> {
     _onServerURLSubmit(event: React.FormEvent) {
         event.preventDefault();
 
-        if (!this.state.isValid) {
-            return;
+        if (this.state.isValid) {
+            this.props.dispatch(setServerURL(this.state.serverURL ?? ''));
         }
-
-        const serverURL = this.state.serverURL ?? '';
-        const parsed = parseAuthority(serverURL);
-        const defaultHost = parseAuthority(config.defaultServerURL)?.hostname ?? '';
-
-        if (!serverURL.trim() || !parsed || parsed.hostname === defaultHost) {
-            this.props.dispatch(setServerURL(serverURL));
-
-            return;
-        }
-
-        window.jitsiNodeAPI.confirmExternalServer(parsed.origin).then(confirmed => {
-            if (confirmed) {
-                this.props.dispatch(setServerURL(parsed.origin));
-            }
-        });
     }
 
     /**
@@ -139,11 +122,11 @@ class ServerURLField extends Component<IProps, IServerURLFieldState> {
                 throw new Error('Invalid protocol');
             }
 
-            // The conference iframe may only ever load an allowed host, so
-            // anything else is invalid input, not merely unconfirmed.
+            // The conference iframe may only ever load Infomaniak hosts or
+            // kmeet.<customer>.com brands; anything else is invalid input.
             const parsed = parseAuthority(url);
 
-            if (!parsed || !isAllowedHost(parsed.hostname)) {
+            if (!parsed || !isAllowedBrandHost(parsed.hostname)) {
                 throw new Error('Server not allowed');
             }
 

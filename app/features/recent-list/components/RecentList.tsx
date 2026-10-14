@@ -5,10 +5,8 @@ import { push } from 'react-router-redux';
 import { Dispatch, compose } from 'redux';
 
 import type { IConference, IState } from '../../../types';
-import config from '../../config';
 import Button from '../../shared/components/Button';
 import { CrossIcon } from '../../shared/icons';
-import { parseAuthority } from '../../utils/hostAllowList';
 import { addRecentListEntry, removeRecentListEntry } from '../actions';
 import {
     ConferenceCard,
@@ -55,34 +53,17 @@ class RecentList extends Component<IProps> {
     }
 
     /**
-     * Creates a handler for navigating to a conference. A conference on a
-     * server other than the default kMeet one (e.g. preprod) is confirmed
-     * through a native dialog in the main process first.
+     * Creates a handler for navigating to a conference. Recent entries are
+     * the user's own join history — previously validated at join time — so
+     * rejoining honors the brand trust level they were created with.
      *
      * @param {Object} conference - Conference Details.
      * @returns {void}
      */
     _onNavigateToConference(conference: IConference) {
         return () => {
-            const target = conference.serverURL || config.defaultServerURL;
-            const host = parseAuthority(target)?.hostname;
-            const defaultHost = parseAuthority(config.defaultServerURL)?.hostname;
-            const navigate = () => {
-                this.props.dispatch(addRecentListEntry(conference));
-                this.props.dispatch(push('/conference', conference));
-            };
-
-            if (!host || host === defaultHost) {
-                navigate();
-
-                return;
-            }
-
-            window.jitsiNodeAPI.confirmExternalServer(target).then(confirmed => {
-                if (confirmed) {
-                    navigate();
-                }
-            });
+            this.props.dispatch(addRecentListEntry(conference));
+            this.props.dispatch(push('/conference', { ...conference, allowBrands: true }));
         };
     }
 

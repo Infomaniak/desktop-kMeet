@@ -25,12 +25,16 @@ class App extends Component<IProps> {
 
         this._listenOnProtocolMessages
             = this._listenOnProtocolMessages.bind(this);
+        this._listenOnBrandProtocolMessages
+            = this._listenOnBrandProtocolMessages.bind(this);
         this._listenOnProtocolHomePage = this._listenOnProtocolHomePage.bind(this);
+        this._openConference = this._openConference.bind(this);
     }
 
     componentDidMount() {
         this._unsubscribeProtocol = [
             window.jitsiNodeAPI.ipc.on('protocol-data-msg', this._listenOnProtocolMessages),
+            window.jitsiNodeAPI.ipc.on('protocol-data-brand-msg', this._listenOnBrandProtocolMessages),
             window.jitsiNodeAPI.ipc.on('protocol-data-homepage', this._listenOnProtocolHomePage)
         ];
 
@@ -43,17 +47,30 @@ class App extends Component<IProps> {
     }
 
     _listenOnProtocolMessages(inputURL: string) {
+        this._openConference(inputURL, false);
+    }
+
+    _listenOnBrandProtocolMessages(inputURL: string) {
+        // Joins initiated by the embedded kMeet web app: custom brand hosts
+        // (kmeet.<customer>.com) are trusted for this source only.
+        this._openConference(inputURL, true);
+    }
+
+    _openConference(inputURL: string, allowBrands: boolean) {
         if (inputURL.slice(-1) === '/') {
             inputURL = inputURL.slice(0, -1);
         }
 
-        const conference = createConferenceObjectFromURL(inputURL, config.defaultServerURL);
+        const conference = createConferenceObjectFromURL(
+            inputURL,
+            config.defaultServerURL,
+            { allowBrands });
 
         if (!conference) {
             return;
         }
 
-        this.props.dispatch(push('/conference', conference));
+        this.props.dispatch(push('/conference', { ...conference, allowBrands }));
     }
 
     _listenOnProtocolHomePage(uri: string) {

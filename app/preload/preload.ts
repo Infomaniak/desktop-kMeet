@@ -8,6 +8,7 @@ installJitsiElectronSdk();
 
 const whitelistedIpcChannels = [
     'protocol-data-msg',
+    'protocol-data-brand-msg',
     'protocol-data-homepage',
     'protocol-data-create-meeting',
     'protocol-data-join-meeting',
@@ -25,23 +26,10 @@ function openExternalLink(url: string): void {
     ipcRenderer.send('jitsi-open-url', url);
 }
 
-/**
- * Ask the main process to confirm, through a native dialog, a connection to
- * a server other than the default kMeet one. The main process re-validates
- * the value before showing anything.
- *
- * @param {string} serverURL - The server URL the user is about to connect to.
- * @returns {Promise<boolean>} Whether the user confirmed.
- */
-function confirmExternalServer(serverURL: string): Promise<boolean> {
-    return ipcRenderer.invoke('confirm-external-server', serverURL);
-}
-
 // The app's own bridge, separate from window.jitsiElectronSDK. It only carries
 // cloneable data plus callbacks (listeners and the unsubscribe they return),
 // which contextBridge supports, so it works under contextIsolation.
 contextBridge.exposeInMainWorld('jitsiNodeAPI', {
-    confirmExternalServer,
     openExternalLink,
     ipc: {
         on: (channel: string, listener: (...args: any[]) => void) => {
