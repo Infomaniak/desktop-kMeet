@@ -32,6 +32,7 @@ import * as URL from 'url';
 
 import config from './app/features/config';
 import { isAllowedHost, parseAuthority } from './app/features/utils/hostAllowList';
+import { buildJoinButtonProtocolPayload } from './app/features/utils/joinButton';
 import { openExternalLink } from './app/features/utils/openExternalLink';
 import updateManager from './autoUpdate';
 import builderJson from './electron-builder.json';
@@ -340,47 +341,18 @@ function createJitsiMeetWindow() {
             }
 
             if (d.url.indexOf('welcomePage.joinButton.clicked') > 0) {
-                // The web app sends the matomo cvar param as an object
-                // {"1":["name","value"],...}, not as an array of pairs —
-                // Object.values() normalizes both shapes into pairs.
-                try {
-                    const joinUrl = new URL.URL(d.url);
-                    const cvar = Object.values(
-                        JSON.parse(joinUrl.searchParams.get('cvar') ?? '{}') as Record<string, [ string, string ]>
-                    );
+                // The payload is web-controlled input: route it through the
+                // same protocol gate as an OS deep link (host allow-list,
+                // non-default server confirmation) instead of reaching the
+                // renderer directly. handleProtocolCall also buffers the
+                // payload until the renderer is ready, which the previous
+                // inline send dropped silently.
+                const joinPayload = buildJoinButtonProtocolPayload(d.url, defaultServerHost);
 
-                    if (rendererReady && mainWindow) {
-                        // Scans backwards like lodash's findLast did; written
-                        // as a plain loop because Array.prototype.findLast is
-                        // ES2023 and tsconfig lib is ES2022.
-                        const findCvar = (name: string) => {
-                            for (let i = cvar.length - 1; i >= 0; i--) {
-                                if (cvar[i][0] === name) {
-                                    return cvar[i][1] ?? '';
-                                }
-                            }
-
-                            return '';
-                        };
-                        let joinHost = findCvar('room_hostname').replace(/https?:\/\//, '');
-                        const joinRoom = findCvar('conference_name');
-                        const joinSubject = findCvar('room_subject');
-
-                        try {
-                            const roomUrl = new URL.URL(`${config.defaultServerURL}/${joinSubject}`);
-
-                            joinHost = roomUrl.origin.replace(/https?:\/\//, '');
-                        } catch (error) {
-                            console.log(error);
-                        }
-
-                        mainWindow.webContents.send(
-                            'protocol-data-msg',
-                            `${joinHost}/${joinRoom}/${joinSubject}`
-                        );
-                    }
-                } catch (error) {
-                    log.error('Failed to parse joinButton cvar payload', error);
+                if (joinPayload) {
+                    void handleProtocolCall(joinPayload);
+                } else {
+                    log.error('Failed to parse joinButton cvar payload');
                 }
             }
 
