@@ -282,8 +282,10 @@ function createJitsiMeetWindow() {
     mainWindow = new BrowserWindow(options);
     windowState.manage(mainWindow);
     // Set this before the first navigation so the embedded homepage sees the
-    // marker while rendering its initial React tree.
-    mainWindow.webContents.userAgent = infomaniakUA;
+    // marker while rendering its initial React tree. activate can reach the
+    // app before ready on macOS, where infomaniakUA is still '' — fall back
+    // to the (already marked) fallback UA.
+    mainWindow.webContents.userAgent = infomaniakUA || app.userAgentFallback;
     mainWindow.loadURL(indexURL);
 
     mainWindow.webContents.setWindowOpenHandler(windowOpenHandler);
@@ -313,7 +315,7 @@ function createJitsiMeetWindow() {
             cancel: false,
             requestHeaders: {
                 ...details.requestHeaders,
-                'User-Agent': infomaniakUA
+                'User-Agent': infomaniakUA || app.userAgentFallback
             }
         });
     });
