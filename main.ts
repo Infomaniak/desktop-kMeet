@@ -38,12 +38,14 @@ import {
 } from './app/features/utils/hostAllowList';
 import { buildJoinButtonProtocolPayload } from './app/features/utils/joinButton';
 import { openExternalLink } from './app/features/utils/openExternalLink';
+import { buildInfomaniakUserAgent } from './app/features/utils/userAgent';
 import updateManager from './autoUpdate';
 import builderJson from './electron-builder.json';
 import i18nManager, { localizeMessage } from './i18nManager';
 import pkgJson from './package.json';
 
 const rootDir = path.resolve(__dirname, '..');
+let infomaniakUA = '';
 
 const showDevTools = Boolean(process.env.SHOW_DEV_TOOLS) || (process.argv.indexOf('--show-dev-tools') > -1);
 const disableAutoupdate = Boolean(process.env.DISABLE_UPDATE) || false;
@@ -279,6 +281,9 @@ function createJitsiMeetWindow() {
 
     mainWindow = new BrowserWindow(options);
     windowState.manage(mainWindow);
+    // Set this before the first navigation so the embedded homepage sees the
+    // marker while rendering its initial React tree.
+    mainWindow.webContents.userAgent = infomaniakUA;
     mainWindow.loadURL(indexURL);
 
     mainWindow.webContents.setWindowOpenHandler(windowOpenHandler);
@@ -287,38 +292,29 @@ function createJitsiMeetWindow() {
         mainWindow.webContents.session.clearCache();
     }
 
-    const fileFilter = {
-        urls: [ 'file://*' ]
+    const requestFilter = {
+        urls: [ 'file://*', '*://*/*' ]
     };
 
-    mainWindow.webContents.session.webRequest.onBeforeSendHeaders(fileFilter, (details, callback) => {
-        const requestedPath = path.resolve(URL.fileURLToPath(details.url));
-        const appBasePath = path.resolve(basePath);
+    mainWindow.webContents.session.webRequest.onBeforeSendHeaders(requestFilter, (details, callback) => {
+        if (details.url.startsWith('file://')) {
+            const requestedPath = path.resolve(URL.fileURLToPath(details.url));
+            const appBasePath = path.resolve(basePath);
 
-        if (!requestedPath.startsWith(appBasePath)) {
-            callback({ cancel: true });
-            console.warn(`Rejected file URL: ${details.url}`);
+            if (!requestedPath.startsWith(appBasePath)) {
+                callback({ cancel: true });
+                console.warn(`Rejected file URL: ${details.url}`);
 
-            return;
+                return;
+            }
         }
 
-        callback({ cancel: false });
-    });
-
-    const infomaniakUA = ` Infomaniak/${pkgJson.version}`;
-
-    // In Electron 43, iframe navigator.userAgent inherits from the session, not
-    // from webContents — override it per frame (restores the sign-in flow).
-    mainWindow.webContents.on('frame-created', (_event, { frame }) => {
-        if (!frame) {
-            return;
-        }
-        frame.once('dom-ready', () => {
-            frame.executeJavaScript(
-                // The ready handler already appends the suffix to the session
-                // UA, which frames inherit — guard so it is never doubled.
-                `navigator.userAgent.includes('${infomaniakUA}') || Object.defineProperty(navigator, 'userAgent', { value: navigator.userAgent + '${infomaniakUA}', configurable: true });`
-            ).catch(() => undefined);
+        callback({
+            cancel: false,
+            requestHeaders: {
+                ...details.requestHeaders,
+                'User-Agent': infomaniakUA
+            }
         });
     });
 
@@ -705,9 +701,14 @@ app.on('certificate-error',
 );
 
 app.on('ready', async () => {
-    session.defaultSession.setUserAgent(
-        session.defaultSession.getUserAgent() + ` Infomaniak/${pkgJson.version}`
+    infomaniakUA = buildInfomaniakUserAgent(
+        session.defaultSession.getUserAgent(),
+        pkgJson.version
     );
+    // Cross-origin frames embedded by file:// pages use the app fallback UA.
+    // Set it before creating the window so login detection sees the marker immediately.
+    app.userAgentFallback = infomaniakUA;
+    session.defaultSession.setUserAgent(infomaniakUA);
 
     createJitsiMeetWindow();
     await createTrayMenu();
