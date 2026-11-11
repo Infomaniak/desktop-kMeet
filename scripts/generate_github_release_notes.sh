@@ -11,10 +11,11 @@
 #   GITHUB_REF_NAME    release tag, e.g. 2.1.0-beta.2 (required)
 #   GITHUB_SERVER_URL  defaults to https://github.com
 #   GITHUB_REPOSITORY  defaults to Infomaniak/desktop-kMeet
-#   GH_TOKEN / gh auth optional: when available, authors are @-mentioned with
-#     the GitHub account GitHub itself maps their commit email to (same
-#     attribution as the commit web page, one API call per unique author);
-#     otherwise bullets fall back to the plain git author name.
+#   GH_TOKEN / gh auth optional: when available, authors belonging to the
+#     release repository's GitHub organization are @-mentioned (same account
+#     mapping GitHub uses on commit pages, one API call per unique author);
+#     everyone else keeps the plain git author name — a fork release page
+#     must not ping the whole upstream team at publish time.
 # Usage: generate_github_release_notes.sh [output-file]  (default: release-notes.md)
 #        generate_github_release_notes.sh --selftest
 
@@ -23,6 +24,7 @@ set -euo pipefail
 TAG="${GITHUB_REF_NAME:-}"
 SERVER_URL="${GITHUB_SERVER_URL:-https://github.com}"
 REPOSITORY="${GITHUB_REPOSITORY:-Infomaniak/desktop-kMeet}"
+ORGANIZATION="${REPOSITORY%%/*}"
 REPO_URL="${SERVER_URL}/${REPOSITORY}"
 OUT_FILE="${1:-release-notes.md}"
 
@@ -91,30 +93,29 @@ else
     echo "gh CLI unavailable or unauthenticated: authors are listed by git name, not @handle." >&2
 fi
 
-# Resolve the GitHub account a git author email belongs to, the same way
-# GitHub attributes commits on the web UI: the commit object carries the raw
-# author and the account GitHub matched it to. One API call per unique
-# author email, cached in a temp file for the whole run.
+# Resolve the GitHub account a git author email belongs to (the same way
+# GitHub attributes commits on the web UI) and keep the @-mention only when
+# that account belongs to the release repository's organization. One API
+# call per unique author email, cached in a temp file for the whole run.
 LOGIN_CACHE="$(mktemp "${TMPDIR:-/tmp}/kmeet-release-logins.XXXXXX")"
 trap 'rm -f "${LOGIN_CACHE}"' EXIT
 
-github_login_for_email() {
-    local email="${1}" sha="${2}" login=""
-    login="$(awk -F'\t' -v e="${email}" '$1 == e { print $2; exit }' "${LOGIN_CACHE}")"
-    if [[ -n "${login}" ]]; then
-        printf '%s' "${login}"
-        return 0
-    fi
+github_mention_for_email() {
+    local email="${1}" sha="${2}" login="" mention=""
+    mention="$(awk -F'\t' -v e="${email}" '$1 == e { print $3; exit }' "${LOGIN_CACHE}")"
     if awk -F'\t' -v e="${email}" '$1 == e { found=1; exit } END { exit !found }' "${LOGIN_CACHE}"; then
-        # Seen before: the email has no GitHub account linked (stored empty).
+        printf '%s' "${mention}"
         return 0
     fi
     if [[ -n "${GH_AVAILABLE}" ]]; then
         login="$(gh api "repos/${REPOSITORY}/commits/${sha}" \
             --jq '.author.login // .committer.login // ""' 2>/dev/null || true)"
+        if [[ -n "${login}" ]] && gh api "orgs/${ORGANIZATION}/members/${login}" >/dev/null 2>&1; then
+            mention="${login}"
+        fi
     fi
-    printf '%s\t%s\n' "${email}" "${login}" >> "${LOGIN_CACHE}"
-    printf '%s' "${login}"
+    printf '%s\t%s\t%s\n' "${email}" "${login}" "${mention}" >> "${LOGIN_CACHE}"
+    printf '%s' "${mention}"
 }
 
 # Previous stable tag: nearest ancestor of the commit before the release tag,
@@ -144,7 +145,7 @@ fi
     # read -r stops at the last entry.
     while IFS=$'\x1f' read -r sha author email subject; do
         [[ -z "${sha}" ]] && continue
-        handle="$(github_login_for_email "${email}" "${sha}")"
+        handle="$(github_mention_for_email "${email}" "${sha}")"
         if [[ -n "${handle}" ]]; then
             by="@${handle}"
         else
