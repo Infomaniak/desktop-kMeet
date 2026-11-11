@@ -13,9 +13,10 @@
 #   GITHUB_REPOSITORY  defaults to Infomaniak/desktop-kMeet
 #   GH_TOKEN / gh auth optional: when available, authors belonging to the
 #     release repository's GitHub organization are @-mentioned (same account
-#     mapping GitHub uses on commit pages, one API call per unique author);
-#     everyone else keeps the plain git author name — a fork release page
-#     must not ping the whole upstream team at publish time.
+#     mapping GitHub uses on commit pages, up to two API calls per unique
+#     author email: commit lookup + membership check, both cached); members
+#     the token cannot see fall back to the plain git author name — a fork
+#     release page must not ping the whole upstream team at publish time.
 # Usage: generate_github_release_notes.sh [output-file]  (default: release-notes.md)
 #        generate_github_release_notes.sh --selftest
 
@@ -110,7 +111,11 @@ github_mention_for_email() {
     if [[ -n "${GH_AVAILABLE}" ]]; then
         login="$(gh api "repos/${REPOSITORY}/commits/${sha}" \
             --jq '.author.login // .committer.login // ""' 2>/dev/null || true)"
-        if [[ -n "${login}" ]] && gh api "orgs/${ORGANIZATION}/members/${login}" >/dev/null 2>&1; then
+        if [[ -n "${login}" ]] && { gh api "orgs/${ORGANIZATION}/members/${login}" >/dev/null 2>&1 \
+            || gh api "orgs/${ORGANIZATION}/public_members/${login}" >/dev/null 2>&1; }; then
+            # Tokens without org access (the CI GITHUB_TOKEN) cannot list
+            # membership: public_members is unauthenticated, so an org member
+            # whose org visibility is Public still gets mentioned in CI.
             mention="${login}"
         fi
     fi
