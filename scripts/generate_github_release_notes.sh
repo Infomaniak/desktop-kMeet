@@ -13,7 +13,7 @@
 #   GITHUB_REPOSITORY  defaults to Infomaniak/desktop-kMeet
 #   GH_TOKEN / gh auth optional: when available, authors belonging to the
 #     release repository's GitHub organization are @-mentioned (same account
-#     mapping GitHub uses on commit pages, up to two API calls per unique
+#     mapping GitHub uses on commit pages, up to three API calls per unique
 #     author email: commit lookup + membership check, both cached); members
 #     the token cannot see fall back to the plain git author name — a fork
 #     release page must not ping the whole upstream team at publish time.
@@ -96,8 +96,9 @@ fi
 
 # Resolve the GitHub account a git author email belongs to (the same way
 # GitHub attributes commits on the web UI) and keep the @-mention only when
-# that account belongs to the release repository's organization. One API
-# call per unique author email, cached in a temp file for the whole run.
+# that account belongs to the release repository's organization. Up to
+# three API calls per unique author email (commit lookup + two membership
+# checks), cached in a temp file for the whole run.
 LOGIN_CACHE="$(mktemp "${TMPDIR:-/tmp}/kmeet-release-logins.XXXXXX")"
 trap 'rm -f "${LOGIN_CACHE}"' EXIT
 
