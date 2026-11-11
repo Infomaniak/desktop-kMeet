@@ -243,6 +243,9 @@ jobs:
       steps:
         - name: release/checkout-repo
           uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+          with:
+            # Full history: the notes compare the release tag with the previous one.
+            fetch-depth: 0
 
         - name: release/download-builds
           uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # v4.1.4
@@ -263,11 +266,20 @@ jobs:
               -name 'kmeet-desktop_*.deb'      -o -name '*.blockmap'            -o \
               -name 'beta*.yml' \) -exec cp -t ./ghr-dist {} +
 
+        - name: release/generate-notes
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            bash scripts/generate_github_release_notes.sh --selftest
+            bash scripts/generate_github_release_notes.sh release-notes.md
+
         - name: release/publish-release
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
-            VERSION=$(jq -r .version package.json)
+            # The tag is the release version: the committed package.json lags
+            # behind because only the build jobs rewrite it from the tag.
+            VERSION="${GITHUB_REF_NAME}"
             RELEASE_TITLE="v${VERSION} ($(date -u "+%Y-%m-%d"))"
             [[ $VERSION =~ "-beta" ]] || [[ $VERSION =~ "-alpha" ]] && PRERELEASE="--prerelease"
-            gh release create --draft ${PRERELEASE} --verify-tag --target "${GITHUB_SHA}" --title "${RELEASE_TITLE}" "${GITHUB_REF_NAME}" ./ghr-dist/*
+            gh release create --draft ${PRERELEASE} --verify-tag --target "${GITHUB_SHA}" --title "${RELEASE_TITLE}" --notes-file release-notes.md "${GITHUB_REF_NAME}" ./ghr-dist/*
