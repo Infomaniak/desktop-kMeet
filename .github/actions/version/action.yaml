@@ -1,0 +1,23 @@
+name: "update-version"
+description: This action updates the package.json version
+
+inputs:
+    shell:
+        description: The shell to run the script
+        required: true
+        default: bash
+
+runs:
+    using: "composite"
+    steps:
+        - name: Check and update package.json version
+          shell: ${{ inputs.shell }}
+          run: |
+              CURRENT_VERSION=$(jq -r '.version' package.json)
+              TAG_VERSION=${GITHUB_REF_NAME}
+
+              if [ "$CURRENT_VERSION" != "$TAG_VERSION" ]; then
+                npm --no-git-tag-version version $TAG_VERSION
+              else
+                echo "Version is already up-to-date."
+              fi

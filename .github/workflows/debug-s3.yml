@@ -1,0 +1,65 @@
+name: debug-s3
+
+# Diagnose the Infomaniak object storage write access:
+# the edge WAF rejects S3 PUTs from some IP ranges (403 HTML page).
+# Matrix: 2 hosted runners x 2 storage hosts, plus the self-hosted runner.
+# Throwaway keys, cleaned up afterwards.
+
+on:
+    workflow_dispatch:
+
+jobs:
+    probe-hosted:
+        strategy:
+            matrix:
+                runner: [ubuntu-latest, windows-2022]
+                host: [download.storage.infomaniak.com, download.storage5.infomaniak.com]
+        name: PUT hosted ${{ matrix.runner }} → ${{ matrix.host }}
+        runs-on: ${{ matrix.runner }}
+        steps:
+            - name: test/curl-put-probe
+              shell: bash
+              env:
+                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              run: |
+                  echo "curl: $(curl --version | head -1)"
+                  CODE=$(curl -s -o /tmp/put-resp.txt -w '%{http_code}' -X PUT --aws-sigv4 "aws:amz:us-east-1:s3" \
+                    --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY" \
+                    --data "probe-hosted-$(date +%s)" \
+                    "https://${{ matrix.host }}/meet/tmp-debug/${{ matrix.runner }}.txt")
+                  echo "PUT https://${{ matrix.host }} → HTTP $CODE"
+                  [ "$CODE" != "200" ] && head -c 120 /tmp/put-resp.txt && echo
+
+    probe-self-hosted:
+        name: PUT self-hosted (Windows11-1) → les 2 hôtes
+        runs-on: [self-hosted, X64, desktop-kdrive]
+        env:
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        steps:
+            - name: test/curl-put-probe
+              shell: powershell
+              run: |
+                  foreach ($h in @("download.storage.infomaniak.com", "download.storage5.infomaniak.com")) {
+                    $key = "tmp-debug/self-hosted-$($h.Split('.')[0]).txt"
+                    $code = & curl.exe -s -o NUL -w "%{http_code}" -X PUT --aws-sigv4 "aws:amz:us-east-1:s3" `
+                      --user "${env:AWS_ACCESS_KEY_ID}:${env:AWS_SECRET_ACCESS_KEY}" `
+                      --data "probe-self" `
+                      "https://$h/meet/$key"
+                    Write-Host "PUT https://$h → HTTP $code"
+                  }
+
+            - name: test/cleanup
+              if: always()
+              shell: powershell
+              env:
+                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              run: |
+                  foreach ($key in @("tmp-debug/ubuntu-latest.txt", "tmp-debug/windows-2022.txt", "tmp-debug/self-hosted-download.txt", "tmp-debug/self-hosted-download5.txt")) {
+                    $code = & curl.exe -s -o NUL -w "%{http_code}" -X DELETE --aws-sigv4 "aws:amz:us-east-1:s3" `
+                      --user "${env:AWS_ACCESS_KEY_ID}:${env:AWS_SECRET_ACCESS_KEY}" `
+                      "https://download.storage.infomaniak.com/meet/$key"
+                    Write-Host "DELETE $key → HTTP $code"
+                  }

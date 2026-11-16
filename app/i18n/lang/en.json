@@ -1,0 +1,46 @@
+{
+	"enterConferenceNameOrUrl": "Enter a room name for your conference or a Jitsi URL",
+	"go": "GO",
+	"help": "Help",
+	"termsLink": "Terms",
+	"privacyLink": "Privacy",
+	"recentListLabel": "or rejoin one of your recent conference rooms",
+	"sendFeedbackLink": "Send Feedback",
+	"aboutLink": "About",
+	"sourceLink": "Source Code",
+	"versionLabel": "Version: {{version}}",
+	"settings": {
+		"back": "Back",
+		"alwaysOnTopWindow": "Always on Top Window",
+		"invalidServer": "Invalid Server URL",
+		"invalidServerTimeout": "Invalid value for Server Timeout",
+		"serverUrl": "Server URL",
+		"serverTimeout": "Server Timeout (in seconds)",
+		"disableAGC": "Disable automatic gain control"
+	},
+	"menu": {
+		"about": "About kMeet",
+		"edit": "Edit",
+		"undo": "Undo",
+		"redo": "Redo",
+		"cut": "Cut",
+		"copy": "Copy",
+		"paste": "Paste",
+		"selectAll": "Select all",
+		"view": "View",
+		"window": "Window",
+		"createMeeting": "Create a meeting",
+		"joinMeeting": "Join a meeting",
+		"planMeeting": "Plan a meeting",
+		"openOnBoot": "Start on computer boot",
+		"openKmeet": "Open kMeet.infomaniak.com",
+		"aboutKmeet": "About kMeet",
+		"quit": "Quit kMeet"
+	},
+	"remoteControl": {
+		"message": "Allow remote control of this computer?",
+		"detail": "A meeting participant is requesting control of your mouse and keyboard.",
+		"allow": "Allow",
+		"deny": "Deny"
+	}
+}

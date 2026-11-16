@@ -1,0 +1,25 @@
+{
+	"enterConferenceNameOrUrl": "Voer de naam van de vergadering of een Jitsi-URL in",
+	"go": "Deelnemen",
+	"help": "Help",
+	"termsLink": "Voorwaarden",
+	"privacyLink": "Privacy",
+	"sendFeedbackLink": "Stuur feedback",
+	"aboutLink": "Over",
+	"sourceLink": "Broncode",
+	"versionLabel": "Versie: {{version}}",
+	"settings": {
+		"back": "Terug",
+		"alwaysOnTopWindow": "Altijd zichtbare venster",
+		"invalidServer": "Ongeldige server-URL",
+		"invalidServerTimeout": "Ongeldige waarde voor server-tijdslimiet",
+		"serverUrl": "Server-URL",
+		"serverTimeout": "Server-tijdslimiet (in seconden)"
+	},
+	"remoteControl": {
+		"message": "Toestaan dat deze computer op afstand wordt bediend?",
+		"detail": "Een deelnemer aan de vergadering vraagt om de besturing van je muis en toetsenbord.",
+		"allow": "Toestaan",
+		"deny": "Weigeren"
+	}
+}

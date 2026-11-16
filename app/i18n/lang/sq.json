@@ -1,0 +1,27 @@
+{
+	"enterConferenceNameOrUrl": "Jepni një emër për konferencën tuaj, ose një URL Jitsi",
+	"go": "SHKO",
+	"help": "Ndihmë",
+	"termsLink": "Kushte",
+	"privacyLink": "Privatësi",
+	"recentListLabel": "ose rihyni në një nga dhomat tuaja përdorur së fundi",
+	"sendFeedbackLink": "Dërgoni Përshtypje",
+	"aboutLink": "Mbi",
+	"sourceLink": "Kod Burim",
+	"versionLabel": "Version: {{version}}",
+	"settings": {
+		"back": "Mbrapsht",
+		"alwaysOnTopWindow": "Dritare Përherë Sipër",
+		"invalidServer": "URL e Pavlefshme Shërbyesi",
+		"invalidServerTimeout": "Vlerë e pavlefshme për Mbarim Kohe Shërbyesi",
+		"serverUrl": "URL Shërbyesi",
+		"serverTimeout": "Mbarim Kohe Shërbyesi (në sekonda)",
+		"disableAGC": "Çaktivizoni kontroll të automatizuar gain-i"
+	},
+	"remoteControl": {
+		"message": "Të lejohet kontrolli në largësi i këtij kompjuteri?",
+		"detail": "Një pjesëmarrës në konferencë po kërkon kontrollin e miut dhe të tastierës tuaj.",
+		"allow": "Lejoje",
+		"deny": "Refuzoje"
+	}
+}

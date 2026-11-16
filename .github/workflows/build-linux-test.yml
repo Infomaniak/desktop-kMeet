@@ -1,0 +1,56 @@
+name: build-linux-test
+
+# Manual test build for the Linux pipeline: validates npm ci (node 20),
+# the arm64 cross-compile toolchain and the AppImage/deb packaging.
+# Linux artifacts are not code-signed by electron-builder, so this test
+# consumes no DigiCert signatures by nature. Publishes NOWHERE
+# (--publish=never).
+
+on:
+    workflow_dispatch:
+
+jobs:
+    build-linux-unsigned-test:
+        runs-on: ubuntu-latest
+        steps:
+            - name: test/checkout-repo
+              uses: actions/checkout@v4
+
+            - name: test/setup-node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+                  cache-dependency-path: package-lock.json
+                  registry-url: "https://npm.pkg.github.com"
+                  scope: "@infomaniak"
+
+            - name: test/install-deps
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  # The committed .npmrc expands ${NPM_TOKEN} (not NODE_AUTH_TOKEN).
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+              run: |
+                  sudo apt-get update || true && sudo apt-get install -y ca-certificates libxtst-dev libpng++-dev gcc-aarch64-linux-gnu g++-aarch64-linux-gnu jq icnsutils graphicsmagick tzdata
+                  npm ci
+
+            - name: test/set-version
+              run: npm --no-git-tag-version version 2.0.2-beta.2
+
+            - name: test/build-unsigned
+              run: |
+                  npm run build
+                  npx electron-builder --linux --publish=never
+
+            - name: test/package
+              run: |
+                  mkdir -p ./release/linux-release
+                  bash -x ./scripts/cp_artifacts.sh dist ./release/linux-release
+
+            - name: test/upload-artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: kmeet-linux-unsigned-test
+                  path: ./release
+                  compression-level: 0
+                  retention-days: 7

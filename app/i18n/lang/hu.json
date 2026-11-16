@@ -1,0 +1,27 @@
+{
+	"enterConferenceNameOrUrl": "Adja meg a konferencia nevét vagy a Jitsi URL-címét",
+	"go": "Indítás",
+	"help": "Súgó",
+	"termsLink": "Feltételek",
+	"privacyLink": "Adatvédelem",
+	"recentListLabel": "vagy csatlakozzon újra az egyik legutóbbi konferenciateremhez",
+	"sendFeedbackLink": "Visszajelzés",
+	"aboutLink": "Névjegy",
+	"sourceLink": "Forráskód",
+	"versionLabel": "Verzió: {{version}}",
+	"settings": {
+		"back": "Vissza",
+		"alwaysOnTopWindow": "Mindig látható",
+		"invalidServer": "Érvénytelen kiszolgáló URL-címe",
+		"invalidServerTimeout": "A kiszolgáló időkorlátja érvénytelen",
+		"serverUrl": "Kiszolgáló URL-címe",
+		"serverTimeout": "Kiszolgálói időkorlát (másodperc)",
+		"disableAGC": "Önműködő erősítésvezérlés letiltása"
+	},
+	"remoteControl": {
+		"message": "Engedélyezi a számítógép távoli irányítását?",
+		"detail": "A konferencia egyik résztvevője az egér és a billentyűzet irányítását kéri.",
+		"allow": "Engedélyezés",
+		"deny": "Elutasítás"
+	}
+}

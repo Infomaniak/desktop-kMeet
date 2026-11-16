@@ -1,0 +1,24 @@
+{
+	"enterConferenceNameOrUrl": "Введите название для вашей конференции или URL-адрес приглашения Jitsi",
+	"go": "Вперёд",
+	"help": "Помощь",
+	"termsLink": "Условия",
+	"privacyLink": "Конфиденциальность",
+	"sendFeedbackLink": "Отправить отзыв",
+	"aboutLink": "О приложении",
+	"sourceLink": "Исходный код",
+	"versionLabel": "Версия: {{version}}",
+	"settings": {
+		"back": "Назад",
+		"alwaysOnTopWindow": "Поверх всех окон",
+		"invalidServer": "Неверный URL-адрес сервера",
+		"serverUrl": "URL-адрес сервера",
+		"serverTimeout": "Тайм-аут сервера (в секундах)"
+	},
+	"remoteControl": {
+		"message": "Разрешить удалённое управление этим компьютером?",
+		"detail": "Участник конференции запрашивает управление вашей мышью и клавиатурой.",
+		"allow": "Разрешить",
+		"deny": "Отклонить"
+	}
+}

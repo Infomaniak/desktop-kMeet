@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the master branch
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-linux:
+    name: Linux
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
+    - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
+      with:
+        node-version-file: '.nvmrc'
+    - name: Build it
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        npm ci
+        npm run dist
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+      with:
+        name: linux-binaries
+        path: |
+          dist/jitsi-meet-amd64.deb
+          dist/jitsi-meet-x86_64.AppImage
+          dist/jitsi-meet-arm64.deb
+          dist/jitsi-meet-arm64.AppImage
+          dist/latest-linux.yml
+          dist/latest-linux-arm64.yml
+  build-mac:
+    name: macOS
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
+    - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
+      with:
+        node-version-file: '.nvmrc'
+    - name: Prepare for app signing and notarization
+      env:
+        MAC_CERT: ${{ secrets.mac_cert }}
+      if: ${{ env.MAC_CERT }}
+      run: |
+        echo "CSC_LINK=${{ secrets.mac_cert }}" >> $GITHUB_ENV
+        echo "CSC_KEY_PASSWORD=${{ secrets.mac_cert_password }}" >> $GITHUB_ENV
+        echo "CSC_FOR_PULL_REQUEST=true" >> $GITHUB_ENV
+        echo "APPLE_ID=${{ secrets.apple_id }}" >> $GITHUB_ENV
+        echo "APPLE_APP_SPECIFIC_PASSWORD=${{ secrets.apple_id_password }}" >> $GITHUB_ENV
+        echo "APPLE_TEAM_ID=${{ secrets.team_id }}" >> $GITHUB_ENV
+    - name: Build it
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        npm ci
+        npm run dist
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+      with:
+        name: mac-binaries
+        path: |
+          dist/jitsi-meet.dmg
+          dist/jitsi-meet.zip
+          dist/latest-mac.yml
+  build-windows:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
+    - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
+      with:
+        node-version-file: '.nvmrc'
+    - name: Build it
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        npm ci
+        npm run dist
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+      with:
+        name: windows-binaries
+        path: |
+          dist/jitsi-meet.exe
+          dist/latest.yml
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
+    - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
+      with:
+        node-version-file: '.nvmrc'
+    - run: npm ci
+    - run: npm run lint

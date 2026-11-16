@@ -1,0 +1,120 @@
+{
+  "publish": {
+    "provider": "s3",
+    "bucket": "meet",
+    "endpoint": "https://download.storage5.infomaniak.com"
+  },
+  "generateUpdatesFilesForAllChannels": true,
+  "appId": "com.infomaniak.meet",
+  "artifactName": "${name}-${version}-${os}-${arch}.${ext}",
+  "directories": {
+    "buildResources": "resources"
+  },
+  "files": ["build", "resources", "!app", "!main.js"],
+  "protocols": {
+    "name": "kmeet-protocol",
+    "role": "Viewer",
+    "schemes": [
+      "kmeet"
+    ]
+  },
+  "afterSign": "./notarize.js",
+  "afterPack": "scripts/linux-sandbox-fix.js",
+  "npmRebuild": false,
+  "deb": {
+    "artifactName": "${name}_${version}-1_${arch}.${ext}",
+    "depends": [
+      "libgtk-3-0",
+      "libnss3",
+      "libxtst6",
+      "xdg-utils",
+      "libatspi2.0-0",
+      "libuuid1"
+    ]
+  },
+  "linux": {
+    "category": "VideoConference;AudioVideo;Audio;Video;Network",
+    "description": "Infomaniak Meet Desktop App",
+    "mimeTypes": [
+      "x-scheme-handler/kmeet"
+    ],
+    "maintainer": "Infomaniak",
+    "executableName": "kMeet",
+    "target": [
+      {
+        "arch": "x64",
+        "target": "AppImage"
+      },
+      {
+        "arch": "x64",
+        "target": "deb"
+      },
+      {
+        "arch": "arm64",
+        "target": "AppImage"
+      },
+      {
+        "arch": "arm64",
+        "target": "deb"
+      }
+    ]
+  },
+  "mac": {
+    "artifactName": "${name}-${version}-${os}.${ext}",
+    "target": [
+      {
+        "arch": "universal",
+        "target": "dmg"
+      },
+      {
+        "arch": "universal",
+        "target": "zip"
+      }
+    ],
+    "category": "public.app-category.video",
+    "darkModeSupport": true,
+    "hardenedRuntime": true,
+    "entitlements": "entitlements.mac.plist",
+    "entitlementsInherit": "entitlements.mac.plist",
+    "asarUnpack": [
+      "./node_modules/@infomaniak/jitsi-meet-electron-sdk/prebuilds/*/*.node",
+      "**/*.node"
+    ],
+    "notarize": false,
+    "extendInfo": {
+      "NSMicrophoneUsageDescription": "kMeet requires access to your camera in order to make video-calls.",
+      "NSCameraUsageDescription": "kMeet requires access to your microphone in order to make calls (audio/video).",
+      "LSMultipleInstancesProhibited": true
+    }
+  },
+  "mas": {
+    "entitlements": "resources/entitlements.mas.plist",
+    "entitlementsInherit": "resources/entitlements.mas.inherit.plist",
+    "hardenedRuntime": false
+  },
+  "dmg": {
+    "sign": true
+  },
+  "win": {
+    "forceCodeSigning": true,
+    "artifactName": "${name}-${version}-${os}.${ext}",
+    "target": ["nsis", "msi"],
+    "signtoolOptions": {
+      "sign": "./scripts/winsign.js",
+      "certificateSubjectName": "INFOMANIAK NETWORK SA",
+      "publisherName": "CN=\"INFOMANIAK NETWORK SA\", O=\"INFOMANIAK NETWORK SA\", L=Les Acacias, S=Genève, C=CH"
+    }
+  },
+  "nsis": {
+    "artifactName": "${name}-setup-${version}-win.${ext}",
+    "oneClick": true,
+    "packElevateHelper": false,
+    "allowToChangeInstallationDirectory": false,
+    "runAfterFinish": true,
+    "createDesktopShortcut": false,
+    "include": "scripts/installer.nsh"
+  },
+  "msi": {
+    "perMachine": true
+  }
+}

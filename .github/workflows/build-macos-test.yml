@@ -1,0 +1,111 @@
+name: build-macos-test
+
+# Manual test build: signed + notarized macOS app, published NOWHERE.
+# Produces a downloadable dmg/zip artifact to validate the Developer ID
+# certificate, the notarization and Gatekeeper acceptance before tagging
+# a real release. Arm64-only on purpose (fast); real releases build universal.
+
+on:
+    workflow_dispatch:
+    # Every push that touches this workflow re-runs the test (iteration on
+    # the self-hosted runner setup).
+    push:
+        branches:
+            - release/infomaniak-master-v4
+        paths:
+            - .github/workflows/build-macos-test.yml
+
+jobs:
+    build-macos-signed-test:
+        # kDrive model: the Developer ID certificate + private key live
+        # permanently in the keychain of this Infomaniak-internal Mac.
+        # No CSC_LINK secret: electron-builder auto-discovers the valid
+        # identity after the keychain is unlocked below.
+        # Pinned to the desktop-kdrive-labeled Mac (M2-3): the org's other
+        # self-hosted Macs use a different keychain password.
+        runs-on: [self-hosted, macOS, desktop-kdrive]
+        env:
+            API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+            API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+            SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+            SENTRY_RELEASE: build-test
+        steps:
+            - name: test/checkout-repo
+              uses: actions/checkout@v4
+
+            - name: test/unlock-keychain
+              env:
+                  KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+              run: security unlock-keychain -p "$KEYCHAIN_PASSWORD" login.keychain
+
+            - name: test/check-signing-identity
+              run: security find-identity -v -p codesigning
+
+            - name: test/setup-node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+                  cache-dependency-path: package-lock.json
+                  registry-url: "https://npm.pkg.github.com"
+                  scope: "@infomaniak"
+
+            - name: test/install-dependencies
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  # The committed .npmrc expands ${NPM_TOKEN}: without this env
+                  # var the GPR tarball download goes out unauthenticated (401).
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+              run: |
+                  echo "token length: ${#NODE_AUTH_TOKEN}, prefix: ${NODE_AUTH_TOKEN:0:4}"
+                  CODE=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $NODE_AUTH_TOKEN" \
+                      'https://npm.pkg.github.com/download/@infomaniak/jitsi-meet-electron-sdk/6.0.11-security.1/f233b222d9e4202a43e376f85213fc7d9ab3a6ea')
+                  echo "GPR tarball check: HTTP $CODE"
+                  [[ "$CODE" == "302" || "$CODE" == "200" ]] || { echo 'ERROR: token rejected by GitHub Packages'; exit 1; }
+                  npm ci
+
+            # The .p8 secret may store real newlines or literal "\n" escapes
+            # (kChat fastlane format): normalize both, accept base64 too.
+            - name: test/write-appstore-api-key
+              env:
+                  APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY }}
+              run: |
+                  KEY_FILE="$RUNNER_TEMP/api_key.p8"
+                  KEY_CONTENT="${APPLE_API_KEY_CONTENT//\\n/$'\n'}"
+                  printf '%s' "$KEY_CONTENT" > "$KEY_FILE"
+                  if ! grep -q 'BEGIN PRIVATE KEY' "$KEY_FILE"; then
+                      printf '%s' "$APPLE_API_KEY_CONTENT" | base64 -d > "$KEY_FILE" 2>/dev/null || true
+                  fi
+                  if ! grep -q 'BEGIN PRIVATE KEY' "$KEY_FILE"; then
+                      echo "ERROR: APPLE_API_KEY secret is not a valid .p8 key (no PEM header)"
+                      exit 1
+                  fi
+                  if [[ -n "$(tail -c 1 "$KEY_FILE")" ]]; then printf '\n' >> "$KEY_FILE"; fi
+                  echo "API_KEY_FILE=$KEY_FILE" >> "$GITHUB_ENV"
+
+            - name: test/set-version
+              run: npm --no-git-tag-version version 2.0.2-beta.2
+
+            - name: test/build-and-sign
+              run: |
+                  npm run build
+                  npx electron-builder --mac --arm64 --publish=never
+
+            - name: test/verify-signature
+              run: |
+                  APP=$(find dist -maxdepth 4 -name "*.app" | head -1)
+                  echo "App: $APP"
+                  codesign -dv --verbose=2 "$APP" 2>&1 | grep -E 'Authority|TeamIdentifier'
+                  codesign --verify --deep --strict "$APP" && echo 'codesign: OK'
+                  spctl -a -t execute -vv "$APP"
+                  xcrun stapler validate "$APP" && echo 'staple: OK'
+
+            - name: test/upload-artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: kmeet-macos-signed-test
+                  path: |
+                      dist/*.dmg
+                      dist/*.zip
+                  compression-level: 0
+                  retention-days: 7

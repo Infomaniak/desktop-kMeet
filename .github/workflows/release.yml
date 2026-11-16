@@ -1,0 +1,285 @@
+name: release-kmeet
+
+on:
+    push:
+        tags:
+            - "[0-9]+.[0-9]+.[0-9]+"
+            - "[0-9]+.[0-9]+.[0-9]+-alpha.[0-9]+"
+            - "[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+"
+
+# The github-release job creates the draft release (GITHUB_TOKEN must write).
+permissions:
+    contents: write
+
+jobs:
+    build-mac:
+        # kDrive model: the Developer ID certificate + private key live
+        # permanently in the keychain of the self-hosted runner. Unlock the
+        # keychain, then electron-builder auto-discovers the valid identity
+        # (no CSC_LINK secret: the private key never leaves the machine).
+        # Pinned to the desktop-kdrive-labeled Mac (M2-3): the org's other
+        # self-hosted Macs use a different keychain password.
+        runs-on: [self-hosted, macOS, desktop-kdrive]
+        env:
+            MAC_PROFILE: ${{ secrets.MAC_PROVISION_PROFILE }}
+            # Notarization auth via App Store Connect API key (see the
+            # write-appstore-api-key step below): APPLE_ID/APPLEIDPASS are not
+            # used on purpose - API keys don't expire like app-specific passwords.
+            API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+            API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+            SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+            SENTRY_RELEASE: ${{ github.ref_name }}
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        steps:
+            - name: release/checkout-repo
+              uses: actions/checkout@v4
+            - name: release/unlock-keychain
+              env:
+                  KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+              run: security unlock-keychain -p "$KEYCHAIN_PASSWORD" login.keychain
+            - name: release/check-signing-identity
+              run: security find-identity -v -p codesigning
+            - name: release/setup-node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+                  cache-dependency-path: package-lock.json
+                  registry-url: "https://npm.pkg.github.com"
+                  scope: "@infomaniak"
+            - name: release/install-dependencies
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  # The committed .npmrc expands ${NPM_TOKEN} (not NODE_AUTH_TOKEN):
+                  # without this the GPR download is unauthenticated (401).
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+              run: |
+                  sudo -H pip install setuptools || true
+                  npm ci
+            - name: release/copy-provisioning-profile
+              run: |
+                  if [[ -n "$MAC_PROFILE" ]]; then
+                      echo "$MAC_PROFILE" | base64 -D > ./mac.provisionprofile
+                  fi
+            - name: release/write-appstore-api-key
+              env:
+                  APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY }}
+              run: |
+                  KEY_FILE="$RUNNER_TEMP/api_key.p8"
+                  KEY_CONTENT="${APPLE_API_KEY_CONTENT//\\n/$'\n'}"
+                  printf '%s' "$KEY_CONTENT" > "$KEY_FILE"
+                  if ! grep -q 'BEGIN PRIVATE KEY' "$KEY_FILE"; then
+                      printf '%s' "$APPLE_API_KEY_CONTENT" | base64 -d > "$KEY_FILE" 2>/dev/null || true
+                  fi
+                  if ! grep -q 'BEGIN PRIVATE KEY' "$KEY_FILE"; then
+                      echo "ERROR: APPLE_API_KEY secret is not a valid .p8 key (no PEM header)"
+                      exit 1
+                  fi
+                  if [[ -n "$(tail -c 1 "$KEY_FILE")" ]]; then printf '\n' >> "$KEY_FILE"; fi
+                  echo "API_KEY_FILE=$KEY_FILE" >> "$GITHUB_ENV"
+            - name: release/update-version
+              uses: ./.github/actions/version
+            - name: release/build-and-publish
+              # Native electron-builder publish (--publish=always) targets the
+              # S3 endpoint from electron-builder.json (storage5: the only
+              # front whose WAF accepts S3 PUTs from CI networks - same bucket
+              # as the classic storage host, whose download links stay baked
+              # in the apps). The publish channel is derived by
+              # electron-builder itself from the app version's prerelease
+              # segment (s3Publisher.checkAndResolveOptions): a 2.0.2-beta.N
+              # version publishes beta*.yml feeds only, never latest.yml; a
+              # stable version publishes latest.yml. The windows NSIS build
+              # works the same way; the windows MSI never publishes
+              # (dist:msi is hard-coded --publish=never, same as kChat's MSI).
+              run: |
+                  npm run build
+                  npx electron-builder --mac --publish=always
+                  mkdir -p ./release/macos-release
+                  bash -x ./scripts/cp_artifacts.sh dist ./release/macos-release
+            - name: release/upload-build
+              uses: actions/upload-artifact@v4
+              with:
+                name: build-macos
+                path: ./release
+                compression-level: 0
+                retention-days: 14
+
+    build-linux:
+        runs-on: ubuntu-latest
+        env:
+            SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+            SENTRY_RELEASE: ${{ github.ref_name }}
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        steps:
+            - name: release/checkout-repo
+              uses: actions/checkout@v4
+            - name: release/setup-node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+                  cache-dependency-path: package-lock.json
+                  registry-url: "https://npm.pkg.github.com"
+                  scope: "@infomaniak"
+            - name: release/install-dependencies
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  # The committed .npmrc expands ${NPM_TOKEN} (not NODE_AUTH_TOKEN).
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+              run: |
+                  sudo apt-get update || true && sudo apt-get install -y ca-certificates libxtst-dev libpng++-dev gcc-aarch64-linux-gnu g++-aarch64-linux-gnu jq icnsutils graphicsmagick tzdata
+                  npm ci
+            - name: release/update-version
+              uses: ./.github/actions/version
+            - name: release/build-and-publish
+              # Same auto-derived channel rule as the macOS job (see above).
+              # Native publish via storage5.
+              run: |
+                  mkdir -p ./release/linux
+                  npm run build
+                  npx electron-builder --linux --publish=always
+                  bash -x ./scripts/cp_artifacts.sh dist ./release/linux
+            - name: release/upload-build
+              uses: actions/upload-artifact@v4
+              with:
+                name: build-linux
+                path: ./release
+                compression-level: 0
+                retention-days: 14
+
+    build-windows:
+        runs-on: windows-2022
+        steps:
+            - name: release/checkout-repo
+              uses: actions/checkout@v3
+            - name: release/setup-node
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "16.20.2"
+                  registry-url: "https://npm.pkg.github.com"
+                  scope: "@infomaniak"
+            - name: release/install-deps
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  # The committed .npmrc expands ${NPM_TOKEN} (not NODE_AUTH_TOKEN).
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+              shell: powershell
+              run: |
+                  ./scripts/Makefile.ps1 install-deps
+                  choco install yq --version 4.15.1 -y
+                  npm i -g node-gyp
+                  node-gyp install
+                  node-gyp install --devdir="C:\Users\runneradmin\.electron-gyp" --target=$(jq -r .devDependencies.electron package.json) --dist-url="https://electronjs.org/headers"
+                  node-gyp install --devdir="C:\Users\runneradmin\.electron-gyp" --target=$(jq -r .devDependencies.electron package.json) --dist-url="https://electronjs.org/headers" --arch arm64
+                  node-gyp install --devdir="C:\Users\runneradmin\.electron-gyp" --target=$(jq -r .devDependencies.electron package.json) --dist-url="https://electronjs.org/headers" --arch ia32
+                  npm ci
+            - name: release/update-version
+              uses: ./.github/actions/version
+            - name: release/build-nsis
+              shell: powershell
+              env:
+                  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+                  SENTRY_RELEASE: ${{ github.ref_name }}
+                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  SM_API_KEY: ${{ secrets.SM_API_KEY }}
+                  SM_CLIENT_CERT_FILE_B64: ${{ secrets.SM_CLIENT_CERT_FILE_B64 }}
+                  SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
+                  SM_HOST: ${{ secrets.SM_HOST }}
+                  SM_CODE_SIGNING_CERT_SHA1_HASH: ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }}
+                  SM_KEYPAIR_ALIAS: ${{ secrets.SM_KEYPAIR_ALIAS }}
+                  SM_TOOLS_URI: ${{ secrets.SM_TOOLS_URI }}
+                  SM_CLIENT_CERT_FILE: ${{ secrets.SM_CLIENT_CERT_FILE }}
+              run: |
+                  ./scripts/setup-keylocker.ps1
+                  ./scripts/Makefile.ps1 build-nsis
+            - name: release/package-nsis
+              run: |
+                mkdir -p ./release/win-nsis
+                bash -x ./scripts/cp_artifacts.sh dist ./release/win-nsis
+            - name: release/clean-dist
+              # kChat pattern: wipe the dist between the two windows builds so
+              # the NSIS artifacts and feeds cannot leak into the MSI package.
+              shell: powershell
+              run: Remove-Item dist\* -Recurse -Force -ErrorAction SilentlyContinue
+            - name: release/build
+              # MSI build. SM Tools are installed and the certificate synced
+              # once in the build-nsis step; this step only needs the SM_*
+              # environment for winsign.js. Running setup-keylocker twice in
+              # the same job is not supported (kChat runs it once too).
+              shell: powershell
+              env:
+                  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+                  SM_API_KEY: ${{ secrets.SM_API_KEY }}
+                  SM_CLIENT_CERT_FILE_B64: ${{ secrets.SM_CLIENT_CERT_FILE_B64 }}
+                  SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
+                  SM_HOST: ${{ secrets.SM_HOST }}
+                  SM_CODE_SIGNING_CERT_SHA1_HASH: ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }}
+                  SM_KEYPAIR_ALIAS: ${{ secrets.SM_KEYPAIR_ALIAS }}
+                  SM_TOOLS_URI: ${{ secrets.SM_TOOLS_URI }}
+                  SM_CLIENT_CERT_FILE: ${{ secrets.SM_CLIENT_CERT_FILE }}
+              run: |
+                  ./scripts/Makefile.ps1 build
+            - name: release/package
+              run: |
+                mkdir -p ./release/win-release
+                bash -x ./scripts/cp_artifacts.sh dist ./release/win-release
+            - name: release/upload-build
+              uses: actions/upload-artifact@v4
+              with:
+                name: build-${{ runner.os }}
+                path: ./release
+                compression-level: 0
+                retention-days: 14
+
+    github-release:
+      runs-on: ubuntu-22.04
+      needs:
+        - build-mac
+        - build-linux
+        - build-windows
+      steps:
+        - name: release/checkout-repo
+          uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+          with:
+            # Full history: the notes compare the release tag with the previous one.
+            fetch-depth: 0
+
+        - name: release/download-builds
+          uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # v4.1.4
+          with:
+            path: release
+            pattern: build-*
+            merge-multiple: true
+
+        - name: release/setup-files-for-github-release
+          # Only real deliverables: the unpacked app trees and internal debug
+          # files must not clutter the release page.
+          run: |
+            mkdir -p ./ghr-dist
+            find ./release -type f \( \
+              -name 'kmeet-desktop-*.zip'      -o -name 'kmeet-desktop-*.dmg'   -o \
+              -name 'kmeet-desktop-*.msi'      -o -name 'kmeet-desktop-*.exe'   -o \
+              -name 'kmeet-desktop-*.AppImage' -o \
+              -name 'kmeet-desktop_*.deb'      -o -name '*.blockmap'            -o \
+              -name 'beta*.yml' \) -exec cp -t ./ghr-dist {} +
+
+        - name: release/generate-notes
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            bash scripts/generate_github_release_notes.sh --selftest
+            bash scripts/generate_github_release_notes.sh release-notes.md
+
+        - name: release/publish-release
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            # The tag is the release version: the committed package.json lags
+            # behind because only the build jobs rewrite it from the tag.
+            VERSION="${GITHUB_REF_NAME}"
+            RELEASE_TITLE="v${VERSION} ($(date -u "+%Y-%m-%d"))"
+            [[ $VERSION =~ "-beta" ]] || [[ $VERSION =~ "-alpha" ]] && PRERELEASE="--prerelease"
+            gh release create --draft ${PRERELEASE} --verify-tag --target "${GITHUB_SHA}" --title "${RELEASE_TITLE}" --notes-file release-notes.md "${GITHUB_REF_NAME}" ./ghr-dist/*

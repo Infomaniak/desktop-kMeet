@@ -1,0 +1,25 @@
+{
+	"enterConferenceNameOrUrl": "Introduza un nome para a conferencia ou un URL de Jitsi",
+	"go": "IR",
+	"help": "Axuda",
+	"termsLink": "Termos",
+	"privacyLink": "Privacidade",
+	"sendFeedbackLink": "Enviar unha opinión",
+	"aboutLink": "Sobre",
+	"sourceLink": "Código fonte",
+	"versionLabel": "Versión: {{version}}",
+	"settings": {
+		"back": "Atrás",
+		"alwaysOnTopWindow": "Xanela sempre por riba",
+		"invalidServer": "O URL do servidor é incorrecto",
+		"invalidServerTimeout": "O tempo de agarda do servidor é incorrecto",
+		"serverUrl": "URL do servidor",
+		"serverTimeout": "Tempo de agarda do servidor (en segundos)"
+	},
+	"remoteControl": {
+		"message": "Permitir o control remoto deste computador?",
+		"detail": "Un participante da conferencia solicita o control do seu rato e do seu teclado.",
+		"allow": "Permitir",
+		"deny": "Denegar"
+	}
+}

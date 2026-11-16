@@ -1,0 +1,27 @@
+{
+	"enterConferenceNameOrUrl": "輸入會議室名稱或 Jitsi 網址",
+	"go": "開始",
+	"help": "協助",
+	"termsLink": "條款",
+	"privacyLink": "隱私權",
+	"recentListLabel": "或重新加入最近參加過的會議",
+	"sendFeedbackLink": "傳送意見反應",
+	"aboutLink": "關於",
+	"sourceLink": "原始碼",
+	"versionLabel": "版本：{{version}}",
+	"settings": {
+		"back": "返回",
+		"alwaysOnTopWindow": "保持在最上層",
+		"invalidServer": "伺服器網址無效",
+		"invalidServerTimeout": "伺服器逾時值無效",
+		"serverUrl": "伺服器網址",
+		"serverTimeout": "伺服器逾時（秒）",
+		"disableAGC": "停用自動增益控制"
+	},
+	"remoteControl": {
+		"message": "允許遠端控制這台電腦？",
+		"detail": "一位會議參與者要求控制您的滑鼠與鍵盤。",
+		"allow": "允許",
+		"deny": "拒絕"
+	}
+}

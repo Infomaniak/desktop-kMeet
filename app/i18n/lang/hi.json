@@ -1,0 +1,27 @@
+{
+	"enterConferenceNameOrUrl": "अपने सम्मेलन के लिए रुम का नाम या जित्सी लिंक दर्ज करें।",
+	"go": "शुरु करें",
+	"help": "सहायता",
+	"termsLink": "शरतें",
+	"privacyLink": "गोपनीयता",
+	"recentListLabel": "या अपने हाल के सम्मेलनों में से किसी एक में पुनः शामिल हों।",
+	"sendFeedbackLink": "प्रतिक्रिया भेजें",
+	"aboutLink": "हमारे बारे में",
+	"sourceLink": "सोर्स कोड",
+	"versionLabel": "संस्करण: {{version}}",
+	"settings": {
+		"back": "पिछे",
+		"alwaysOnTopWindow": "ऑलवेज़-ऑन-टॉप",
+		"invalidServer": "अमान्य सर्वर URL",
+		"invalidServerTimeout": "यह संख्या सर्वर टाइमआउट के लिए अमान्य है!",
+		"serverUrl": "सर्वर URL",
+		"serverTimeout": "सर्वर टाइमआउट (सकेंड में)",
+		"disableAGC": "स्वचालित नियंत्रण बंद करें"
+	},
+	"remoteControl": {
+		"message": "इस कंप्यूटर को दूर से नियंत्रित करने की अनुमति दें?",
+		"detail": "सम्मेलन का एक प्रतिभागी आपके माउस और कीबोर्ड का नियंत्रण मांग रहा है।",
+		"allow": "अनुमति दें",
+		"deny": "अस्वीकार करें"
+	}
+}

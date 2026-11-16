@@ -1,0 +1,25 @@
+{
+	"enterConferenceNameOrUrl": "Digite um nome para a sua conferência ou uma Jitsi URL",
+	"go": "Iniciar",
+	"help": "Ajuda",
+	"termsLink": "Termos",
+	"privacyLink": "Privacidade",
+	"sendFeedbackLink": "Enviar Comentário",
+	"aboutLink": "Sobre",
+	"sourceLink": "Código Fonte",
+	"versionLabel": "Versão: {{version}}",
+	"settings": {
+		"back": "Voltar",
+		"alwaysOnTopWindow": "Janela Sempre Visível",
+		"invalidServer": "URL do Servidor Inválida",
+		"invalidServerTimeout": "Valor inválido para tempo limite do servidor",
+		"serverUrl": "URL do servidor",
+		"serverTimeout": "Tempo Limite do Servidor (em segundos)"
+	},
+	"remoteControl": {
+		"message": "Permitir o controle remoto deste computador?",
+		"detail": "Um participante da conferência está solicitando o controle do seu mouse e teclado.",
+		"allow": "Permitir",
+		"deny": "Negar"
+	}
+}
