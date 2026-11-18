@@ -1,6 +1,6 @@
 # Issue tracker: GitLab
 
-Issues and specs for this repo live as GitLab issues on `gitlab.infomaniak.ch` (self-hosted). Use the [`glab`](https://gitlab.com/gitlab-org/cli) CLI for all operations.
+Issues and specs for this repo live as GitLab issues on the self-hosted GitLab instance (see `git remote get-url origin`). Use the [`glab`](https://gitlab.com/gitlab-org/cli) CLI for all operations.
 
 ## Conventions
 

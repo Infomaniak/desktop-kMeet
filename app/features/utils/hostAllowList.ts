@@ -14,9 +14,18 @@
  * gets loaded (canonical origin), so the checked value and the loaded value
  * cannot differ.
  */
+// Internal preprod host, injected at build time from CI secrets or local
+// env (see .env.kmeet.example): never hardcoded, so the public mirror
+// stays clean. Public builds ship an empty value, which this spread
+// drops — preprod is not allow-listed there. Normalized because
+// isAllowedHost compares the lowercased, trimmed hostname the URL parser
+// produced: a CI value pasted with stray whitespace or uppercase would
+// otherwise never match (fail closed, but a confusing dev trap).
+const injectedPreprodHost = (process.env.KMEET_PREPROD_HOST || '').trim().toLowerCase();
+
 const ALLOWED_HOSTS: string[] = [
     'kmeet.infomaniak.com',
-    'kmeet.preprod.dev.infomaniak.ch'
+    ...(injectedPreprodHost ? [ injectedPreprodHost ] : [])
 ];
 
 /**

@@ -77,6 +77,7 @@ jobs:
                   SM_KEYPAIR_ALIAS: ${{ secrets.SM_KEYPAIR_ALIAS }}
                   SM_TOOLS_URI: ${{ secrets.SM_TOOLS_URI }}
                   SM_CLIENT_CERT_FILE: ${{ secrets.SM_CLIENT_CERT_FILE }}
+                  KMEET_PREPROD_HOST: ${{ secrets.KMEET_PREPROD_HOST }}
               run: |
                   ./scripts/setup-keylocker.ps1
                   ./scripts/Makefile.ps1 build-nsis

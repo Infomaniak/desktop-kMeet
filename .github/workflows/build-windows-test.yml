@@ -47,6 +47,8 @@ jobs:
             # x64 only: the WiX bundle of electron-builder 24.x cannot build
             # arm64 MSIs (CNDL0264).
             - name: test/build-unsigned
+              env:
+                  KMEET_PREPROD_HOST: ${{ secrets.KMEET_PREPROD_HOST }}
               run: |
                   npm run build
                   node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync('electron-builder.json','utf8'));delete c.win.signtoolOptions.sign;delete c.win.signtoolOptions.certificateSubjectName;fs.writeFileSync('electron-builder.test.json',JSON.stringify(c))"

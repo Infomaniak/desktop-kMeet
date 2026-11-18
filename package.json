@@ -24,10 +24,6 @@
   "engines": {
     "node": ">=24.0.0"
   },
-  "repository": {
-    "type": "git",
-    "url": "git://gitlab.infomaniak.ch/infomaniak/jitsi-meet-electron"
-  },
   "keywords": [
     "infomaniak",
     "kmeet"

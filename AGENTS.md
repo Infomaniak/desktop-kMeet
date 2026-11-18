@@ -2,7 +2,7 @@
 
 ### Issue tracker
 
-Issues live as GitLab issues on `gitlab.infomaniak.ch` (self-hosted), using the `glab` CLI. See `docs/agents/issue-tracker.md`.
+Issues live as GitLab issues on the self-hosted GitLab instance (see `git remote get-url origin`), using the `glab` CLI. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

@@ -22,6 +22,7 @@ jobs:
     - name: Build it
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        KMEET_PREPROD_HOST: ${{ secrets.KMEET_PREPROD_HOST }}
       run: |
         npm ci
         npm run dist
@@ -57,6 +58,7 @@ jobs:
     - name: Build it
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        KMEET_PREPROD_HOST: ${{ secrets.KMEET_PREPROD_HOST }}
       run: |
         npm ci
         npm run dist
@@ -78,6 +80,7 @@ jobs:
     - name: Build it
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        KMEET_PREPROD_HOST: ${{ secrets.KMEET_PREPROD_HOST }}
       run: |
         npm ci
         npm run dist
