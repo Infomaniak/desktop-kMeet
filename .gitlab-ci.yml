@@ -1,6 +1,20 @@
 stages:
   - check
 
+internal-urls:
+  stage: check
+  script:
+    # Guard for the public mirror: no internal Infomaniak host in tracked
+    # files. The host names are split so this file never matches itself.
+    - |
+      root='infomaniak'
+      pattern="([a-z0-9-]+\.)+dev\.${root}\.ch|gitlab\.${root}\.ch"
+      if git grep -InE "$pattern"; then
+        echo "⛔ Internal Infomaniak URLs found in tracked files - move them to build env or CI secrets (see .env.kmeet.example)."
+        exit 1
+      fi
+      echo "OK: no internal Infomaniak URL in tracked files."
+
 # @jitsi/robotjs (transitive dependency of @infomaniak/jitsi-meet-electron-sdk)
 # compiles against X11 at install time; the bare node image lacks the headers.
 .native-deps:

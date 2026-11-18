@@ -30,7 +30,7 @@ The merge commit `97c2248` body documents exactly what was adopted from upstream
 | SDK | `jitsi-meet-electron-sdk` | `@infomaniak/jitsi-meet-electron-sdk` | `package.json`, `main.ts`, `app/preload/preload.ts` |
 | Branding assets | Jitsi icons/logo | kMeet icons/logo | `resources/`, `app/images/` |
 
-Note: the working tree often carries an **uncommitted local override** of `defaultServerURL` pointing at `kmeet.preprod.dev.infomaniak.ch`. Never commit it. `git status` before committing anything in `app/features/config/`.
+Note: the working tree often carries an **uncommitted local override** of `defaultServerURL` pointing at the internal preprod kMeet host (see `.env.kmeet.example`). Never commit it. `git status` before committing anything in `app/features/config/`.
 
 ## Architecture: what we deliberately do differently
 
@@ -62,7 +62,7 @@ Note: the working tree often carries an **uncommitted local override** of `defau
 ## Build, packaging, CI
 
 - **Packaging** — `electron-builder.json` is Infomaniak's (channels, feeds, publish targets). Signing/notarization: `notarize.js`, `scripts/sign.ps1`, `scripts/winsign.js`, `scripts/setup-keylocker.ps1` (DigiCert SM), `entitlements.mac.plist`.
-- **CI split** — GitLab (`gitlab.infomaniak.ch`, source of truth) runs `.gitlab-ci.yml` (lint + type-check only). The GitHub mirror runs `.github/workflows/` for builds and the `release-kmeet` release pipeline (tags trigger it; see README Releases).
+- **CI split** — GitLab (self-hosted instance, source of truth) runs `.gitlab-ci.yml` (lint + type-check only). The GitHub mirror runs `.github/workflows/` for builds and the `release-kmeet` release pipeline (tags trigger it; see README Releases).
 - **Toolchain** — Electron 43, Node ≥ 24, esbuild (`esbuild.js`), TypeScript with a few legacy `.js` survivors (`app/features/recent-list/*.js`, `app/features/settings/*.js`). `.js` is allowed only where it already exists; new code is TypeScript.
 - **Tests** — `npm test` compiles `test/*.test.ts` only. `test/hostAllowList.test.js` is a dead legacy duplicate; don't copy it.
 

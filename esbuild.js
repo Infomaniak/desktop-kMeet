@@ -166,7 +166,12 @@ const common = {
     // webpack's `mode` injected this into both bundles via DefinePlugin; do the
     // same so bundled dependencies (in either process) see the build-time value.
     define: {
-        'process.env.NODE_ENV': JSON.stringify(mode)
+        'process.env.NODE_ENV': JSON.stringify(mode),
+
+        // Internal preprod host, injected at build time (see .env.kmeet.example).
+        // The renderer bundle has no process at runtime, so every bundle must
+        // see the build-time value, exactly like NODE_ENV above.
+        'process.env.KMEET_PREPROD_HOST': JSON.stringify(process.env.KMEET_PREPROD_HOST || '')
     }
 };
 

@@ -16,7 +16,11 @@
  */
 const ALLOWED_HOSTS: string[] = [
     'kmeet.infomaniak.com',
-    'kmeet.preprod.dev.infomaniak.ch'
+    // Internal preprod host, injected at build time from CI secrets or local
+    // env (see .env.kmeet.example): never hardcoded, so the public mirror
+    // stays clean. Public builds ship an empty value, which this spread
+    // drops — preprod is not allow-listed there.
+    ...(process.env.KMEET_PREPROD_HOST ? [ process.env.KMEET_PREPROD_HOST ] : [])
 ];
 
 /**

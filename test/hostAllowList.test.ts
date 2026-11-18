@@ -1,5 +1,10 @@
 import assert from 'node:assert';
 
+// Must stay first, even though import/order would sort it last: this import
+// sets the env var the allow-list module captures at initialization, so it
+// has to run before that module (and before functions.ts, which imports it).
+// eslint-disable-next-line import/order -- execution order is functional here
+import { PREPROD_HOST_FIXTURE } from './preprodHostEnv';
 import { createConferenceObjectFromURL } from '../app/features/utils/functions';
 import {
     ALLOWED_HOSTS,
@@ -30,11 +35,11 @@ describe('Host allow-list', () => {
     describe('ALLOWED_HOSTS', () => {
         it('contains the production hosts', () => {
             assert.ok(ALLOWED_HOSTS.includes('kmeet.infomaniak.com'));
-            assert.ok(ALLOWED_HOSTS.includes('kmeet.preprod.dev.infomaniak.ch'));
+            assert.ok(ALLOWED_HOSTS.includes(PREPROD_HOST_FIXTURE));
             // Brand domains (kmeet.infomaniakgroup.com, ...) are dynamic:
             // they are served by the "kmeet." naming convention, never
             // enumerated in the static list.
-            assert.ok(!ALLOWED_HOSTS.some(h => h !== 'kmeet.infomaniak.com' && h !== 'kmeet.preprod.dev.infomaniak.ch'));
+            assert.ok(!ALLOWED_HOSTS.some(h => h !== 'kmeet.infomaniak.com' && h !== PREPROD_HOST_FIXTURE));
         });
     });
 
@@ -55,13 +60,13 @@ describe('Host allow-list', () => {
             assert.strictEqual(isAllowedHost('kmeet.infomaniak.com'), true);
         });
 
-        it('allows kmeet.preprod.dev.infomaniak.ch', () => {
-            assert.strictEqual(isAllowedHost('kmeet.preprod.dev.infomaniak.ch'), true);
+        it('allows the injected preprod host', () => {
+            assert.strictEqual(isAllowedHost(PREPROD_HOST_FIXTURE), true);
         });
 
         it('allows subdomains of allowed hosts', () => {
             assert.strictEqual(isAllowedHost('sub.kmeet.infomaniak.com'), true);
-            assert.strictEqual(isAllowedHost('a.b.kmeet.preprod.dev.infomaniak.ch'), true);
+            assert.strictEqual(isAllowedHost(`a.b.${PREPROD_HOST_FIXTURE}`), true);
         });
 
         it('is case-insensitive (RFC 3986)', () => {
@@ -150,7 +155,7 @@ describe('Host allow-list', () => {
         describe('isAllowedBrandHost (web-app and settings joins)', () => {
             it('accepts everything the strict policy accepts', () => {
                 assert.strictEqual(isAllowedBrandHost('kmeet.infomaniak.com'), true);
-                assert.strictEqual(isAllowedBrandHost('kmeet.preprod.dev.infomaniak.ch'), true);
+                assert.strictEqual(isAllowedBrandHost(PREPROD_HOST_FIXTURE), true);
                 assert.strictEqual(isAllowedBrandHost('sub.kmeet.infomaniak.com'), true);
                 assert.strictEqual(isAllowedBrandHost(''), true);
             });
@@ -181,7 +186,7 @@ describe('Host allow-list', () => {
             it('rejects lookalikes embedding an allowed host', () => {
                 // kmeet.infomaniak.com smuggled inside a longer domain.
                 assert.strictEqual(isAllowedBrandHost('kmeet.infomaniak.com.evil.com'), false);
-                assert.strictEqual(isAllowedBrandHost('kmeet.preprod.dev.infomaniak.ch.evil.com'), false);
+                assert.strictEqual(isAllowedBrandHost(`${PREPROD_HOST_FIXTURE}.evil.com`), false);
             });
 
             it('rejects the YWH bypass payloads', () => {
@@ -273,8 +278,8 @@ describe('Host allow-list', () => {
             assert.strictEqual(isAllowedHost(hostPart), true);
         });
 
-        it('allows kmeet://kmeet.preprod.dev.infomaniak.ch/room', () => {
-            const inputURL = 'kmeet.preprod.dev.infomaniak.ch/room';
+        it('allows kmeet:// on the injected preprod host', () => {
+            const inputURL = `${PREPROD_HOST_FIXTURE}/room`;
             const hostPart = inputURL.split('/')[0];
 
             assert.strictEqual(isAllowedHost(hostPart), true);
