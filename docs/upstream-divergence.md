@@ -62,13 +62,13 @@ Note: the working tree often carries an **uncommitted local override** of `defau
 ## Build, packaging, CI
 
 - **Packaging** — `electron-builder.json` is Infomaniak's (channels, feeds, publish targets). Signing/notarization: `notarize.js`, `scripts/sign.ps1`, `scripts/winsign.js`, `scripts/setup-keylocker.ps1` (DigiCert SM), `entitlements.mac.plist`.
-- **CI split** — GitLab (self-hosted instance, source of truth) runs `.gitlab-ci.yml` (lint + type-check only). The GitHub mirror runs `.github/workflows/` for builds and the `release-kmeet` release pipeline (tags trigger it; see README Releases).
+- **CI split** — GitLab (self-hosted instance, source of truth) runs `.gitlab-ci.yml` (lint, type-check, and the internal-URL guard). The GitHub mirror runs `.github/workflows/` for builds and the `release-kmeet` release pipeline (tags trigger it; see README Releases).
 - **Toolchain** — Electron 43, Node ≥ 24, esbuild (`esbuild.js`), TypeScript with a few legacy `.js` survivors (`app/features/recent-list/*.js`, `app/features/settings/*.js`). `.js` is allowed only where it already exists; new code is TypeScript.
-- **Tests** — `npm test` compiles `test/*.test.ts` only. `test/hostAllowList.test.js` is a dead legacy duplicate; don't copy it.
+- **Tests** — `npm test` compiles `test/*.test.ts` only; `test/preprodHostEnv.ts` must stay the first import of any test exercising the allow-list.
 
 ## Fork-owned files (preserve during upstream merges)
 
-Root: `autoUpdate.js`, `notifications.js`, `i18nManager.js`, `i18n/`, `sentry-symbols.js`, `electron-builder.json`, `entitlements.mac.plist`, `notarize.js`, `.env.example`, `.gitlab-ci.yml`, `.gitlab/`, `AGENTS.md`, `docs/`
+Root: `autoUpdate.js`, `notifications.js`, `i18nManager.js`, `i18n/`, `sentry-symbols.js`, `electron-builder.json`, `entitlements.mac.plist`, `notarize.js`, `.env.example`, `.env.kmeet.example`, `.gitlab-ci.yml`, `.gitlab/`, `AGENTS.md`, `docs/`
 `scripts/`: `sign.ps1`, `winsign.js`, `verify.ps1`, `setup-keylocker.ps1`, `Makefile.ps1`, `cp_artifacts.sh`, `installer.nsh`, `linux-sandbox-fix.js`, `generate_release_post.sh`
 `app/`: `features/config/index.ts`, `features/login/`, `features/utils/hostAllowList.ts`, `preload/preload.ts` (SDK bridge), `types.ts`
 CI: `.github/workflows/release.yml` + `build-*-test.yml`, `debug-s3.yml`

@@ -6,4 +6,4 @@
  */
 process.env.KMEET_PREPROD_HOST = 'kmeet-preprod.example.test';
 
-export const PREPROD_HOST_FIXTURE = 'kmeet-preprod.example.test';
+export const PREPROD_HOST_FIXTURE = process.env.KMEET_PREPROD_HOST;
