@@ -87,6 +87,8 @@ jobs:
               run: npm --no-git-tag-version version 2.0.2-beta.2
 
             - name: test/build-and-sign
+              env:
+                  KMEET_PREPROD_HOST: ${{ secrets.KMEET_PREPROD_HOST }}
               run: |
                   npm run build
                   npx electron-builder --mac --arm64 --publish=never

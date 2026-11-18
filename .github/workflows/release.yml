@@ -92,6 +92,8 @@ jobs:
               # stable version publishes latest.yml. The windows NSIS build
               # works the same way; the windows MSI never publishes
               # (dist:msi is hard-coded --publish=never, same as kChat's MSI).
+              env:
+                  KMEET_PREPROD_HOST: ${{ secrets.KMEET_PREPROD_HOST }}
               run: |
                   npm run build
                   npx electron-builder --mac --publish=always
@@ -136,6 +138,8 @@ jobs:
             - name: release/build-and-publish
               # Same auto-derived channel rule as the macOS job (see above).
               # Native publish via storage5.
+              env:
+                  KMEET_PREPROD_HOST: ${{ secrets.KMEET_PREPROD_HOST }}
               run: |
                   mkdir -p ./release/linux
                   npm run build

@@ -2,6 +2,9 @@ stages:
   - check
 
 internal-urls:
+  # Pins an image that ships git: a bare default image may not, and a missing
+  # git must fail loudly, never read as "no match".
+  image: node:24
   stage: check
   script:
     # Guard for the public mirror: no internal Infomaniak host in tracked
@@ -9,9 +12,13 @@ internal-urls:
     - |
       root='infomaniak'
       pattern="([a-z0-9-]+\.)+dev\.${root}\.ch|gitlab\.${root}\.ch"
-      if git grep -InE "$pattern"; then
+      git grep -InE "$pattern" || code=$?
+      if [ "${code:-0}" -eq 0 ]; then
         echo "⛔ Internal Infomaniak URLs found in tracked files - move them to build env or CI secrets (see .env.kmeet.example)."
         exit 1
+      elif [ "${code:-0}" -gt 1 ]; then
+        echo "git grep failed (exit ${code}) — treating as failure, not as no-match"
+        exit "${code}"
       fi
       echo "OK: no internal Infomaniak URL in tracked files."
 

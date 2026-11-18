@@ -119,6 +119,8 @@ jobs:
               # segment makes electron-builder write beta.yml/alpha.yml feeds
               # only, never latest.yml (same channel derivation as the real
               # release; see the release.yml build-and-publish comment).
+              env:
+                  KMEET_PREPROD_HOST: ${{ secrets.KMEET_PREPROD_HOST }}
               run: |
                   npm run build
                   npx electron-builder --mac --publish=always
