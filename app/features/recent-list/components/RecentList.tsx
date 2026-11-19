@@ -53,9 +53,7 @@ class RecentList extends Component<IProps> {
     }
 
     /**
-     * Creates a handler for navigating to a conference. Recent entries are
-     * the user's own join history — previously validated at join time — so
-     * rejoining honors the brand trust level they were created with.
+     * Creates a handler for navigating to a conference.
      *
      * @param {Object} conference - Conference Details.
      * @returns {void}
@@ -63,7 +61,7 @@ class RecentList extends Component<IProps> {
     _onNavigateToConference(conference: IConference) {
         return () => {
             this.props.dispatch(addRecentListEntry(conference));
-            this.props.dispatch(push('/conference', { ...conference, allowBrands: true }));
+            this.props.dispatch(push('/conference', conference));
         };
     }
 
