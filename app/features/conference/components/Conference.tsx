@@ -16,11 +16,7 @@ import type { IConference, IState } from '../../../types';
 import config from '../../config';
 import { getSetting } from '../../settings';
 import Spinner from '../../shared/components/Spinner';
-import {
-    isAllowedBrandHost,
-    isAllowedHost,
-    parseAuthority
-} from '../../utils/hostAllowList';
+import { isAllowedHost, parseAuthority } from '../../utils/hostAllowList';
 import { parseURLParams } from '../../utils/parseURLParams';
 import { conferenceEnded, conferenceJoined } from '../actions';
 import JitsiMeetExternalAPI from '../external_api';
@@ -37,7 +33,6 @@ interface IProps {
     dispatch: Dispatch;
     location: {
         state: {
-            allowBrands?: boolean;
             room: string;
             serverURL?: string;
             subject?: string;
@@ -52,7 +47,6 @@ interface IConferenceState {
 class Conference extends Component<IProps, IConferenceState> {
     _ref = React.createRef<any>();
     _api?: JitsiMeetExternalAPI;
-    _allowBrands = false;
     _conference!: { room: string; serverURL: string; subject?: string; };
     _iframeLoaded?: boolean;
     _loadTimer?: ReturnType<typeof setTimeout>;
@@ -79,7 +73,6 @@ class Conference extends Component<IProps, IConferenceState> {
             || this.props._serverURL
             || config.defaultServerURL;
 
-        this._allowBrands = Boolean(this.props.location.state.allowBrands);
         this._conference = {
             room,
             serverURL,
@@ -129,16 +122,12 @@ class Conference extends Component<IProps, IConferenceState> {
         }
 
         // Final gate before load, fail-closed: re-parse the server URL with
-        // the same parser the iframe load will use, enforce the trust policy
-        // of the source, and continue only with the canonical origin.
-        // Whatever reached this component, the checked value and the loaded
-        // value cannot differ (YWH-PGM7461).
+        // the same parser the iframe load will use and continue only with
+        // its canonical origin. Whatever reached this component, the
+        // checked value and the loaded value cannot differ (YWH-PGM7461).
         const parsed = parseAuthority(this._conference.serverURL);
-        const allowed = this._allowBrands
-            ? isAllowedBrandHost(parsed?.hostname)
-            : isAllowedHost(parsed?.hostname);
 
-        if (!parsed || !allowed) {
+        if (!parsed || !isAllowedHost(parsed.hostname)) {
             // eslint-disable-next-line no-console
             console.warn(`Refusing to load conference from unauthorized server: ${this._conference.serverURL}`);
 
