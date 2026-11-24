@@ -437,8 +437,6 @@ function createJitsiMeetWindow() {
             mainWindow?.show();
         }
     });
-
-    void handleProtocolCall(process.argv.pop());
 }
 
 async function requestRemoteControlConsent(): Promise<boolean> {
@@ -714,6 +712,17 @@ app.on('ready', async () => {
 
     createJitsiMeetWindow();
     await createTrayMenu();
+
+    /**
+     * On Windows, a deep link (kmeet://) used while the app is closed arrives
+     * as a command line argument of the first launch. Dispatched once and
+     * without mutating process.argv: switches may follow the URL.
+     */
+    const startupProtocolArg = process.argv.find(arg => arg.startsWith(appProtocolSurplus));
+
+    if (startupProtocolArg) {
+        void handleProtocolCall(startupProtocolArg);
+    }
 });
 
 if (isDev) {
@@ -721,10 +730,21 @@ if (isDev) {
 }
 
 app.on('second-instance', (event, commandLine) => {
+    // The window can be closed to the tray (mainWindow === null): recreate it
+    // and bring it back, otherwise a deep link from the web app reopens nothing.
     if (mainWindow) {
         mainWindow.isMinimized() && mainWindow.restore();
+        mainWindow.show();
         mainWindow.focus();
-        void handleProtocolCall(commandLine.pop());
+    }
+
+    /**
+     * Select the URL without mutating commandLine: switches may follow it.
+     */
+    const protocolArg = commandLine.find(arg => arg.startsWith(appProtocolSurplus));
+
+    if (protocolArg) {
+        void handleProtocolCall(protocolArg);
     }
 });
 
