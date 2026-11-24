@@ -222,6 +222,10 @@ function setApplicationMenu() {
 }
 
 function createJitsiMeetWindow() {
+    // The window can be recreated (closed to tray, deep link re-attaches to
+    // the running process), so the renderer readiness flag must be per-window.
+    rendererReady = false;
+
     setApplicationMenu();
 
     if (!process.mas && !disableAutoupdate) {
@@ -711,11 +715,11 @@ app.on('ready', async () => {
     session.defaultSession.setUserAgent(infomaniakUA);
 
     createJitsiMeetWindow();
-    await createTrayMenu();
 
     /**
      * On Windows, a deep link (kmeet://) used while the app is closed arrives
-     * as a command line argument of the first launch. Dispatched once and
+     * as a command line argument of the first launch. Dispatched once, before
+     * the tray menu (which can fail without affecting the deep link) and
      * without mutating process.argv: switches may follow the URL.
      */
     const startupProtocolArg = process.argv.find(arg => arg.startsWith(appProtocolSurplus));
@@ -723,6 +727,8 @@ app.on('ready', async () => {
     if (startupProtocolArg) {
         void handleProtocolCall(startupProtocolArg);
     }
+
+    await createTrayMenu();
 });
 
 if (isDev) {
