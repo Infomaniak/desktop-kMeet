@@ -217,6 +217,10 @@ function setApplicationMenu() {
 }
 
 function createJitsiMeetWindow() {
+    // The window can be recreated (closed to tray, deep link re-attaches to
+    // the running process), so the renderer readiness flag must be per-window.
+    rendererReady = false;
+
     setApplicationMenu();
 
     if (!process.mas && !disableAutoupdate) {
@@ -460,8 +464,6 @@ function createJitsiMeetWindow() {
             mainWindow?.show();
         }
     });
-
-    void handleProtocolCall(process.argv.pop());
 }
 
 async function requestRemoteControlConsent(): Promise<boolean> {
@@ -705,6 +707,19 @@ app.on('ready', async () => {
     session.defaultSession.setUserAgent(infomaniakUA);
 
     createJitsiMeetWindow();
+
+    /**
+     * On Windows, a deep link (kmeet://) used while the app is closed arrives
+     * as a command line argument of the first launch. Dispatched once, before
+     * the tray menu (which can fail without affecting the deep link) and
+     * without mutating process.argv: switches may follow the URL.
+     */
+    const startupProtocolArg = process.argv.find(arg => arg.startsWith(appProtocolSurplus));
+
+    if (startupProtocolArg) {
+        void handleProtocolCall(startupProtocolArg);
+    }
+
     await createTrayMenu();
 });
 
@@ -713,10 +728,21 @@ if (isDev) {
 }
 
 app.on('second-instance', (event, commandLine) => {
+    // The window can be closed to the tray (mainWindow === null): recreate it
+    // and bring it back, otherwise a deep link from the web app reopens nothing.
     if (mainWindow) {
         mainWindow.isMinimized() && mainWindow.restore();
+        mainWindow.show();
         mainWindow.focus();
-        void handleProtocolCall(commandLine.pop());
+    }
+
+    /**
+     * Select the URL without mutating commandLine: switches may follow it.
+     */
+    const protocolArg = commandLine.find(arg => arg.startsWith(appProtocolSurplus));
+
+    if (protocolArg) {
+        void handleProtocolCall(protocolArg);
     }
 });
 
